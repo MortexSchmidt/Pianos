@@ -8,6 +8,13 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
+local connections = {}
+_G.UndercoreConnections = connections
+
+local function trackConn(conn)
+	table.insert(connections, conn)
+	return conn
+end
 
 -- Get UI parent
 local function getUiParent()
@@ -615,7 +622,7 @@ local function createSlider(parent, text, min, max, default, callback)
 			dragging = false
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(input)
+	trackConn(UserInputService.InputChanged:Connect(function(input)
 		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 			local rel = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
 			value = math.floor(min + rel * (max - min))
@@ -702,6 +709,171 @@ local resetBtn = createToggle(playerPage, "Reset Character (click)", function(v)
 	end
 end)
 
+-- ===================
+-- HARD EXIT DIALOG
+-- ===================
+local exitDialogGui = Instance.new("ScreenGui")
+exitDialogGui.Name = "UndercoreExit"
+exitDialogGui.ResetOnSpawn = false
+exitDialogGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+exitDialogGui.DisplayOrder = 200
+exitDialogGui.IgnoreGuiInset = true
+protectGui(exitDialogGui)
+exitDialogGui.Parent = uiParent
+
+local blurFrame = Instance.new("Frame")
+blurFrame.Size = UDim2.new(1, 0, 1, 0)
+blurFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+blurFrame.BackgroundTransparency = 1
+blurFrame.BorderSizePixel = 0
+blurFrame.Visible = false
+blurFrame.Parent = exitDialogGui
+
+local blurEffect = Instance.new("BlurEffect")
+blurEffect.Size = 0
+blurEffect.Name = "UndercoreExitBlur"
+blurEffect.Parent = game:GetService("Lighting")
+
+local dialogFrame = Instance.new("CanvasGroup")
+dialogFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+dialogFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+dialogFrame.Size = UDim2.new(0, 360, 0, 180)
+dialogFrame.BackgroundColor3 = BG
+dialogFrame.BorderSizePixel = 0
+dialogFrame.Visible = false
+dialogFrame.GroupTransparency = 1
+dialogFrame.ZIndex = 10
+dialogFrame.Parent = blurFrame
+
+local dialogCorner = Instance.new("UICorner")
+dialogCorner.CornerRadius = UDim.new(0, 8)
+dialogCorner.Parent = dialogFrame
+
+local dialogTitle = Instance.new("TextLabel")
+dialogTitle.Font = Enum.Font.GothamBold
+dialogTitle.TextSize = 16
+dialogTitle.TextColor3 = TEXT_WHITE
+dialogTitle.TextXAlignment = Enum.TextXAlignment.Center
+dialogTitle.TextYAlignment = Enum.TextYAlignment.Center
+dialogTitle.BackgroundTransparency = 1
+dialogTitle.Size = UDim2.new(1, 0, 0, 50)
+dialogTitle.Position = UDim2.new(0, 0, 0, 20)
+dialogTitle.Text = "Terminate Undercore"
+dialogTitle.Parent = dialogFrame
+
+local dialogMsg = Instance.new("TextLabel")
+dialogMsg.Font = Enum.Font.Gotham
+dialogMsg.TextSize = 13
+dialogMsg.TextColor3 = TEXT_GRAY
+dialogMsg.TextXAlignment = Enum.TextXAlignment.Center
+dialogMsg.TextYAlignment = Enum.TextYAlignment.Top
+dialogMsg.BackgroundTransparency = 1
+dialogMsg.Size = UDim2.new(1, -40, 0, 40)
+dialogMsg.Position = UDim2.new(0, 20, 0, 65)
+dialogMsg.TextWrapped = true
+dialogMsg.Text = "Are you sure you want to terminate the script? All features will be disabled."
+dialogMsg.Parent = dialogFrame
+
+local cancelBtn = Instance.new("TextButton")
+cancelBtn.Font = Enum.Font.GothamBold
+cancelBtn.TextSize = 13
+cancelBtn.TextColor3 = TEXT_WHITE
+cancelBtn.Text = "Cancel"
+cancelBtn.BackgroundColor3 = BG_LIGHT
+cancelBtn.BorderSizePixel = 0
+cancelBtn.Size = UDim2.new(0, 130, 0, 36)
+cancelBtn.Position = UDim2.new(0, 30, 0, 125)
+cancelBtn.Parent = dialogFrame
+
+local confirmBtn = Instance.new("TextButton")
+confirmBtn.Font = Enum.Font.GothamBold
+confirmBtn.TextSize = 13
+confirmBtn.TextColor3 = TEXT_WHITE
+confirmBtn.Text = "Confirm"
+confirmBtn.BackgroundColor3 = RED
+confirmBtn.BorderSizePixel = 0
+confirmBtn.Size = UDim2.new(0, 130, 0, 36)
+confirmBtn.Position = UDim2.new(1, -160, 0, 125)
+confirmBtn.Parent = dialogFrame
+
+local exitDialogVisible = false
+
+local function showExitDialog()
+	if exitDialogVisible then return end
+	exitDialogVisible = true
+	playSound(SOUND_CLICK, 0.3)
+
+	blurFrame.Visible = true
+	blurFrame.BackgroundTransparency = 1
+	dialogFrame.Visible = true
+	dialogFrame.Size = UDim2.new(0, 0, 0, 0)
+	dialogFrame.GroupTransparency = 1
+
+	local blurTween = TweenService:Create(blurEffect, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = 24 })
+	blurTween:Play()
+
+	local bgTween = TweenService:Create(blurFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundTransparency = 0.5 })
+	bgTween:Play()
+
+	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 360, 0, 180), GroupTransparency = 0 })
+	dialogTween:Play()
+end
+
+local function hideExitDialog()
+	if not exitDialogVisible then return end
+	exitDialogVisible = false
+	playSound(SOUND_CLICK, 0.3)
+
+	local blurTween = TweenService:Create(blurEffect, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = 0 })
+	blurTween:Play()
+
+	local bgTween = TweenService:Create(blurFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundTransparency = 1 })
+	bgTween:Play()
+
+	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 0), GroupTransparency = 1 })
+	dialogTween:Play()
+
+	dialogTween.Completed:Wait()
+	blurFrame.Visible = false
+	dialogFrame.Visible = false
+end
+
+cancelBtn.MouseButton1Click:Connect(function()
+	hideExitDialog()
+end)
+
+cancelBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
+end)
+
+confirmBtn.MouseButton1Click:Connect(function()
+	hideExitDialog()
+	hideExitDialog = nil
+
+	-- Close menu with animation
+	if menuVisible then
+		closeMenu()
+		task.wait(0.8)
+	end
+
+	-- Cleanup
+	blurEffect:Destroy()
+	exitDialogGui:Destroy()
+	gui:Destroy()
+	notifGui:Destroy()
+
+	-- Disable all features
+	_G.Undercore = {}
+	for _, conn in ipairs(_G.UndercoreConnections or {}) do
+		pcall(function() conn:Disconnect() end)
+	end
+	_G.UndercoreConnections = nil
+end)
+
+confirmBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
+end)
+
 -- SETTINGS
 local settingsPage = createPage("Settings")
 local navSettings, navSettingsIcon, navSettingsLabel = createNavButton("Settings")
@@ -715,6 +887,25 @@ local testNotif = createToggle(settingsPage, "Test Notification", function(v)
 		notify("Undercore", "Test notification works!", 3, ACCENT, "info")
 		task.wait(1)
 	end
+end)
+
+local exitBtn = Instance.new("TextButton")
+exitBtn.Font = Enum.Font.GothamBold
+exitBtn.TextSize = 13
+exitBtn.TextColor3 = TEXT_WHITE
+exitBtn.Text = "TERMINATE SCRIPT"
+exitBtn.BackgroundColor3 = RED
+exitBtn.BorderSizePixel = 0
+exitBtn.Size = UDim2.new(1, 0, 0, 36)
+exitBtn.Parent = settingsPage
+
+exitBtn.MouseButton1Click:Connect(function()
+	playSound(SOUND_CLICK, 0.3)
+	showExitDialog()
+end)
+
+exitBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
 end)
 
 -- Default page
@@ -799,7 +990,7 @@ toggleBtn.MouseEnter:Connect(function()
 end)
 
 -- Keys
-UserInputService.InputBegan:Connect(function(input, processed)
+trackConn(UserInputService.InputBegan:Connect(function(input, processed)
 	if input.KeyCode == Enum.KeyCode.RightShift
 		or input.KeyCode == Enum.KeyCode.K
 		or input.KeyCode == Enum.KeyCode.F8
@@ -833,7 +1024,7 @@ mainFrame.InputChanged:Connect(function(input)
 	end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
+trackConn(UserInputService.InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
 		local delta = input.Position - dragStart
 		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
@@ -859,7 +1050,7 @@ local flyBodyVelocity
 local flyBodyGyro
 
 local function setupFly()
-	RunService.RenderStepped:Connect(function()
+	trackConn(RunService.RenderStepped:Connect(function()
 		if not _G.Undercore.Fly then
 			if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
 			if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
@@ -905,7 +1096,7 @@ end
 setupFly()
 
 -- SPEED & JUMP
-RunService.RenderStepped:Connect(function()
+trackConn(RunService.RenderStepped:Connect(function()
 	local char = player.Character
 	if not char then return end
 	local hum = char:FindFirstChildOfClass("Humanoid")
@@ -935,7 +1126,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- NOCLIP
-RunService.Stepped:Connect(function()
+trackConn(RunService.Stepped:Connect(function()
 	if not _G.Undercore.Noclip then return end
 	local char = player.Character
 	if not char then return end
@@ -947,7 +1138,7 @@ RunService.Stepped:Connect(function()
 end)
 
 -- INFINITE JUMP
-UserInputService.JumpRequest:Connect(function()
+trackConn(UserInputService.JumpRequest:Connect(function()
 	if _G.Undercore.InfJump then
 		local char = player.Character
 		if char then
@@ -960,7 +1151,7 @@ UserInputService.JumpRequest:Connect(function()
 end)
 
 -- FLING AURA
-RunService.RenderStepped:Connect(function()
+trackConn(RunService.RenderStepped:Connect(function()
 	if not _G.Undercore.Fling then return end
 	local char = player.Character
 	if not char then return end
@@ -1044,10 +1235,10 @@ end
 for _, p in ipairs(Players:GetPlayers()) do
 	createESPForPlayer(p)
 end
-Players.PlayerAdded:Connect(createESPForPlayer)
-Players.PlayerRemoving:Connect(removeESPForPlayer)
+trackConn(Players.PlayerAdded:Connect(createESPForPlayer))
+trackConn(Players.PlayerRemoving:Connect(removeESPForPlayer))
 
-RunService.RenderStepped:Connect(function()
+trackConn(RunService.RenderStepped:Connect(function()
 	local camera = Workspace.CurrentCamera
 	local char = player.Character
 	local root = char and char:FindFirstChild("HumanoidRootPart")
