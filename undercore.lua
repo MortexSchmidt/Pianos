@@ -936,6 +936,44 @@ local function hideExitDialog()
 	dialogSweep:Destroy()
 end
 
+local espObjects = {}
+
+local function resetAllCheats()
+	local char = player.Character
+	if char then
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.WalkSpeed = 16
+			hum.JumpPower = 50
+			hum.JumpHeight = 7.2
+			hum.MaxHealth = 100
+			hum.Health = hum.MaxHealth
+			hum.PlatformStand = false
+		end
+		-- Restore collisions
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = true
+			end
+		end
+		-- Remove fly body objects
+		for _, obj in ipairs(char:GetDescendants()) do
+			if obj:IsA("BodyVelocity") or obj:IsA("BodyGyro") then
+				obj:Destroy()
+			end
+		end
+	end
+	-- Clear ESP drawings
+	for _, obj in pairs(espObjects) do
+		if obj.box then obj.box:Remove() end
+		if obj.name then obj.name:Remove() end
+		if obj.dist then obj.dist:Remove() end
+		if obj.health then obj.health:Remove() end
+		if obj.tracer then obj.tracer:Remove() end
+	end
+	espObjects = {}
+end
+
 cancelBtn.MouseButton1Click:Connect(function()
 	hideExitDialog()
 end)
@@ -976,6 +1014,9 @@ reloadBtn.MouseButton1Click:Connect(function()
 	notify("Undercore", "Script closed. Relaunching...", 3, GREEN, "success")
 	task.wait(2)
 
+	-- Reset all cheats on character
+	resetAllCheats()
+
 	-- Disable all features
 	_G.Undercore = {}
 	for _, conn in ipairs(_G.UndercoreConnections or {}) do
@@ -1011,6 +1052,9 @@ confirmBtn.MouseButton1Click:Connect(function()
 	exitDialogGui:Destroy()
 	gui:Destroy()
 	notifGui:Destroy()
+
+	-- Reset all cheats on character
+	resetAllCheats()
 
 	-- Disable all features
 	_G.Undercore = {}
@@ -1355,8 +1399,6 @@ trackConn(RunService.RenderStepped:Connect(function()
 end))
 
 -- ESP
-local espObjects = {}
-
 local function clearESP()
 	for _, obj in pairs(espObjects) do
 		if obj.box then obj.box:Remove() end
