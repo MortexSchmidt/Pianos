@@ -48,7 +48,6 @@ local RED = Color3.fromRGB(220, 60, 60)
 local SOUND_INJECT = "124834506603771"
 local SOUND_NOTIF = "131268007007000"
 local SOUND_ERROR = "18999173729"
-local SOUND_CLICK = "83465157817014"
 local SOUND_HOVER = "72243701593463"
 local SOUND_MODAL = "18999173729"
 local SOUND_PAGE = { "105197111717033", "85298254384092", "114157584505971" }
@@ -71,7 +70,7 @@ end
 
 -- Preload all sounds
 do
-	local allSounds = { SOUND_INJECT, SOUND_NOTIF, SOUND_ERROR, SOUND_CLICK, SOUND_HOVER, SOUND_MODAL }
+	local allSounds = { SOUND_INJECT, SOUND_NOTIF, SOUND_ERROR, SOUND_HOVER, SOUND_MODAL }
 	for _, id in ipairs(allSounds) do
 		local s = Instance.new("Sound")
 		s.SoundId = "rbxassetid://" .. id
