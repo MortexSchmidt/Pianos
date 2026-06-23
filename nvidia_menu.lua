@@ -11,6 +11,7 @@ local player = Players.LocalPlayer
 
 -- Colors
 local ACCENT = Color3.fromRGB(255, 200, 0) -- yellow accent
+local GREEN = Color3.fromRGB(76, 175, 80) -- green for injection
 local CARD_BLACK = Color3.fromRGB(12, 12, 12)
 local CARD_DARK = Color3.fromRGB(18, 18, 18)
 local TEXT_WHITE = Color3.fromRGB(255, 255, 255)
@@ -116,9 +117,10 @@ local function dismiss(data)
 	recalcPositions()
 end
 
-local function notify(title, message, duration, status, soundId)
+local function notify(title, message, duration, status, soundId, accentColor)
 	duration = duration or 5
 	status = status or "SYSTEM"
+	accentColor = accentColor or ACCENT
 	if soundId then
 		playSound(soundId, 0.5)
 	end
@@ -145,7 +147,7 @@ local function notify(title, message, duration, status, soundId)
 	strip.Name = "AccentStrip"
 	strip.Size = UDim2.new(0, STRIP_WIDTH, 1, 0)
 	strip.Position = UDim2.new(0, 0, 0, 0)
-	strip.BackgroundColor3 = ACCENT
+	strip.BackgroundColor3 = accentColor
 	strip.BorderSizePixel = 0
 	strip.ZIndex = 5
 	strip.Parent = card
@@ -176,7 +178,7 @@ local function notify(title, message, duration, status, soundId)
 	statusLabel.Name = "Status"
 	statusLabel.Font = Enum.Font.GothamBold
 	statusLabel.TextSize = 10
-	statusLabel.TextColor3 = ACCENT
+	statusLabel.TextColor3 = accentColor
 	statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 	statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 	statusLabel.BackgroundTransparency = 1
@@ -217,7 +219,7 @@ local function notify(title, message, duration, status, soundId)
 	overlay.Name = "AccentOverlay"
 	overlay.Size = UDim2.new(1, 0, 1, 0)
 	overlay.Position = UDim2.new(0, 0, 0, 0)
-	overlay.BackgroundColor3 = ACCENT
+	overlay.BackgroundColor3 = accentColor
 	overlay.BorderSizePixel = 0
 	overlay.Visible = true
 	overlay.ZIndex = 10
@@ -436,10 +438,10 @@ end)
 
 -- Toggle key (RightShift)
 UserInputService.InputBegan:Connect(function(input, processed)
-	if processed then return end
 	if input.KeyCode == Enum.KeyCode.RightShift then
 		menuVisible = not menuVisible
 		mainFrame.Visible = menuVisible
+		mainFrame.ZIndex = 100
 		if menuVisible then
 			playSound(SOUND_UI_OPEN, 0.1)
 		else
@@ -484,7 +486,7 @@ end)
 -- INJECTION NOTIFICATION
 -- ===================
 task.wait(1)
-notify("TALENTLESS", "Скрипт успешно заинжекчен", 5, "INJECTED", SOUND_NOTIF_SUCCESS)
+notify("TALENTLESS", "Скрипт успешно заинжекчен", 5, "INJECTED", SOUND_NOTIF_SUCCESS, GREEN)
 
 -- Load button
 loadBtn.MouseButton1Click:Connect(function()
