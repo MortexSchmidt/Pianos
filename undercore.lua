@@ -46,12 +46,12 @@ local RED = Color3.fromRGB(220, 60, 60)
 
 -- Sound IDs
 local SOUND_INJECT = "124834506603771"
-local SOUND_NOTIF = "134998934323294"
-local SOUND_ERROR = "80779065737564"
-local SOUND_CLICK = "98884317334085"
-local SOUND_HOVER = "81092680156069"
-local SOUND_MODAL = "85513921738461"
-local SOUND_PAGE = { "98884317334085" }
+local SOUND_NOTIF = "131268007007000"
+local SOUND_ERROR = "18999173729"
+local SOUND_CLICK = "83465157817014"
+local SOUND_HOVER = "72243701593463"
+local SOUND_MODAL = "18999173729"
+local SOUND_PAGE = { "105197111717033", "85298254384092", "114157584505971" }
 
 local function playSound(soundId, loudness)
 	local sound = Instance.new("Sound")
@@ -1275,7 +1275,6 @@ exitBtn.Parent = settingsPage
 
 exitBtn.MouseButton1Click:Connect(function()
 	if exitDialogVisible then return end
-	playSound(SOUND_MODAL, 0.5)
 	showExitDialog()
 end)
 
@@ -1463,6 +1462,9 @@ local function setupFly()
 		if not _G.Undercore.Fly then
 			if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
 			if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
+			local char = player.Character
+			local hum = char and char:FindFirstChildOfClass("Humanoid")
+			if hum then hum.PlatformStand = false end
 			return
 		end
 
@@ -1474,13 +1476,13 @@ local function setupFly()
 
 		if not flyBodyVelocity then
 			flyBodyVelocity = Instance.new("BodyVelocity")
-			flyBodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 1e5
+			flyBodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 9e9
 			flyBodyVelocity.Velocity = Vector3.zero
 			flyBodyVelocity.Parent = root
 
 			flyBodyGyro = Instance.new("BodyGyro")
-			flyBodyGyro.MaxForce = Vector3.new(1, 1, 1) * 1e5
-			flyBodyGyro.P = 1e4
+			flyBodyGyro.MaxForce = Vector3.new(1, 1, 1) * 9e9
+			flyBodyGyro.P = 1e5
 			flyBodyGyro.Parent = root
 		end
 
@@ -1531,6 +1533,10 @@ trackConn(RunService.RenderStepped:Connect(function()
 	if _G.Undercore.GodMode then
 		hum.MaxHealth = math.huge
 		hum.Health = math.huge
+	else
+		if hum.MaxHealth == math.huge then
+			hum.MaxHealth = 100
+		end
 	end
 end))
 
@@ -1574,8 +1580,15 @@ trackConn(RunService.RenderStepped:Connect(function()
 			if otherRoot and otherHum and otherHum.Health > 0 then
 				local dist = (otherRoot.Position - root.Position).Magnitude
 				if dist <= _G.Undercore.FlingRange then
-					otherRoot.Velocity = (otherRoot.Position - root.Position).Unit * _G.Undercore.FlingPower + Vector3.new(0, _G.Undercore.FlingPower * 0.3, 0)
-					otherRoot.AngularVelocity = Vector3.new(math.random(-50, 50), math.random(-50, 50), math.random(-50, 50))
+					local flingDir = (otherRoot.Position - root.Position).Unit
+					otherRoot.Velocity = flingDir * _G.Undercore.FlingPower + Vector3.new(0, _G.Undercore.FlingPower * 0.5, 0)
+					otherRoot.RotVelocity = Vector3.new(math.random(-100, 100), math.random(-100, 100), math.random(-100, 100)) * 10
+					otherHum:ChangeState(Enum.HumanoidStateType.Physics)
+					task.delay(0.5, function()
+						if otherHum and otherHum.Health > 0 then
+							otherHum:ChangeState(Enum.HumanoidStateType.GettingUp)
+						end
+					end)
 				end
 			end
 		end
@@ -1740,7 +1753,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.1.1"
+local SCRIPT_VERSION = "1.1.2"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
