@@ -630,7 +630,7 @@ local function createSlider(parent, text, min, max, default, callback)
 			label.Text = text .. ": " .. tostring(value)
 			if callback then callback(value) end
 		end
-	end)
+	end))
 
 	return { frame = frame, get = function() return value end }
 end
@@ -997,7 +997,7 @@ trackConn(UserInputService.InputBegan:Connect(function(input, processed)
 	then
 		if menuVisible then closeMenu() else openMenu() end
 	end
-end)
+end))
 
 -- Dragging
 local dragging = false
@@ -1029,7 +1029,7 @@ trackConn(UserInputService.InputChanged:Connect(function(input)
 		local delta = input.Position - dragStart
 		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 	end
-end)
+end))
 
 -- ===================
 -- FEATURES
@@ -1091,7 +1091,7 @@ local function setupFly()
 		flyBodyVelocity.Velocity = dir
 		flyBodyGyro.CFrame = cam.CFrame
 		hum.PlatformStand = true
-	end)
+	end))
 end
 setupFly()
 
@@ -1123,7 +1123,7 @@ trackConn(RunService.RenderStepped:Connect(function()
 		hum.MaxHealth = math.huge
 		hum.Health = math.huge
 	end
-end)
+end))
 
 -- NOCLIP
 trackConn(RunService.Stepped:Connect(function()
@@ -1135,7 +1135,7 @@ trackConn(RunService.Stepped:Connect(function()
 			part.CanCollide = false
 		end
 	end
-end)
+end))
 
 -- INFINITE JUMP
 trackConn(UserInputService.JumpRequest:Connect(function()
@@ -1148,7 +1148,7 @@ trackConn(UserInputService.JumpRequest:Connect(function()
 			end
 		end
 	end
-end)
+end))
 
 -- FLING AURA
 trackConn(RunService.RenderStepped:Connect(function()
@@ -1171,7 +1171,7 @@ trackConn(RunService.RenderStepped:Connect(function()
 			end
 		end
 	end
-end)
+end))
 
 -- ESP
 local espObjects = {}
@@ -1328,7 +1328,7 @@ trackConn(RunService.RenderStepped:Connect(function()
 			obj.tracer.Visible = false
 		end
 	end
-end)
+end))
 
 -- ===================
 -- INJECTION NOTIFICATION
