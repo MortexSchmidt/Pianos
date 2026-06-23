@@ -1046,32 +1046,37 @@ reloadBtn.MouseButton1Click:Connect(function()
 		task.wait(0.8)
 	end
 
-	-- Blue: Restarting
-	playSound(SOUND_NOTIF, 0.5)
-	notify("Undercore", "Restarting script...", 3, ACCENT, "info")
-	task.wait(2.5)
-
-	-- Cleanup
-	blurEffect:Destroy()
-	exitDialogGui:Destroy()
-	gui:Destroy()
-
-	-- Green: Script closed, relaunching
-	playSound(SOUND_INJECT, 0.8)
-	notify("Undercore", "Script closed. Relaunching...", 3, GREEN, "success")
-	task.wait(2)
+	-- Immediately disconnect all connections to stop input handling
+	for _, conn in ipairs(_G.UndercoreConnections or {}) do
+		pcall(function() conn:Disconnect() end)
+	end
+	_G.UndercoreConnections = nil
 
 	-- Reset all cheats on character
 	resetAllCheats()
 
 	-- Disable all features
 	_G.Undercore = {}
-	for _, conn in ipairs(_G.UndercoreConnections or {}) do
-		pcall(function() conn:Disconnect() end)
-	end
-	_G.UndercoreConnections = nil
 
-	-- Reload the script
+	-- Destroy main GUI immediately (toggle button, menu, exit dialog)
+	blurEffect:Destroy()
+	exitDialogGui:Destroy()
+	gui:Destroy()
+
+	-- Blue: Restarting (real delay)
+	playSound(SOUND_NOTIF, 0.5)
+	notify("Undercore", "Restarting script...", 3, ACCENT, "info")
+	task.wait(3)
+
+	-- Green: Script closed, relaunching (real delay)
+	playSound(SOUND_INJECT, 0.8)
+	notify("Undercore", "Script closed. Relaunching...", 3, GREEN, "success")
+	task.wait(3)
+
+	-- Destroy notifGui after notifications finish
+	notifGui:Destroy()
+
+	-- Actually reload the script
 	local reloadUrl = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
 	local ok, content = pcall(function()
 		return game:HttpGet(reloadUrl, true)
@@ -1094,21 +1099,23 @@ confirmBtn.MouseButton1Click:Connect(function()
 		task.wait(0.8)
 	end
 
-	-- Cleanup
-	blurEffect:Destroy()
-	exitDialogGui:Destroy()
-	gui:Destroy()
-	notifGui:Destroy()
+	-- Immediately disconnect all connections to stop input handling
+	for _, conn in ipairs(_G.UndercoreConnections or {}) do
+		pcall(function() conn:Disconnect() end)
+	end
+	_G.UndercoreConnections = nil
 
 	-- Reset all cheats on character
 	resetAllCheats()
 
 	-- Disable all features
 	_G.Undercore = {}
-	for _, conn in ipairs(_G.UndercoreConnections or {}) do
-		pcall(function() conn:Disconnect() end)
-	end
-	_G.UndercoreConnections = nil
+
+	-- Destroy all GUIs immediately
+	blurEffect:Destroy()
+	exitDialogGui:Destroy()
+	gui:Destroy()
+	notifGui:Destroy()
 end)
 
 -- SETTINGS
@@ -1599,7 +1606,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.0.0"
+local SCRIPT_VERSION = "1.0.1"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
 
 task.spawn(function()
