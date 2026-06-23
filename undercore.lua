@@ -1129,7 +1129,7 @@ reloadBtn.MouseButton1Click:Connect(function()
 	notifGui:Destroy()
 
 	-- Actually reload the script
-	local reloadUrl = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
+	local reloadUrl = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua"
 	local ok, content = pcall(function()
 		return game:HttpGet(reloadUrl, true)
 	end)
@@ -1663,7 +1663,7 @@ end))
 -- INJECTION SEQUENCE
 -- ===================
 local SCRIPT_VERSION = "1.0.3"
-local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
+local VERSION_URL = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
 
 task.spawn(function()
 	task.wait(0.5)
