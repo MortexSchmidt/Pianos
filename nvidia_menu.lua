@@ -5,6 +5,7 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
+local ContentProvider = game:GetService("ContentProvider")
 
 local player = Players.LocalPlayer
 
@@ -15,6 +16,31 @@ local CARD_DARK = Color3.fromRGB(18, 18, 18)
 local TEXT_WHITE = Color3.fromRGB(255, 255, 255)
 local TEXT_GRAY = Color3.fromRGB(160, 160, 160)
 local STRIP_WIDTH = 3
+
+-- Sound IDs from TALENTLESS
+local SOUND_UI_OPEN = "70452176150315"
+local SOUND_UI_CLOSE = "1524549907"
+local SOUND_BYE = "104269922408932"
+local SOUND_NOTIF_ERROR = "7383525713"
+local SOUND_NOTIF_SUCCESS = "18595195017"
+
+-- Preload sounds
+local assetsToPreload = {
+	"rbxassetid://" .. SOUND_UI_OPEN,
+	"rbxassetid://" .. SOUND_UI_CLOSE,
+	"rbxassetid://" .. SOUND_BYE,
+	"rbxassetid://" .. SOUND_NOTIF_ERROR,
+	"rbxassetid://" .. SOUND_NOTIF_SUCCESS,
+}
+ContentProvider:PreloadAsync(assetsToPreload)
+
+local function playSound(soundId, loudness)
+	local sound = Instance.new("Sound")
+	sound.SoundId = "rbxassetid://" .. soundId
+	sound.Parent = player.Character or player
+	sound.Volume = loudness or 1
+	sound:Play()
+end
 
 -- ===================
 -- NOTIFICATION SYSTEM
@@ -90,9 +116,12 @@ local function dismiss(data)
 	recalcPositions()
 end
 
-local function notify(title, message, duration, status)
+local function notify(title, message, duration, status, soundId)
 	duration = duration or 5
 	status = status or "SYSTEM"
+	if soundId then
+		playSound(soundId, 0.5)
+	end
 
 	local y = 0
 	for _, n in ipairs(notifications) do
@@ -307,6 +336,7 @@ closeBtn.Parent = titleBar
 closeBtn.MouseButton1Click:Connect(function()
 	menuVisible = false
 	mainFrame.Visible = false
+	playSound(SOUND_UI_CLOSE, 0.1)
 end)
 
 -- Content area
@@ -394,12 +424,27 @@ local playBtn = createButton("PLAY", CARD_DARK)
 local stopBtn = createButton("STOP", CARD_DARK)
 local loadBtn = createButton("LOAD TALENTLESS", CARD_DARK)
 
+playBtn.MouseButton1Click:Connect(function()
+	playSound(SOUND_NOTIF_SUCCESS, 0.3)
+	notify("TALENTLESS", "Воспроизведение запущено", 3, "PLAYING", SOUND_NOTIF_SUCCESS)
+end)
+
+stopBtn.MouseButton1Click:Connect(function()
+	playSound(SOUND_BYE, 0.2)
+	notify("TALENTLESS", "Воспроизведение остановлено", 3, "STOPPED", SOUND_BYE)
+end)
+
 -- Toggle key (RightShift)
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then return end
 	if input.KeyCode == Enum.KeyCode.RightShift then
 		menuVisible = not menuVisible
 		mainFrame.Visible = menuVisible
+		if menuVisible then
+			playSound(SOUND_UI_OPEN, 0.1)
+		else
+			playSound(SOUND_UI_CLOSE, 0.1)
+		end
 	end
 end)
 
@@ -439,18 +484,18 @@ end)
 -- INJECTION NOTIFICATION
 -- ===================
 task.wait(1)
-notify("TALENTLESS", "Скрипт успешно заинжекчен", 5, "INJECTED")
+notify("TALENTLESS", "Скрипт успешно заинжекчен", 5, "INJECTED", SOUND_NOTIF_SUCCESS)
 
 -- Load button
 loadBtn.MouseButton1Click:Connect(function()
-	notify("TALENTLESS", "Загрузка основного скрипта...", 3, "LOADING")
+	notify("TALENTLESS", "Загрузка основного скрипта...", 3, "LOADING", SOUND_NOTIF_SUCCESS)
 	local success, err = pcall(function()
 		loadstring(game:HttpGet("https://hellohellohell0.com/talentless-raw/TALENTLESS.lua", true))()
 	end)
 	if success then
-		notify("TALENTLESS", "Скрипт загружен успешно", 3, "SUCCESS")
+		notify("TALENTLESS", "Скрипт загружен успешно", 3, "SUCCESS", SOUND_NOTIF_SUCCESS)
 	else
-		notify("TALENTLESS", "Ошибка: " .. tostring(err), 4, "ERROR")
+		notify("TALENTLESS", "Ошибка: " .. tostring(err), 4, "ERROR", SOUND_NOTIF_ERROR)
 	end
 end)
 
