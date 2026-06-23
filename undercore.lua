@@ -801,13 +801,21 @@ local exitDialogVisible = false
 local function showExitDialog()
 	if exitDialogVisible then return end
 	exitDialogVisible = true
-	playSound(SOUND_CLICK, 0.3)
+	playSound(SOUND_ERROR, 0.5)
 
 	blurFrame.Visible = true
 	blurFrame.BackgroundTransparency = 1
 	dialogFrame.Visible = true
 	dialogFrame.Size = UDim2.new(0, 0, 0, 0)
 	dialogFrame.GroupTransparency = 1
+
+	-- Green sweep overlay on dialog
+	local dialogSweep = Instance.new("Frame")
+	dialogSweep.Size = UDim2.new(1, 0, 1, 0)
+	dialogSweep.BackgroundColor3 = GREEN
+	dialogSweep.BorderSizePixel = 0
+	dialogSweep.ZIndex = 20
+	dialogSweep.Parent = dialogFrame
 
 	local blurTween = TweenService:Create(blurEffect, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = 24 })
 	blurTween:Play()
@@ -817,12 +825,32 @@ local function showExitDialog()
 
 	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 360, 0, 180), GroupTransparency = 0 })
 	dialogTween:Play()
+
+	task.wait(0.15)
+
+	local sweepOut = TweenService:Create(dialogSweep, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
+	sweepOut:Play()
+	sweepOut.Completed:Wait()
+	dialogSweep:Destroy()
 end
 
 local function hideExitDialog()
 	if not exitDialogVisible then return end
 	exitDialogVisible = false
 	playSound(SOUND_CLICK, 0.3)
+
+	-- Green sweep in on dialog
+	local dialogSweep = Instance.new("Frame")
+	dialogSweep.Size = UDim2.new(0, 0, 1, 0)
+	dialogSweep.Position = UDim2.new(0, 0, 0, 0)
+	dialogSweep.BackgroundColor3 = GREEN
+	dialogSweep.BorderSizePixel = 0
+	dialogSweep.ZIndex = 20
+	dialogSweep.Parent = dialogFrame
+
+	local sweepIn = TweenService:Create(dialogSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+	sweepIn:Play()
+	sweepIn.Completed:Wait()
 
 	local blurTween = TweenService:Create(blurEffect, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = 0 })
 	blurTween:Play()
@@ -836,6 +864,7 @@ local function hideExitDialog()
 	dialogTween.Completed:Wait()
 	blurFrame.Visible = false
 	dialogFrame.Visible = false
+	dialogSweep:Destroy()
 end
 
 cancelBtn.MouseButton1Click:Connect(function()
