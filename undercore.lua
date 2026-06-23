@@ -529,6 +529,7 @@ end
 -- UI helpers
 local function createToggle(parent, text, callback)
 	local enabled = false
+	local toggling = false
 
 	local frame = Instance.new("Frame")
 	frame.Size = UDim2.new(1, 0, 0, 35)
@@ -547,35 +548,65 @@ local function createToggle(parent, text, callback)
 	label.Text = text
 	label.Parent = frame
 
-	local toggle = Instance.new("TextButton")
-	toggle.Font = Enum.Font.GothamBold
-	toggle.TextSize = 11
-	toggle.TextColor3 = TEXT_WHITE
-	toggle.Text = "OFF"
-	toggle.BackgroundColor3 = RED
-	toggle.BorderSizePixel = 0
-	toggle.Size = UDim2.new(0, 40, 0, 20)
-	toggle.Position = UDim2.new(1, -50, 0.5, -10)
-	toggle.Parent = frame
+	-- Toggle switch background
+	local switchBg = Instance.new("TextButton")
+	switchBg.Text = ""
+	switchBg.BackgroundColor3 = BG_DARK
+	switchBg.BorderSizePixel = 0
+	switchBg.Size = UDim2.new(0, 40, 0, 20)
+	switchBg.Position = UDim2.new(1, -50, 0.5, -10)
+	switchBg.AutoButtonColor = false
+	switchBg.Parent = frame
 
-	toggle.MouseButton1Click:Connect(function()
+	-- Green fill (grows when ON)
+	local switchFill = Instance.new("Frame")
+	switchFill.Size = UDim2.new(0, 0, 1, 0)
+	switchFill.BackgroundColor3 = GREEN
+	switchFill.BorderSizePixel = 0
+	switchFill.ZIndex = 2
+	switchFill.Parent = switchBg
+
+	-- White circle knob
+	local knob = Instance.new("Frame")
+	knob.Size = UDim2.new(0, 16, 0, 16)
+	knob.Position = UDim2.new(0, 2, 0.5, -8)
+	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	knob.BorderSizePixel = 0
+	knob.ZIndex = 3
+	knob.Parent = switchBg
+
+	local function updateVisual()
+		if enabled then
+			local fillTween = TweenService:Create(switchFill, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+			fillTween:Play()
+			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(1, -18, 0.5, -8) })
+			knobTween:Play()
+		else
+			local fillTween = TweenService:Create(switchFill, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0) })
+			fillTween:Play()
+			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0, 2, 0.5, -8) })
+			knobTween:Play()
+		end
+	end
+
+	local function doToggle()
+		if toggling then return end
+		toggling = true
 		playRandomPageSound()
 		enabled = not enabled
-		if enabled then
-			toggle.Text = "ON"
-			toggle.BackgroundColor3 = GREEN
-		else
-			toggle.Text = "OFF"
-			toggle.BackgroundColor3 = RED
-		end
+		updateVisual()
 		if callback then callback(enabled) end
-	end)
+		task.wait(0.25)
+		toggling = false
+	end
+
+	switchBg.MouseButton1Click:Connect(doToggle)
 
 	frame.MouseEnter:Connect(function()
 		playSound(SOUND_HOVER, 0.15)
 	end)
 
-	return { frame = frame, get = function() return enabled end, set = function(v) enabled = v toggle.Text = v and "ON" or "OFF" toggle.BackgroundColor3 = v and GREEN or RED end }
+	return { frame = frame, get = function() return enabled end, set = function(v) enabled = v updateVisual() end }
 end
 
 local function createSlider(parent, text, min, max, default, callback)
@@ -925,6 +956,7 @@ exitBtn.Size = UDim2.new(1, 0, 0, 36)
 exitBtn.Parent = settingsPage
 
 exitBtn.MouseButton1Click:Connect(function()
+	if exitDialogVisible then return end
 	playRandomPageSound()
 	showExitDialog()
 end)
