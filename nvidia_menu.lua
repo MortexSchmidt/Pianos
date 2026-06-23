@@ -10,19 +10,25 @@ local player = Players.LocalPlayer
 
 -- Get UI parent (executor compatible)
 local function getUiParent()
-	if gethui then 
+	-- Try gethui first
+	if gethui then
 		local ok, hui = pcall(gethui)
 		if ok and hui then return hui end
 	end
-	if syn and syn.protect_gui then
-		local ok, cg = pcall(function() return game:GetService("CoreGui") end)
-		if ok then return cg end
-	end
+	-- Try CoreGui
 	local ok, cg = pcall(function() return game:GetService("CoreGui") end)
 	if ok and cg then return cg end
+	-- Fallback to PlayerGui (most reliable)
 	return player:WaitForChild("PlayerGui")
 end
 local uiParent = getUiParent()
+
+-- Also try syn.protect_gui if available
+local function protectGui(gui)
+	if syn and syn.protect_gui then
+		pcall(syn.protect_gui, gui)
+	end
+end
 
 print("[TALENTLESS] nvidia_menu loaded, UI parent: " .. tostring(uiParent))
 
@@ -73,6 +79,8 @@ notifGui.Name = "NvidiaNotifGui"
 notifGui.ResetOnSpawn = false
 notifGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 notifGui.DisplayOrder = 100
+notifGui.IgnoreGuiInset = true
+protectGui(notifGui)
 notifGui.Parent = uiParent
 
 local container = Instance.new("Frame")
@@ -284,6 +292,8 @@ menuGui.Name = "NvidiaMenuGui"
 menuGui.ResetOnSpawn = false
 menuGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 menuGui.DisplayOrder = 99
+menuGui.IgnoreGuiInset = true
+protectGui(menuGui)
 menuGui.Parent = uiParent
 
 print("[TALENTLESS] Menu GUI created, parent: " .. tostring(menuGui.Parent))
@@ -467,6 +477,8 @@ toggleBtn.Size = UDim2.new(0, 30, 0, 30)
 toggleBtn.Position = UDim2.new(0, 10, 0, 10)
 toggleBtn.ZIndex = 50
 toggleBtn.Parent = menuGui
+
+print("[TALENTLESS] Toggle button created, visible: " .. tostring(toggleBtn.Visible) .. " parent: " .. tostring(toggleBtn.Parent))
 
 local toggleStrip = Instance.new("Frame")
 toggleStrip.Name = "AccentStrip"
