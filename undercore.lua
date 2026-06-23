@@ -1,4 +1,4 @@
--- Undercore v1.1.1 - Custom Cheat Menu
+-- Undercore v1.1.3 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1752,7 +1752,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.1.2"
+local SCRIPT_VERSION = "1.1.3"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
