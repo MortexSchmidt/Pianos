@@ -4,10 +4,18 @@
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
 local ContentProvider = game:GetService("ContentProvider")
 
 local player = Players.LocalPlayer
+
+-- Get UI parent (executor compatible)
+local function getUiParent()
+	if gethui then return gethui() end
+	local ok, cg = pcall(function() return game:GetService("CoreGui") end)
+	if ok then return cg end
+	return player:WaitForChild("PlayerGui")
+end
+local uiParent = getUiParent()
 
 -- Colors
 local ACCENT = Color3.fromRGB(255, 200, 0) -- yellow accent
@@ -56,7 +64,7 @@ notifGui.Name = "NvidiaNotifGui"
 notifGui.ResetOnSpawn = false
 notifGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 notifGui.DisplayOrder = 100
-notifGui.Parent = CoreGui
+notifGui.Parent = uiParent
 
 local container = Instance.new("Frame")
 container.Name = "NotificationContainer"
@@ -267,7 +275,7 @@ menuGui.Name = "NvidiaMenuGui"
 menuGui.ResetOnSpawn = false
 menuGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 menuGui.DisplayOrder = 99
-menuGui.Parent = CoreGui
+menuGui.Parent = uiParent
 
 local menuVisible = false
 
