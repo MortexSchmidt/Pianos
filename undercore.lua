@@ -1,4 +1,4 @@
--- Undercore v1.3.1 - Custom Cheat Menu
+-- Undercore v1.3.2 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -532,28 +532,26 @@ local function showPage(name)
 	pageSwitching = true
 	playRandomPageSound()
 
-	-- Deactivate old button with green glow sweep (right to left)
+	-- Deactivate old button with solid green sweep (right to left)
 	if currentPage and navButtons[currentPage] then
 		local oldData = navButtons[currentPage]
 		local oldBtn = oldData.btn
 
-		-- Green glow sweep on old nav button (right to left)
+		-- Solid green sweep on old nav button (right to left)
 		local oldSweep = Instance.new("Frame")
 		oldSweep.Size = UDim2.new(1, 0, 1, 0)
 		oldSweep.Position = UDim2.new(0, 0, 0, 0)
 		oldSweep.BackgroundColor3 = GREEN
-		oldSweep.BackgroundTransparency = 0.7
+		oldSweep.BackgroundTransparency = 0
 		oldSweep.BorderSizePixel = 0
 		oldSweep.ZIndex = 1
 		oldSweep.Parent = oldBtn
 
-		local oldStroke = Instance.new("UIStroke")
-		oldStroke.Color = GREEN
-		oldStroke.Thickness = 1.5
-		oldStroke.Transparency = 0.5
-		oldStroke.Parent = oldSweep
+		-- Change text/icon to dark for readability on green
+		oldData.icon.ImageColor3 = Color3.fromRGB(20, 20, 20)
+		oldData.label.TextColor3 = Color3.fromRGB(20, 20, 20)
 
-		local oldSweepOut = TweenService:Create(oldSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1 })
+		local oldSweepOut = TweenService:Create(oldSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
 		oldSweepOut:Play()
 		oldSweepOut.Completed:Wait()
 		oldSweep:Destroy()
@@ -581,55 +579,52 @@ local function showPage(name)
 		page.Visible = (pageName == name)
 	end
 
-	-- Activate new button with green glow sweep (left to right, then exit right)
+	-- Activate new button with solid green sweep (left to right, indicator breaks off and stays)
 	local newData = navButtons[name]
 	if newData then
 		local newBtn = newData.btn
 
-		-- Green glow sweep on new nav button (left to right)
+		-- Solid green sweep on new nav button (left to right)
 		local newSweep = Instance.new("Frame")
 		newSweep.Size = UDim2.new(0, 0, 1, 0)
 		newSweep.Position = UDim2.new(0, 0, 0, 0)
 		newSweep.BackgroundColor3 = GREEN
-		newSweep.BackgroundTransparency = 0.7
+		newSweep.BackgroundTransparency = 0
 		newSweep.BorderSizePixel = 0
 		newSweep.ZIndex = 1
 		newSweep.Parent = newBtn
 
-		local newStroke = Instance.new("UIStroke")
-		newStroke.Color = GREEN
-		newStroke.Thickness = 1.5
-		newStroke.Transparency = 0.5
-		newStroke.Parent = newSweep
+		-- Change text/icon to dark for readability on green
+		newData.icon.ImageColor3 = Color3.fromRGB(20, 20, 20)
+		newData.label.TextColor3 = Color3.fromRGB(20, 20, 20)
 
 		-- Phase 1: sweep in left to right
 		local newSweepIn = TweenService:Create(newSweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
 		newSweepIn:Play()
 		newSweepIn.Completed:Wait()
 
+		-- Now sweep covers entire button — set active colors (dark text on green)
 		newData.btn.TextColor3 = TEXT_WHITE
 		newData.btn.BackgroundColor3 = BG_LIGHT
 		newData.icon.ImageColor3 = GREEN
 		newData.label.TextColor3 = TEXT_WHITE
 
-		-- Phase 2: sweep exits to the right (slides out)
-		local newSweepOut = TweenService:Create(newSweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1 })
-		newSweepOut:Play()
-		newSweepOut.Completed:Wait()
-		newSweep:Destroy()
-
-		-- Green indicator strip: slide from left to right on new button
+		-- Position the indicator strip at the new button
 		local btn = newData.btn
 		local targetY = btn.AbsolutePosition.Y - mainFrame.AbsolutePosition.Y
 		local targetH = btn.AbsoluteSize.Y
 
+		-- Indicator strip appears as part of the sweep (left edge, 3px wide)
 		navIndicator.Visible = true
 		navIndicator.BackgroundColor3 = GREEN
-		navIndicator.Size = UDim2.new(0, 0, 0, targetH)
+		navIndicator.Size = UDim2.new(0, 3, 0, targetH)
 		navIndicator.Position = UDim2.new(0, 0, 0, targetY)
 
-		local indicatorTween = TweenService:Create(navIndicator, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 3, 0, targetH) })
-		indicatorTween:Play()
+		-- Phase 2: sweep exits to the right, but indicator strip stays behind
+		local newSweepOut = TweenService:Create(newSweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
+		newSweepOut:Play()
+		newSweepOut.Completed:Wait()
+		newSweep:Destroy()
 	end
 
 	local sweepOut = TweenService:Create(sweepOverlay, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
@@ -1880,7 +1875,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.3.1"
+local SCRIPT_VERSION = "1.3.2"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
