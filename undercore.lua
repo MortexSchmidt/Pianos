@@ -124,9 +124,9 @@ end
 
 -- Notification icons
 local NOTIF_ICONS = {
-	info = "rbxassetid://139569684809135",
-	error = "rbxassetid://84067697271969",
-	success = "rbxassetid://119144319810956",
+	info = "rbxassetid://773391098118939",
+	error = "rbxassetid://773391094262923",
+	success = "rbxassetid://773391086914667",
 }
 
 local function notify(title, message, duration, color, notifType)
@@ -403,11 +403,11 @@ local pages = {}
 local navButtons = {}
 
 local NAV_ICONS = {
-	["Movement"] = "rbxassetid://95237403972033",
-	["Combat"] = "rbxassetid://108927893786063",
-	["Visuals"] = "rbxassetid://93101474340373",
-	["Player"] = "rbxassetid://132798719741410",
-	["Settings"] = "rbxassetid://136432877080343",
+	["Movement"] = "rbxassetid://773391098118939",
+	["Combat"] = "rbxassetid://773391094262923",
+	["Visuals"] = "rbxassetid://773391086914667",
+	["Player"] = "rbxassetid://773391090508219",
+	["Settings"] = "rbxassetid://773391102756043",
 }
 
 local function createNavButton(name)
@@ -873,7 +873,7 @@ local infoIcon = Instance.new("ImageLabel")
 infoIcon.Size = UDim2.new(0, 14, 0, 14)
 infoIcon.Position = UDim2.new(0, 30, 0, 190)
 infoIcon.BackgroundTransparency = 1
-infoIcon.Image = "rbxassetid://139569684809135"
+infoIcon.Image = "rbxassetid://773391098118939"
 infoIcon.ImageColor3 = ACCENT
 infoIcon.ScaleType = Enum.ScaleType.Fit
 infoIcon.ZIndex = 11
@@ -906,7 +906,7 @@ local function createTooltip(btn, text)
 	infoIcon.Size = UDim2.new(0, 16, 0, 16)
 	infoIcon.Position = UDim2.new(0, 8, 0, 6)
 	infoIcon.BackgroundTransparency = 1
-	infoIcon.Image = "rbxassetid://139569684809135"
+	infoIcon.Image = "rbxassetid://773391098118939"
 	infoIcon.ImageColor3 = ACCENT
 	infoIcon.ScaleType = Enum.ScaleType.Fit
 	infoIcon.ZIndex = 101
@@ -925,24 +925,28 @@ local function createTooltip(btn, text)
 	tooltipText.ZIndex = 101
 	tooltipText.Parent = tooltip
 
+	local function hideTooltip()
+		tooltip.Visible = false
+		tooltip.Size = UDim2.new(0, 220, 0, 0)
+	end
+
 	btn.MouseEnter:Connect(function()
 		playSound(SOUND_HOVER, 0.15)
 		local btnPos = btn.AbsolutePosition
 		local btnSize = btn.AbsoluteSize
 		tooltip.Visible = true
 		tooltip.Size = UDim2.new(0, 220, 0, 0)
-		tooltip.Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 5)
-		local tween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 220, 0, 28), Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 33) })
+		tooltip.Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 2)
+		local tween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 220, 0, 28), Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 30) })
 		tween:Play()
 	end)
 
 	btn.MouseLeave:Connect(function()
-		local btnPos = btn.AbsolutePosition
-		local btnSize = btn.AbsoluteSize
-		local tween = TweenService:Create(tooltip, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 220, 0, 0), Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 5) })
-		tween:Play()
-		tween.Completed:Wait()
-		tooltip.Visible = false
+		hideTooltip()
+	end)
+
+	btn.MouseButton1Click:Connect(function()
+		hideTooltip()
 	end)
 end
 
