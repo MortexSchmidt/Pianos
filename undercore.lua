@@ -93,10 +93,22 @@ end
 local function dismiss(data)
 	if data.dismissed then return end
 	data.dismissed = true
-	local slideOut = TweenService:Create(data.frame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Position = UDim2.new(0, NOTIF_WIDTH + 10, 0, data.frame.Position.Y.Offset), GroupTransparency = 1 })
+
+	local card = data.frame
+	local overlay = data.overlay
+
+	overlay.Visible = true
+	overlay.Size = UDim2.new(0, 0, 1, 0)
+	overlay.Position = UDim2.new(0, 0, 0, 0)
+
+	local sweepOut = TweenService:Create(overlay, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+	sweepOut:Play()
+	sweepOut.Completed:Wait()
+
+	local slideOut = TweenService:Create(card, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Position = UDim2.new(0, NOTIF_WIDTH + 10, 0, card.Position.Y.Offset), GroupTransparency = 1 })
 	slideOut:Play()
 	slideOut.Completed:Wait()
-	data.frame:Destroy()
+	card:Destroy()
 	for i, n in ipairs(notifications) do
 		if n == data then table.remove(notifications, i) break end
 	end
@@ -140,16 +152,16 @@ local function notify(title, message, duration, color, isError)
 	content.Parent = card
 
 	local pad = Instance.new("UIPadding")
-	pad.PaddingTop = UDim.new(0, 10)
-	pad.PaddingBottom = UDim.new(0, 10)
-	pad.PaddingLeft = UDim.new(0, 12)
-	pad.PaddingRight = UDim.new(0, 12)
+	pad.PaddingTop = UDim.new(0, 12)
+	pad.PaddingBottom = UDim.new(0, 12)
+	pad.PaddingLeft = UDim.new(0, 14)
+	pad.PaddingRight = UDim.new(0, 14)
 	pad.Parent = content
 
 	local lay = Instance.new("UIListLayout")
 	lay.FillDirection = Enum.FillDirection.Vertical
 	lay.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	lay.Padding = UDim.new(0, 3)
+	lay.Padding = UDim.new(0, 4)
 	lay.Parent = content
 
 	local status = Instance.new("TextLabel")
@@ -157,17 +169,32 @@ local function notify(title, message, duration, color, isError)
 	status.TextSize = 10
 	status.TextColor3 = color
 	status.TextXAlignment = Enum.TextXAlignment.Left
+	status.TextYAlignment = Enum.TextYAlignment.Top
 	status.BackgroundTransparency = 1
 	status.Size = UDim2.new(1, 0, 0, 0)
 	status.AutomaticSize = Enum.AutomaticSize.Y
 	status.Text = title:upper()
 	status.Parent = content
 
+	local titleLabel = Instance.new("TextLabel")
+	titleLabel.Font = Enum.Font.GothamBold
+	titleLabel.TextSize = 14
+	titleLabel.TextColor3 = TEXT_WHITE
+	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+	titleLabel.TextYAlignment = Enum.TextYAlignment.Top
+	titleLabel.BackgroundTransparency = 1
+	titleLabel.Size = UDim2.new(1, 0, 0, 0)
+	titleLabel.AutomaticSize = Enum.AutomaticSize.Y
+	titleLabel.TextWrapped = true
+	titleLabel.Text = title
+	titleLabel.Parent = content
+
 	local msg = Instance.new("TextLabel")
 	msg.Font = Enum.Font.Gotham
 	msg.TextSize = 12
 	msg.TextColor3 = TEXT_GRAY
 	msg.TextXAlignment = Enum.TextXAlignment.Left
+	msg.TextYAlignment = Enum.TextYAlignment.Top
 	msg.BackgroundTransparency = 1
 	msg.Size = UDim2.new(1, 0, 0, 0)
 	msg.AutomaticSize = Enum.AutomaticSize.Y
@@ -175,15 +202,33 @@ local function notify(title, message, duration, color, isError)
 	msg.Text = message
 	msg.Parent = content
 
+	-- NVIDIA sweep overlay
+	local overlay = Instance.new("Frame")
+	overlay.Name = "AccentOverlay"
+	overlay.Size = UDim2.new(1, 0, 1, 0)
+	overlay.Position = UDim2.new(0, 0, 0, 0)
+	overlay.BackgroundColor3 = color
+	overlay.BorderSizePixel = 0
+	overlay.Visible = true
+	overlay.ZIndex = 10
+	overlay.Parent = card
+
 	task.defer(function()
 		task.wait()
 		local height = card.AbsoluteSize.Y
 		if height <= 0 then task.wait() height = card.AbsoluteSize.Y end
-		local data = { frame = card, height = height, dismissed = false }
+		local data = { frame = card, height = height, dismissed = false, overlay = overlay }
 		table.insert(notifications, data)
-		local slideIn = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = UDim2.new(0, 0, 0, y) })
+
+		local slideIn = TweenService:Create(card, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = UDim2.new(0, 0, 0, y) })
 		slideIn:Play()
 		slideIn.Completed:Wait()
+
+		local collapse = TweenService:Create(overlay, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 3, 1, 0) })
+		collapse:Play()
+		collapse.Completed:Wait()
+		overlay.Visible = false
+
 		task.delay(duration, function() dismiss(data) end)
 	end)
 end
@@ -344,6 +389,20 @@ end
 
 local function showPage(name)
 	playRandomPageSound()
+
+	-- Page sweep effect
+	local sweepOverlay = Instance.new("Frame")
+	sweepOverlay.Size = UDim2.new(0, 0, 1, 0)
+	sweepOverlay.Position = UDim2.new(0, 0, 0, 0)
+	sweepOverlay.BackgroundColor3 = GREEN
+	sweepOverlay.BorderSizePixel = 0
+	sweepOverlay.ZIndex = 50
+	sweepOverlay.Parent = contentFrame
+
+	local sweepIn = TweenService:Create(sweepOverlay, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+	sweepIn:Play()
+	sweepIn.Completed:Wait()
+
 	for pageName, page in pairs(pages) do
 		page.Visible = (pageName == name)
 	end
@@ -356,6 +415,11 @@ local function showPage(name)
 			btn.BackgroundColor3 = BG_DARK
 		end
 	end
+
+	local sweepOut = TweenService:Create(sweepOverlay, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
+	sweepOut:Play()
+	sweepOut.Completed:Wait()
+	sweepOverlay:Destroy()
 end
 
 -- UI helpers
