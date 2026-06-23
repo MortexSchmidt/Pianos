@@ -1038,8 +1038,43 @@ closeMenu = function()
 	menuSweep:Destroy()
 end
 
+local holdTimer = nil
+local holdCancelled = false
+
+local function startHold()
+	holdCancelled = false
+	holdTimer = task.delay(5, function()
+		if not holdCancelled then
+			showExitDialog()
+		end
+	end)
+end
+
+local function cancelHold()
+	holdCancelled = true
+	if holdTimer then
+		task.cancel(holdTimer)
+		holdTimer = nil
+	end
+end
+
+-- Toggle button: click = open/close, hold 5s = terminate
+toggleBtn.MouseButton1Down:Connect(function()
+	startHold()
+end)
+
+toggleBtn.MouseButton1Up:Connect(function()
+	cancelHold()
+end)
+
+toggleBtn.MouseLeave:Connect(function()
+	cancelHold()
+end)
+
 toggleBtn.MouseButton1Click:Connect(function()
-	if menuVisible then closeMenu() else openMenu() end
+	if not exitDialogVisible then
+		if menuVisible then closeMenu() else openMenu() end
+	end
 end)
 
 toggleBtn.MouseEnter:Connect(function()
@@ -1048,11 +1083,20 @@ end)
 
 -- Keys
 trackConn(UserInputService.InputBegan:Connect(function(input, processed)
-	if input.KeyCode == Enum.KeyCode.RightShift
-		or input.KeyCode == Enum.KeyCode.K
-		or input.KeyCode == Enum.KeyCode.F8
-	then
+	if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.K then
 		if menuVisible then closeMenu() else openMenu() end
+	elseif input.KeyCode == Enum.KeyCode.F8 then
+		startHold()
+	end
+end))
+
+trackConn(UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.F8 then
+		cancelHold()
+		if not exitDialogVisible and not holdCancelled then
+			-- Quick tap, not held long enough for terminate
+			if menuVisible then closeMenu() else openMenu() end
+		end
 	end
 end))
 
