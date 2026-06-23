@@ -346,44 +346,33 @@ local function createNavButton(name)
 	btn.Font = Enum.Font.Gotham
 	btn.TextSize = 13
 	btn.TextColor3 = TEXT_GRAY
-	btn.Text = "  " .. name
+	btn.Text = name
 	btn.TextXAlignment = Enum.TextXAlignment.Left
 	btn.BackgroundColor3 = BG_DARK
 	btn.BorderSizePixel = 0
 	btn.Size = UDim2.new(1, 0, 0, 36)
 	btn.Parent = navFrame
 
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0, 38)
+	pad.Parent = btn
+
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "Icon"
-	icon.Size = UDim2.new(0, 16, 0, 16)
-	icon.Position = UDim2.new(0, 12, 0.5, -8)
+	icon.Size = UDim2.new(0, 18, 0, 18)
+	icon.Position = UDim2.new(0, 14, 0.5, -9)
 	icon.BackgroundTransparency = 1
 	icon.Image = NAV_ICONS[name] or ""
 	icon.ImageColor3 = TEXT_GRAY
+	icon.ImageTransparency = 0
+	icon.ZIndex = 2
 	icon.Parent = btn
-
-	-- Shift text right to make room for icon
-	btn.TextXAlignment = Enum.TextXAlignment.Left
-	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 34)
-	pad.Parent = btn
-
-	-- Active green strip (hidden by default)
-	local activeStrip = Instance.new("Frame")
-	activeStrip.Name = "ActiveStrip"
-	activeStrip.Size = UDim2.new(0, 3, 1, 0)
-	activeStrip.Position = UDim2.new(0, 0, 0, 0)
-	activeStrip.BackgroundColor3 = GREEN
-	activeStrip.BorderSizePixel = 0
-	activeStrip.ZIndex = 5
-	activeStrip.Visible = false
-	activeStrip.Parent = btn
 
 	btn.MouseEnter:Connect(function()
 		playSound(SOUND_HOVER, 0.15)
 	end)
 
-	return btn, activeStrip, icon
+	return btn, icon
 end
 
 local function createPage(name)
@@ -410,32 +399,31 @@ local function createPage(name)
 end
 
 local currentPage = nil
+local pageSwitching = false
+
+-- Global green indicator strip on navFrame (leftmost edge)
+local navIndicator = Instance.new("Frame")
+navIndicator.Name = "NavIndicator"
+navIndicator.Size = UDim2.new(0, 3, 0, 36)
+navIndicator.Position = UDim2.new(0, 0, 0, 10)
+navIndicator.BackgroundColor3 = GREEN
+navIndicator.BorderSizePixel = 0
+navIndicator.ZIndex = 10
+navIndicator.Visible = false
+navIndicator.Parent = navFrame
 
 local function showPage(name)
 	if currentPage == name then return end
+	if pageSwitching then return end
+	pageSwitching = true
 	playRandomPageSound()
 
-	-- Animate old nav strip: sweep right then hide
+	-- Deactivate old button
 	if currentPage and navButtons[currentPage] then
 		local oldData = navButtons[currentPage]
-		local oldStrip = oldData.strip
-		local oldIcon = oldData.icon
-		local oldBtn = oldData.btn
-
-		-- Sweep the strip to the right
-		if oldStrip then
-			oldStrip.Visible = true
-			local sweepStrip = TweenService:Create(oldStrip, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 })
-			sweepStrip:Play()
-			sweepStrip.Completed:Wait()
-			oldStrip.Size = UDim2.new(0, 3, 1, 0)
-			oldStrip.BackgroundTransparency = 0
-			oldStrip.Visible = false
-		end
-
-		oldBtn.TextColor3 = TEXT_GRAY
-		oldBtn.BackgroundColor3 = BG_DARK
-		if oldIcon then oldIcon.ImageColor3 = TEXT_GRAY end
+		oldData.btn.TextColor3 = TEXT_GRAY
+		oldData.btn.BackgroundColor3 = BG_DARK
+		oldData.icon.ImageColor3 = TEXT_GRAY
 	end
 
 	-- Page content sweep
@@ -447,7 +435,7 @@ local function showPage(name)
 	sweepOverlay.ZIndex = 50
 	sweepOverlay.Parent = contentFrame
 
-	local sweepIn = TweenService:Create(sweepOverlay, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+	local sweepIn = TweenService:Create(sweepOverlay, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
 	sweepIn:Play()
 	sweepIn.Completed:Wait()
 
@@ -455,33 +443,35 @@ local function showPage(name)
 		page.Visible = (pageName == name)
 	end
 
-	-- Activate new nav strip: sweep from left
+	-- Activate new button
 	local newData = navButtons[name]
 	if newData then
-		local newStrip = newData.strip
-		local newIcon = newData.icon
-		local newBtn = newData.btn
-
-		if newStrip then
-			newStrip.Size = UDim2.new(0, 0, 1, 0)
-			newStrip.Position = UDim2.new(0, 0, 0, 0)
-			newStrip.Visible = true
-			newStrip.BackgroundTransparency = 0
-			local stripIn = TweenService:Create(newStrip, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 3, 1, 0) })
-			stripIn:Play()
-		end
-
-		newBtn.TextColor3 = TEXT_WHITE
-		newBtn.BackgroundColor3 = BG_LIGHT
-		if newIcon then newIcon.ImageColor3 = GREEN end
+		newData.btn.TextColor3 = TEXT_WHITE
+		newData.btn.BackgroundColor3 = BG_LIGHT
+		newData.icon.ImageColor3 = GREEN
 	end
 
-	local sweepOut = TweenService:Create(sweepOverlay, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
+	-- Move indicator strip with sweep
+	local btn = newData and newData.btn
+	if btn then
+		local targetY = btn.AbsolutePosition.Y - navFrame.AbsolutePosition.Y
+		local targetH = btn.AbsoluteSize.Y
+
+		navIndicator.Visible = true
+		navIndicator.Size = UDim2.new(0, 0, 0, targetH)
+		navIndicator.Position = UDim2.new(0, 0, 0, targetY)
+
+		local indicatorTween = TweenService:Create(navIndicator, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 3, 0, targetH) })
+		indicatorTween:Play()
+	end
+
+	local sweepOut = TweenService:Create(sweepOverlay, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
 	sweepOut:Play()
 	sweepOut.Completed:Wait()
 	sweepOverlay:Destroy()
 
 	currentPage = name
+	pageSwitching = false
 end
 
 -- UI helpers
@@ -612,8 +602,8 @@ end
 
 -- MOVEMENT
 local movementPage = createPage("Movement")
-local navMovement, navMovementStrip, navMovementIcon = createNavButton("Movement")
-navButtons["Movement"] = { btn = navMovement, strip = navMovementStrip, icon = navMovementIcon }
+local navMovement, navMovementIcon = createNavButton("Movement")
+navButtons["Movement"] = { btn = navMovement, icon = navMovementIcon }
 navMovement.MouseButton1Click:Connect(function() showPage("Movement") end)
 
 createLabel(movementPage, "Movement")
@@ -627,8 +617,8 @@ local noclipToggle = createToggle(movementPage, "Noclip", function(v) _G.Underco
 
 -- COMBAT
 local combatPage = createPage("Combat")
-local navCombat, navCombatStrip, navCombatIcon = createNavButton("Combat")
-navButtons["Combat"] = { btn = navCombat, strip = navCombatStrip, icon = navCombatIcon }
+local navCombat, navCombatIcon = createNavButton("Combat")
+navButtons["Combat"] = { btn = navCombat, icon = navCombatIcon }
 navCombat.MouseButton1Click:Connect(function() showPage("Combat") end)
 
 createLabel(combatPage, "Combat")
@@ -638,8 +628,8 @@ local flingRange = createSlider(combatPage, "Fling Range", 5, 50, 15, function(v
 
 -- VISUAL
 local visualPage = createPage("Visuals")
-local navVisual, navVisualStrip, navVisualIcon = createNavButton("Visuals")
-navButtons["Visuals"] = { btn = navVisual, strip = navVisualStrip, icon = navVisualIcon }
+local navVisual, navVisualIcon = createNavButton("Visuals")
+navButtons["Visuals"] = { btn = navVisual, icon = navVisualIcon }
 navVisual.MouseButton1Click:Connect(function() showPage("Visuals") end)
 
 createLabel(visualPage, "ESP")
@@ -651,8 +641,8 @@ local espTracer = createToggle(visualPage, "ESP Tracers", function(v) _G.Underco
 
 -- PLAYER
 local playerPage = createPage("Player")
-local navPlayer, navPlayerStrip, navPlayerIcon = createNavButton("Player")
-navButtons["Player"] = { btn = navPlayer, strip = navPlayerStrip, icon = navPlayerIcon }
+local navPlayer, navPlayerIcon = createNavButton("Player")
+navButtons["Player"] = { btn = navPlayer, icon = navPlayerIcon }
 navPlayer.MouseButton1Click:Connect(function() showPage("Player") end)
 
 createLabel(playerPage, "Player")
@@ -669,8 +659,8 @@ end)
 
 -- SETTINGS
 local settingsPage = createPage("Settings")
-local navSettings, navSettingsStrip, navSettingsIcon = createNavButton("Settings")
-navButtons["Settings"] = { btn = navSettings, strip = navSettingsStrip, icon = navSettingsIcon }
+local navSettings, navSettingsIcon = createNavButton("Settings")
+navButtons["Settings"] = { btn = navSettings, icon = navSettingsIcon }
 navSettings.MouseButton1Click:Connect(function() showPage("Settings") end)
 
 createLabel(settingsPage, "Settings")
@@ -706,7 +696,7 @@ openMenu = function()
 	menuVisible = true
 	mainFrame.Visible = true
 	mainFrame.Size = UDim2.new(0, 0, 0, 0)
-	mainFrame.GroupTransparency = 0
+	mainFrame.GroupTransparency = 1
 
 	-- Green sweep overlay on menu
 	local menuSweep = Instance.new("Frame")
@@ -716,7 +706,7 @@ openMenu = function()
 	menuSweep.ZIndex = 100
 	menuSweep.Parent = mainFrame
 
-	local sizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 600, 0, 400) })
+	local sizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 600, 0, 400), GroupTransparency = 0 })
 	sizeTween:Play()
 
 	task.wait(0.15)
@@ -743,9 +733,15 @@ closeMenu = function()
 	sweepIn:Play()
 	sweepIn.Completed:Wait()
 
+	-- Shrink + fade out
+	local sizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 0), GroupTransparency = 1 })
+	sizeTween:Play()
+	sizeTween.Completed:Wait()
+
 	menuVisible = false
 	mainFrame.Visible = false
 	mainFrame.Size = UDim2.new(0, 600, 0, 400)
+	mainFrame.GroupTransparency = 0
 	menuSweep:Destroy()
 end
 
