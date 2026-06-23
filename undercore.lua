@@ -799,7 +799,7 @@ blurEffect.Parent = game:GetService("Lighting")
 local dialogFrame = Instance.new("CanvasGroup")
 dialogFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 dialogFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-dialogFrame.Size = UDim2.new(0, 380, 0, 200)
+dialogFrame.Size = UDim2.new(0, 380, 0, 220)
 dialogFrame.BackgroundColor3 = BG
 dialogFrame.BorderSizePixel = 0
 dialogFrame.Visible = false
@@ -864,6 +864,30 @@ confirmBtn.BorderSizePixel = 0
 confirmBtn.Size = UDim2.new(0, 100, 0, 36)
 confirmBtn.Position = UDim2.new(1, -120, 0, 145)
 confirmBtn.Parent = dialogFrame
+
+-- Info text below buttons
+local infoIcon = Instance.new("ImageLabel")
+infoIcon.Size = UDim2.new(0, 14, 0, 14)
+infoIcon.Position = UDim2.new(0, 30, 0, 190)
+infoIcon.BackgroundTransparency = 1
+infoIcon.Image = "rbxassetid://139569684809135"
+infoIcon.ImageColor3 = ACCENT
+infoIcon.ScaleType = Enum.ScaleType.Fit
+infoIcon.ZIndex = 11
+infoIcon.Parent = dialogFrame
+
+local infoText = Instance.new("TextLabel")
+infoText.Font = Enum.Font.Gotham
+infoText.TextSize = 11
+infoText.TextColor3 = TEXT_GRAY
+infoText.TextXAlignment = Enum.TextXAlignment.Left
+infoText.TextYAlignment = Enum.TextYAlignment.Center
+infoText.BackgroundTransparency = 1
+infoText.Size = UDim2.new(1, -60, 0, 20)
+infoText.Position = UDim2.new(0, 48, 0, 187)
+infoText.Text = "All actions except Cancel will reset your character"
+infoText.ZIndex = 11
+infoText.Parent = dialogFrame
 
 -- Tooltip helper for dialog buttons
 local function createTooltip(btn, text)
@@ -947,7 +971,7 @@ local function showExitDialog()
 	local bgTween = TweenService:Create(blurFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundTransparency = 0.5 })
 	bgTween:Play()
 
-	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 380, 0, 200), GroupTransparency = 0 })
+	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 380, 0, 220), GroupTransparency = 0 })
 	dialogTween:Play()
 
 	task.wait(0.15)
@@ -1016,6 +1040,10 @@ local function resetAllCheats()
 			if obj:IsA("BodyVelocity") or obj:IsA("BodyGyro") then
 				obj:Destroy()
 			end
+		end
+		-- Respawn character
+		if hum then
+			hum.Health = 0
 		end
 	end
 	-- Clear ESP drawings
