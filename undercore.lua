@@ -37,6 +37,27 @@ local TEXT_GRAY = Color3.fromRGB(150, 150, 150)
 local GREEN = Color3.fromRGB(76, 175, 80)
 local RED = Color3.fromRGB(220, 60, 60)
 
+-- Sound IDs
+local SOUND_INJECT = "124834506603771"
+local SOUND_NOTIF = "131268007007000"
+local SOUND_ERROR = "18999173729"
+local SOUND_CLICK = "83465157817014"
+local SOUND_HOVER = "72243701593463"
+local SOUND_PAGE = { "105197111717033", "85298254384092", "114157584505971" }
+
+local function playSound(soundId, loudness)
+	local sound = Instance.new("Sound")
+	sound.SoundId = "rbxassetid://" .. soundId
+	sound.Parent = player.Character or player
+	sound.Volume = loudness or 0.5
+	sound:Play()
+end
+
+local function playRandomPageSound()
+	local idx = math.random(1, #SOUND_PAGE)
+	playSound(SOUND_PAGE[idx], 0.3)
+end
+
 -- ===================
 -- NOTIFICATION SYSTEM
 -- ===================
@@ -82,9 +103,14 @@ local function dismiss(data)
 	recalcPositions()
 end
 
-local function notify(title, message, duration, color)
+local function notify(title, message, duration, color, isError)
 	duration = duration or 4
 	color = color or ACCENT
+	if isError then
+		playSound(SOUND_ERROR, 0.5)
+	else
+		playSound(SOUND_NOTIF, 0.5)
+	end
 	local y = 0
 	for _, n in ipairs(notifications) do
 		if not n.dismissed then y = y + n.height + 6 end
@@ -223,8 +249,13 @@ closeBtn.Position = UDim2.new(1, -35, 0, 2)
 closeBtn.Parent = titleBar
 
 closeBtn.MouseButton1Click:Connect(function()
+	playSound(SOUND_CLICK, 0.3)
 	menuVisible = false
 	mainFrame.Visible = false
+end)
+
+closeBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.2)
 end)
 
 -- Left navigation
@@ -281,6 +312,10 @@ local function createNavButton(name, iconName)
 	pad.PaddingLeft = UDim.new(0, 15)
 	pad.Parent = btn
 
+	btn.MouseEnter:Connect(function()
+		playSound(SOUND_HOVER, 0.15)
+	end)
+
 	return btn
 end
 
@@ -308,6 +343,7 @@ local function createPage(name)
 end
 
 local function showPage(name)
+	playRandomPageSound()
 	for pageName, page in pairs(pages) do
 		page.Visible = (pageName == name)
 	end
@@ -355,6 +391,7 @@ local function createToggle(parent, text, callback)
 	toggle.Parent = frame
 
 	toggle.MouseButton1Click:Connect(function()
+		playSound(SOUND_CLICK, 0.3)
 		enabled = not enabled
 		if enabled then
 			toggle.Text = "ON"
@@ -364,6 +401,10 @@ local function createToggle(parent, text, callback)
 			toggle.BackgroundColor3 = RED
 		end
 		if callback then callback(enabled) end
+	end)
+
+	frame.MouseEnter:Connect(function()
+		playSound(SOUND_HOVER, 0.15)
 	end)
 
 	return { frame = frame, get = function() return enabled end, set = function(v) enabled = v toggle.Text = v and "ON" or "OFF" toggle.BackgroundColor3 = v and GREEN or RED end }
@@ -535,8 +576,13 @@ toggleBtn.ZIndex = 50
 toggleBtn.Parent = gui
 
 toggleBtn.MouseButton1Click:Connect(function()
+	playSound(SOUND_CLICK, 0.3)
 	menuVisible = not menuVisible
 	mainFrame.Visible = menuVisible
+end)
+
+toggleBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
 end)
 
 -- Keys
@@ -885,6 +931,7 @@ end)
 -- INJECTION NOTIFICATION
 -- ===================
 task.wait(0.5)
+playSound(SOUND_INJECT, 0.8)
 notify("Undercore", "Script injected successfully", 4, GREEN)
 
 -- Expose
