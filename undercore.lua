@@ -1006,11 +1006,10 @@ local function createTooltip(btn, text)
 		local btnSize = btn.AbsoluteSize
 		local tipX = btnPos.X + btnSize.X / 2 - 110
 		local tipY = btnPos.Y - 30
+		print("[Undercore Tooltip] btnPos:", btnPos, "tipY:", tipY, "gap:", btnPos.Y - (tipY + 28))
 		tooltip.Visible = true
-		tooltip.Size = UDim2.new(0, 220, 0, 0)
-		tooltip.Position = UDim2.new(0, tipX, 0, btnPos.Y - 2)
-		local tween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 220, 0, 28), Position = UDim2.new(0, tipX, 0, tipY) })
-		tween:Play()
+		tooltip.Size = UDim2.new(0, 220, 0, 28)
+		tooltip.Position = UDim2.new(0, tipX, 0, tipY)
 	end)
 
 	btn.MouseLeave:Connect(function()
@@ -1731,7 +1730,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.0.7"
+local SCRIPT_VERSION = "1.0.8"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
