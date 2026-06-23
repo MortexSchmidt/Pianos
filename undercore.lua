@@ -150,6 +150,7 @@ local function notify(title, message, duration, color, notifType)
 	card.Size = UDim2.new(0, NOTIF_WIDTH, 0, 0)
 	card.AutomaticSize = Enum.AutomaticSize.Y
 	card.BackgroundColor3 = BG
+	card.GroupColor3 = Color3.fromRGB(255, 255, 255)
 	card.GroupTransparency = 0
 	card.BorderSizePixel = 0
 	card.Position = UDim2.new(0, NOTIF_WIDTH + 10, 0, y)
@@ -297,6 +298,7 @@ mainFrame.BackgroundColor3 = BG
 mainFrame.BorderSizePixel = 0
 mainFrame.Visible = false
 mainFrame.Active = false
+mainFrame.GroupColor3 = Color3.fromRGB(255, 255, 255)
 mainFrame.Parent = gui
 
 -- Title bar
@@ -803,6 +805,7 @@ dialogFrame.Size = UDim2.new(0, 380, 0, 220)
 dialogFrame.BackgroundColor3 = BG
 dialogFrame.BorderSizePixel = 0
 dialogFrame.Visible = false
+dialogFrame.GroupColor3 = Color3.fromRGB(255, 255, 255)
 dialogFrame.GroupTransparency = 1
 dialogFrame.ZIndex = 10
 dialogFrame.Parent = blurFrame
@@ -892,13 +895,12 @@ infoText.Parent = dialogFrame
 -- Tooltip helper for dialog buttons
 local function createTooltip(btn, text)
 	local tooltip = Instance.new("Frame")
-	tooltip.Size = UDim2.new(0, 200, 0, 0)
-	tooltip.Position = UDim2.new(0.5, -100, 0, 40)
+	tooltip.Size = UDim2.new(0, 220, 0, 0)
 	tooltip.BackgroundColor3 = BG_DARK
 	tooltip.BorderSizePixel = 0
 	tooltip.Visible = false
-	tooltip.ZIndex = 30
-	tooltip.Parent = btn
+	tooltip.ZIndex = 100
+	tooltip.Parent = exitDialogGui
 
 	local infoIcon = Instance.new("ImageLabel")
 	infoIcon.Size = UDim2.new(0, 16, 0, 16)
@@ -907,7 +909,7 @@ local function createTooltip(btn, text)
 	infoIcon.Image = "rbxassetid://139569684809135"
 	infoIcon.ImageColor3 = ACCENT
 	infoIcon.ScaleType = Enum.ScaleType.Fit
-	infoIcon.ZIndex = 31
+	infoIcon.ZIndex = 101
 	infoIcon.Parent = tooltip
 
 	local tooltipText = Instance.new("TextLabel")
@@ -920,20 +922,24 @@ local function createTooltip(btn, text)
 	tooltipText.Size = UDim2.new(1, -32, 1, 0)
 	tooltipText.Position = UDim2.new(0, 30, 0, 0)
 	tooltipText.Text = text
-	tooltipText.ZIndex = 31
+	tooltipText.ZIndex = 101
 	tooltipText.Parent = tooltip
 
 	btn.MouseEnter:Connect(function()
 		playSound(SOUND_HOVER, 0.15)
+		local btnPos = btn.AbsolutePosition
+		local btnSize = btn.AbsoluteSize
 		tooltip.Visible = true
-		tooltip.Size = UDim2.new(0, 200, 0, 0)
-		tooltip.Position = UDim2.new(0.5, -100, 0, 40)
-		local tween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 200, 0, 28), Position = UDim2.new(0.5, -100, 0, 12) })
+		tooltip.Size = UDim2.new(0, 220, 0, 0)
+		tooltip.Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 5)
+		local tween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 220, 0, 28), Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 33) })
 		tween:Play()
 	end)
 
 	btn.MouseLeave:Connect(function()
-		local tween = TweenService:Create(tooltip, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 200, 0, 0), Position = UDim2.new(0.5, -100, 0, 40) })
+		local btnPos = btn.AbsolutePosition
+		local btnSize = btn.AbsoluteSize
+		local tween = TweenService:Create(tooltip, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 220, 0, 0), Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 5) })
 		tween:Play()
 		tween.Completed:Wait()
 		tooltip.Visible = false
