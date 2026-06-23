@@ -865,6 +865,61 @@ confirmBtn.Size = UDim2.new(0, 100, 0, 36)
 confirmBtn.Position = UDim2.new(1, -120, 0, 145)
 confirmBtn.Parent = dialogFrame
 
+-- Tooltip helper for dialog buttons
+local function createTooltip(btn, text)
+	local tooltip = Instance.new("Frame")
+	tooltip.Size = UDim2.new(0, 200, 0, 0)
+	tooltip.Position = UDim2.new(0.5, -100, 0, 40)
+	tooltip.BackgroundColor3 = BG_DARK
+	tooltip.BorderSizePixel = 0
+	tooltip.Visible = false
+	tooltip.ZIndex = 30
+	tooltip.Parent = btn
+
+	local infoIcon = Instance.new("ImageLabel")
+	infoIcon.Size = UDim2.new(0, 16, 0, 16)
+	infoIcon.Position = UDim2.new(0, 8, 0, 6)
+	infoIcon.BackgroundTransparency = 1
+	infoIcon.Image = "rbxassetid://139569684809135"
+	infoIcon.ImageColor3 = ACCENT
+	infoIcon.ScaleType = Enum.ScaleType.Fit
+	infoIcon.ZIndex = 31
+	infoIcon.Parent = tooltip
+
+	local tooltipText = Instance.new("TextLabel")
+	tooltipText.Font = Enum.Font.Gotham
+	tooltipText.TextSize = 11
+	tooltipText.TextColor3 = TEXT_WHITE
+	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
+	tooltipText.TextYAlignment = Enum.TextYAlignment.Center
+	tooltipText.BackgroundTransparency = 1
+	tooltipText.Size = UDim2.new(1, -32, 1, 0)
+	tooltipText.Position = UDim2.new(0, 30, 0, 0)
+	tooltipText.Text = text
+	tooltipText.ZIndex = 31
+	tooltipText.Parent = tooltip
+
+	btn.MouseEnter:Connect(function()
+		playSound(SOUND_HOVER, 0.15)
+		tooltip.Visible = true
+		tooltip.Size = UDim2.new(0, 200, 0, 0)
+		tooltip.Position = UDim2.new(0.5, -100, 0, 40)
+		local tween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 200, 0, 28), Position = UDim2.new(0.5, -100, 0, 12) })
+		tween:Play()
+	end)
+
+	btn.MouseLeave:Connect(function()
+		local tween = TweenService:Create(tooltip, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 200, 0, 0), Position = UDim2.new(0.5, -100, 0, 40) })
+		tween:Play()
+		tween.Completed:Wait()
+		tooltip.Visible = false
+	end)
+end
+
+createTooltip(cancelBtn, "Close this dialog without any changes")
+createTooltip(reloadBtn, "Restart the script with update check")
+createTooltip(confirmBtn, "Fully terminate and remove all features")
+
 local exitDialogVisible = false
 
 local function showExitDialog()
@@ -978,16 +1033,8 @@ cancelBtn.MouseButton1Click:Connect(function()
 	hideExitDialog()
 end)
 
-cancelBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
-end)
-
 -- Block all clicks on background while dialog is open
 blurFrame.MouseButton1Click:Connect(function()
-end)
-
-reloadBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
 end)
 
 reloadBtn.MouseButton1Click:Connect(function()
@@ -1062,10 +1109,6 @@ confirmBtn.MouseButton1Click:Connect(function()
 		pcall(function() conn:Disconnect() end)
 	end
 	_G.UndercoreConnections = nil
-end)
-
-confirmBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
 end)
 
 -- SETTINGS
