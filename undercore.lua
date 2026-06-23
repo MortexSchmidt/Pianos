@@ -745,10 +745,6 @@ dialogFrame.GroupTransparency = 1
 dialogFrame.ZIndex = 10
 dialogFrame.Parent = blurFrame
 
-local dialogCorner = Instance.new("UICorner")
-dialogCorner.CornerRadius = UDim.new(0, 8)
-dialogCorner.Parent = dialogFrame
-
 local dialogTitle = Instance.new("TextLabel")
 dialogTitle.Font = Enum.Font.GothamBold
 dialogTitle.TextSize = 16
@@ -1362,22 +1358,44 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
+local SCRIPT_VERSION = "1.0.0"
+local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
+
 task.spawn(function()
 	task.wait(0.5)
 
 	-- Step 1: Checking for updates
 	playSound(SOUND_NOTIF, 0.5)
 	notify("Undercore", "Checking for updates...", 3, ACCENT, "info")
-	task.wait(2.5)
 
-	-- Step 2: Update found, installing
-	playSound(SOUND_NOTIF, 0.5)
-	notify("Undercore", "Update found. Installing latest version...", 3, ACCENT, "info")
-	task.wait(2.5)
+	-- Actually fetch version from GitHub
+	local remoteVersion = nil
+	local updateAvailable = false
 
-	-- Step 3: Installation complete
-	playSound(SOUND_INJECT, 0.8)
-	notify("Undercore", "Installation complete. Latest version injected.", 4, GREEN, "success")
+	pcall(function()
+		remoteVersion = game:HttpGet(VERSION_URL, true)
+		remoteVersion = remoteVersion:gsub("%s+", "")
+		if remoteVersion ~= SCRIPT_VERSION then
+			updateAvailable = true
+		end
+	end)
+
+	task.wait(2)
+
+	if updateAvailable then
+		-- Step 2: Update found, installing
+		playSound(SOUND_NOTIF, 0.5)
+		notify("Undercore", "Update found (v" .. remoteVersion .. "). Installing...", 3, ACCENT, "info")
+		task.wait(2.5)
+
+		-- Step 3: Installation complete
+		playSound(SOUND_INJECT, 0.8)
+		notify("Undercore", "Installation complete. v" .. remoteVersion .. " injected.", 4, GREEN, "success")
+	else
+		-- No update needed
+		playSound(SOUND_INJECT, 0.8)
+		notify("Undercore", "Latest version (v" .. SCRIPT_VERSION .. ") injected.", 4, GREEN, "success")
+	end
 end)
 
 -- Expose
