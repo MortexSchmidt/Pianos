@@ -156,10 +156,10 @@ local function notify(title, message, duration, color, notifType)
 	bar.ZIndex = 5
 	bar.Parent = card
 
-	-- Icon (right of strip, 48x48 area)
+	-- Icon (right of strip)
 	local iconArea = Instance.new("Frame")
 	iconArea.Name = "IconArea"
-	iconArea.Size = UDim2.new(0, 52, 0, 0)
+	iconArea.Size = UDim2.new(0, 56, 0, 0)
 	iconArea.Position = UDim2.new(0, 3, 0, 0)
 	iconArea.AutomaticSize = Enum.AutomaticSize.Y
 	iconArea.BackgroundTransparency = 1
@@ -167,20 +167,19 @@ local function notify(title, message, duration, color, notifType)
 
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "NotifIcon"
-	icon.Size = UDim2.new(0, 28, 0, 28)
-	icon.AnchorPoint = Vector2.new(0.5, 0)
-	icon.Position = UDim2.new(0.5, 0, 0, 14)
+	icon.Size = UDim2.new(0, 36, 0, 36)
+	icon.Position = UDim2.new(0, 10, 0, 14)
 	icon.BackgroundTransparency = 1
 	icon.Image = iconId
-	icon.ImageColor3 = iconColor
+	icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 	icon.ScaleType = Enum.ScaleType.Fit
 	icon.ZIndex = 6
 	icon.Parent = iconArea
 
 	-- Content (right of icon)
 	local content = Instance.new("Frame")
-	content.Size = UDim2.new(1, -58, 0, 0)
-	content.Position = UDim2.new(0, 58, 0, 0)
+	content.Size = UDim2.new(1, -62, 0, 0)
+	content.Position = UDim2.new(0, 62, 0, 0)
 	content.AutomaticSize = Enum.AutomaticSize.Y
 	content.BackgroundTransparency = 1
 	content.Parent = card
@@ -380,34 +379,43 @@ local function createNavButton(name)
 	btn.Font = Enum.Font.Gotham
 	btn.TextSize = 13
 	btn.TextColor3 = TEXT_GRAY
-	btn.Text = name
+	btn.Text = ""
 	btn.TextXAlignment = Enum.TextXAlignment.Left
 	btn.BackgroundColor3 = BG_DARK
 	btn.BorderSizePixel = 0
 	btn.Size = UDim2.new(1, 0, 0, 40)
 	btn.Parent = navFrame
 
-	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 44)
-	pad.Parent = btn
-
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "Icon"
-	icon.Size = UDim2.new(0, 22, 0, 22)
-	icon.AnchorPoint = Vector2.new(0, 0.5)
-	icon.Position = UDim2.new(0, 14, 0.5, 0)
+	icon.Size = UDim2.new(0, 24, 0, 24)
+	icon.Position = UDim2.new(0, 12, 0, 8)
 	icon.BackgroundTransparency = 1
 	icon.Image = NAV_ICONS[name] or ""
-	icon.ImageColor3 = Color3.fromRGB(160, 160, 160)
+	icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 	icon.ScaleType = Enum.ScaleType.Fit
 	icon.ZIndex = 2
 	icon.Parent = btn
+
+	local label = Instance.new("TextLabel")
+	label.Name = "Label"
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 13
+	label.TextColor3 = TEXT_GRAY
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.TextYAlignment = Enum.TextYAlignment.Center
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.new(1, -48, 0, 40)
+	label.Position = UDim2.new(0, 44, 0, 0)
+	label.Text = name
+	label.ZIndex = 2
+	label.Parent = btn
 
 	btn.MouseEnter:Connect(function()
 		playSound(SOUND_HOVER, 0.15)
 	end)
 
-	return btn, icon
+	return btn, icon, label
 end
 
 local function createPage(name)
@@ -458,7 +466,8 @@ local function showPage(name)
 		local oldData = navButtons[currentPage]
 		oldData.btn.TextColor3 = TEXT_GRAY
 		oldData.btn.BackgroundColor3 = BG_DARK
-		oldData.icon.ImageColor3 = Color3.fromRGB(160, 160, 160)
+		oldData.icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+		oldData.label.TextColor3 = TEXT_GRAY
 	end
 
 	-- Page content sweep
@@ -484,6 +493,7 @@ local function showPage(name)
 		newData.btn.TextColor3 = TEXT_WHITE
 		newData.btn.BackgroundColor3 = BG_LIGHT
 		newData.icon.ImageColor3 = GREEN
+		newData.label.TextColor3 = TEXT_WHITE
 	end
 
 	-- Move indicator strip to active button position
@@ -637,8 +647,8 @@ end
 
 -- MOVEMENT
 local movementPage = createPage("Movement")
-local navMovement, navMovementIcon = createNavButton("Movement")
-navButtons["Movement"] = { btn = navMovement, icon = navMovementIcon }
+local navMovement, navMovementIcon, navMovementLabel = createNavButton("Movement")
+navButtons["Movement"] = { btn = navMovement, icon = navMovementIcon, label = navMovementLabel }
 navMovement.MouseButton1Click:Connect(function() showPage("Movement") end)
 
 createLabel(movementPage, "Movement")
@@ -652,8 +662,8 @@ local noclipToggle = createToggle(movementPage, "Noclip", function(v) _G.Underco
 
 -- COMBAT
 local combatPage = createPage("Combat")
-local navCombat, navCombatIcon = createNavButton("Combat")
-navButtons["Combat"] = { btn = navCombat, icon = navCombatIcon }
+local navCombat, navCombatIcon, navCombatLabel = createNavButton("Combat")
+navButtons["Combat"] = { btn = navCombat, icon = navCombatIcon, label = navCombatLabel }
 navCombat.MouseButton1Click:Connect(function() showPage("Combat") end)
 
 createLabel(combatPage, "Combat")
@@ -663,8 +673,8 @@ local flingRange = createSlider(combatPage, "Fling Range", 5, 50, 15, function(v
 
 -- VISUAL
 local visualPage = createPage("Visuals")
-local navVisual, navVisualIcon = createNavButton("Visuals")
-navButtons["Visuals"] = { btn = navVisual, icon = navVisualIcon }
+local navVisual, navVisualIcon, navVisualLabel = createNavButton("Visuals")
+navButtons["Visuals"] = { btn = navVisual, icon = navVisualIcon, label = navVisualLabel }
 navVisual.MouseButton1Click:Connect(function() showPage("Visuals") end)
 
 createLabel(visualPage, "ESP")
@@ -676,8 +686,8 @@ local espTracer = createToggle(visualPage, "ESP Tracers", function(v) _G.Underco
 
 -- PLAYER
 local playerPage = createPage("Player")
-local navPlayer, navPlayerIcon = createNavButton("Player")
-navButtons["Player"] = { btn = navPlayer, icon = navPlayerIcon }
+local navPlayer, navPlayerIcon, navPlayerLabel = createNavButton("Player")
+navButtons["Player"] = { btn = navPlayer, icon = navPlayerIcon, label = navPlayerLabel }
 navPlayer.MouseButton1Click:Connect(function() showPage("Player") end)
 
 createLabel(playerPage, "Player")
@@ -694,8 +704,8 @@ end)
 
 -- SETTINGS
 local settingsPage = createPage("Settings")
-local navSettings, navSettingsIcon = createNavButton("Settings")
-navButtons["Settings"] = { btn = navSettings, icon = navSettingsIcon }
+local navSettings, navSettingsIcon, navSettingsLabel = createNavButton("Settings")
+navButtons["Settings"] = { btn = navSettings, icon = navSettingsIcon, label = navSettingsLabel }
 navSettings.MouseButton1Click:Connect(function() showPage("Settings") end)
 
 createLabel(settingsPage, "Settings")
