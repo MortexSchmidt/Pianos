@@ -46,11 +46,12 @@ local RED = Color3.fromRGB(220, 60, 60)
 
 -- Sound IDs
 local SOUND_INJECT = "124834506603771"
-local SOUND_NOTIF = "131268007007000"
-local SOUND_ERROR = "18999173729"
-local SOUND_CLICK = "83465157817014"
-local SOUND_HOVER = "72243701593463"
-local SOUND_PAGE = { "105197111717033", "85298254384092", "114157584505971" }
+local SOUND_NOTIF = "134998934323294"
+local SOUND_ERROR = "80779065737564"
+local SOUND_CLICK = "98884317334085"
+local SOUND_HOVER = "81092680156069"
+local SOUND_MODAL = "85513921738461"
+local SOUND_PAGE = { "98884317334085" }
 
 local function playSound(soundId, loudness)
 	local sound = Instance.new("Sound")
@@ -409,6 +410,20 @@ local NAV_ICONS = {
 	["Player"] = "rbxassetid://114284249768955",
 	["Settings"] = "rbxassetid://93982901670694",
 }
+
+-- Preload all icons so they appear instantly
+do
+	local allIcons = {}
+	for _, v in pairs(NOTIF_ICONS) do table.insert(allIcons, v) end
+	for _, v in pairs(NAV_ICONS) do table.insert(allIcons, v) end
+	for _, id in ipairs(allIcons) do
+		local img = Instance.new("ImageLabel")
+		img.Image = id
+		img.Visible = false
+		img.Parent = game:GetService("ReplicatedStorage")
+		task.delay(5, function() pcall(function() img:Destroy() end) end)
+	end
+end
 
 local function createNavButton(name)
 	local btn = Instance.new("TextButton")
@@ -997,7 +1012,7 @@ local exitDialogVisible = false
 local function showExitDialog()
 	if exitDialogVisible then return end
 	exitDialogVisible = true
-	playSound(SOUND_ERROR, 0.5)
+	playSound(SOUND_MODAL, 0.5)
 
 	blurFrame.Visible = true
 	blurFrame.BackgroundTransparency = 1
@@ -1697,7 +1712,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.0.5"
+local SCRIPT_VERSION = "1.0.6"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
