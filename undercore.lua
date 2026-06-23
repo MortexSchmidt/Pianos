@@ -1,4 +1,4 @@
--- Undercore v1.3.2 - Custom Cheat Menu
+-- Undercore v1.3.3 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -361,8 +361,8 @@ titleText.TextXAlignment = Enum.TextXAlignment.Left
 titleText.TextYAlignment = Enum.TextYAlignment.Center
 titleText.BackgroundTransparency = 1
 titleText.Size = UDim2.new(1, -80, 1, 0)
-titleText.Position = UDim2.new(0, 15, 0, 0)
-titleText.Text = "  Undercore"
+titleText.Position = UDim2.new(0, 12, 0, 0)
+titleText.Text = "Undercore"
 titleText.Parent = titleBar
 
 local closeBtn = Instance.new("TextButton")
@@ -1875,7 +1875,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.3.2"
+local SCRIPT_VERSION = "1.3.3"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
