@@ -56,9 +56,28 @@ local SOUND_PAGE = { "98884317334085" }
 local function playSound(soundId, loudness)
 	local sound = Instance.new("Sound")
 	sound.SoundId = "rbxassetid://" .. soundId
-	sound.Parent = player.Character or player
 	sound.Volume = loudness or 0.5
+	sound.Parent = workspace
 	sound:Play()
+	sound.Ended:Connect(function()
+		sound:Destroy()
+	end)
+	task.delay(10, function()
+		if sound and sound.Parent then
+			sound:Destroy()
+		end
+	end)
+end
+
+-- Preload all sounds
+do
+	local allSounds = { SOUND_INJECT, SOUND_NOTIF, SOUND_ERROR, SOUND_CLICK, SOUND_HOVER, SOUND_MODAL }
+	for _, id in ipairs(allSounds) do
+		local s = Instance.new("Sound")
+		s.SoundId = "rbxassetid://" .. id
+		s.Parent = workspace
+		task.delay(5, function() pcall(function() s:Destroy() end) end)
+	end
 end
 
 local function playRandomPageSound()
@@ -986,10 +1005,10 @@ local function createTooltip(btn, text)
 		local btnPos = btn.AbsolutePosition
 		local btnSize = btn.AbsoluteSize
 		local tipX = btnPos.X + btnSize.X / 2 - 110
-		local tipY = btnPos.Y - 32
+		local tipY = btnPos.Y - 30
 		tooltip.Visible = true
 		tooltip.Size = UDim2.new(0, 220, 0, 0)
-		tooltip.Position = UDim2.new(0, tipX, 0, btnPos.Y - 4)
+		tooltip.Position = UDim2.new(0, tipX, 0, btnPos.Y - 2)
 		local tween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 220, 0, 28), Position = UDim2.new(0, tipX, 0, tipY) })
 		tween:Play()
 	end)
@@ -1712,7 +1731,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.0.6"
+local SCRIPT_VERSION = "1.0.7"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
