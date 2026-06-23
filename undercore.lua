@@ -1,4 +1,4 @@
--- Undercore v1.3.4 - Custom Cheat Menu
+-- Undercore v1.4.0 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -812,9 +812,9 @@ navButtons["Movement"] = { btn = navMovement, icon = navMovementIcon, label = na
 navMovement.MouseButton1Click:Connect(function() showPage("Movement") end)
 
 createLabel(movementPage, "Movement")
-local flyToggle = createToggle(movementPage, "Fly (CFrame)", function(v) _G.Undercore.Fly = v end)
+local flyToggle = createToggle(movementPage, "Fly", function(v) _G.Undercore.Fly = v end)
 local flySpeed = createSlider(movementPage, "Fly Speed", 10, 500, 50, function(v) _G.Undercore.FlySpeed = v end)
-local speedToggle = createToggle(movementPage, "Speed (CFrame)", function(v) _G.Undercore.Speed = v end)
+local speedToggle = createToggle(movementPage, "Speed", function(v) _G.Undercore.Speed = v end)
 local speedVal = createSlider(movementPage, "Walk Speed", 16, 500, 50, function(v) _G.Undercore.SpeedVal = v end)
 local jumpToggle = createToggle(movementPage, "Jump Power", function(v) _G.Undercore.Jump = v end)
 local jumpVal = createSlider(movementPage, "Jump Power", 50, 500, 100, function(v) _G.Undercore.JumpVal = v end)
@@ -831,6 +831,7 @@ createLabel(combatPage, "Combat")
 local flingToggle = createToggle(combatPage, "Fling Aura", function(v) _G.Undercore.Fling = v end)
 local flingPower = createSlider(combatPage, "Fling Power", 100, 5000, 1000, function(v) _G.Undercore.FlingPower = v end)
 local flingRange = createSlider(combatPage, "Fling Range", 5, 50, 15, function(v) _G.Undercore.FlingRange = v end)
+local flingAutoToggle = createToggle(combatPage, "Auto Fling (teleport)", function(v) _G.Undercore.FlingAuto = v end)
 
 -- VISUAL
 local visualPage = createPage("Visuals")
@@ -1469,18 +1470,21 @@ _G.Undercore = {
 	Speed = false, SpeedVal = 50,
 	Jump = false, JumpVal = 100,
 	Noclip = false, NoFall = false,
-	Fling = false, FlingPower = 1000, FlingRange = 15,
+	Fling = false, FlingPower = 1000, FlingRange = 15, FlingAuto = false,
 	ESP = false, ESPName = false, ESPDist = false, ESPHealth = false, ESPTracer = false,
 	InfJump = false, GodMode = false, AntiFling = false,
 }
 
--- FLY (CFrame-based, smooth steps to avoid teleport detection, no BodyVelocity)
+-- FLY (BodyVelocity + BodyGyro, reliable and fast)
+local flyBodyVelocity
+local flyBodyGyro
 local flyEnabled = false
-local flyConn
 
 local function setupFly()
-	flyConn = RunService.RenderStepped:Connect(function()
+	trackConn(RunService.RenderStepped:Connect(function()
 		if not _G.Undercore.Fly then
+			if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
+			if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
 			if flyEnabled then
 				flyEnabled = false
 				local char = player.Character
@@ -1496,8 +1500,18 @@ local function setupFly()
 		local hum = char:FindFirstChildOfClass("Humanoid")
 		if not root or not hum then return end
 
-		flyEnabled = true
-		hum.PlatformStand = true
+		if not flyBodyVelocity then
+			flyBodyVelocity = Instance.new("BodyVelocity")
+			flyBodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 9e9
+			flyBodyVelocity.Velocity = Vector3.zero
+			flyBodyVelocity.Parent = root
+
+			flyBodyGyro = Instance.new("BodyGyro")
+			flyBodyGyro.MaxForce = Vector3.new(1, 1, 1) * 9e9
+			flyBodyGyro.P = 1e5
+			flyBodyGyro.Parent = root
+			flyEnabled = true
+		end
 
 		local cam = Workspace.CurrentCamera
 		local dir = Vector3.zero
@@ -1509,41 +1523,31 @@ local function setupFly()
 		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0, 1, 0) end
 
 		if dir.Magnitude > 0 then
-			local speed = _G.Undercore.FlySpeed
-			-- Smooth CFrame movement in small steps (anti-teleport: server sees gradual movement)
-			pcall(function()
-				root.CFrame = root.CFrame + dir.Unit * math.min(speed * 0.016, 8)
-			end)
+			dir = dir.Unit * _G.Undercore.FlySpeed
 		end
-	end)
-	trackConn(flyConn)
+
+		flyBodyVelocity.Velocity = dir
+		flyBodyGyro.CFrame = cam.CFrame
+		hum.PlatformStand = true
+	end))
 end
 setupFly()
 
--- SPEED (CFrame-based, WalkSpeed stays 16 so server doesn't detect speed change)
-local speedConn
-local function setupSpeed()
-	speedConn = RunService.RenderStepped:Connect(function()
-		local char = player.Character
-		if not char then return end
-		local root = char:FindFirstChild("HumanoidRootPart")
-		local hum = char:FindFirstChildOfClass("Humanoid")
-		if not root or not hum then return end
+-- SPEED (WalkSpeed force-set every frame)
+trackConn(RunService.RenderStepped:Connect(function()
+	local char = player.Character
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
 
-		if _G.Undercore.Speed and not _G.Undercore.Fly then
-			-- Don't change WalkSpeed (server can detect it)
-			-- Instead, move via CFrame in the direction the player is walking
-			local moveDir = hum.MoveDirection
-			if moveDir.Magnitude > 0 then
-				pcall(function()
-					root.CFrame = root.CFrame + moveDir * math.min(_G.Undercore.SpeedVal * 0.016, 8)
-				end)
-			end
+	if _G.Undercore.Speed then
+		pcall(function() hum.WalkSpeed = _G.Undercore.SpeedVal end)
+	else
+		if hum.WalkSpeed ~= 16 and not _G.Undercore.Fly then
+			pcall(function() hum.WalkSpeed = 16 end)
 		end
-	end)
-	trackConn(speedConn)
-end
-setupSpeed()
+	end
+end))
 
 -- JUMP & GOD MODE (force-set every frame, pcall for safety)
 trackConn(RunService.RenderStepped:Connect(function()
@@ -1677,6 +1681,76 @@ trackConn(RunService.RenderStepped:Connect(function()
 		end
 	end
 end))
+
+-- AUTO FLING (teleport to each player, fling them, return. You stand still but pierce through everyone)
+task.spawn(function()
+	while true do
+		task.wait(0.1)
+		if not _G.Undercore.FlingAuto then continue end
+
+		local char = player.Character
+		if not char then continue end
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if not root then continue end
+
+		local originalPos = root.CFrame
+
+		for _, other in ipairs(Players:GetPlayers()) do
+			if not _G.Undercore.FlingAuto then break end
+			if other ~= player and other.Character then
+				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
+				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
+				if otherRoot and otherHum and otherHum.Health > 0 then
+					-- Teleport to them at high speed (pierce through)
+					pcall(function()
+						root.CFrame = CFrame.new(otherRoot.Position + otherRoot.CFrame.LookVector * 2)
+					end)
+					task.wait(0.05)
+
+					-- Fling them with all methods
+					local flingDir = (otherRoot.Position - root.Position).Unit
+					local force = _G.Undercore.FlingPower
+
+					pcall(function()
+						otherRoot:ApplyImpulse(flingDir * force * otherRoot.AssemblyMass)
+						otherRoot:ApplyAngularImpulse(Vector3.new(
+							math.random(-100, 100),
+							math.random(-100, 100),
+							math.random(-100, 100)
+						) * otherRoot.AssemblyMass * 50)
+					end)
+
+					pcall(function()
+						otherRoot.Velocity = flingDir * force + Vector3.new(0, force * 0.5, 0)
+						otherRoot.RotVelocity = Vector3.new(
+							math.random(-100, 100),
+							math.random(-100, 100),
+							math.random(-100, 100)
+						) * 10
+					end)
+
+					pcall(function()
+						otherHum:ChangeState(Enum.HumanoidStateType.Physics)
+						otherHum:ChangeState(Enum.HumanoidStateType.FallingDown)
+					end)
+
+					task.delay(1, function()
+						if otherHum and otherHum.Health > 0 then
+							pcall(function() otherHum:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+						end
+					end)
+
+					task.wait(0.05)
+				end
+			end
+		end
+
+		-- Return to original position
+		pcall(function()
+			root.CFrame = originalPos
+		end)
+	end
+end)
 
 -- NO FALL DAMAGE (cancel fall damage by resetting velocity before landing + state bypass)
 trackConn(RunService.Stepped:Connect(function()
@@ -1887,7 +1961,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.3.4"
+local SCRIPT_VERSION = "1.4.0"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
