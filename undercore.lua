@@ -122,11 +122,11 @@ local function dismiss(data)
 	recalcPositions()
 end
 
--- Notification icons
+-- Notification icons (Unicode symbols)
 local NOTIF_ICONS = {
-	info = "rbxassetid://773391098118939",
-	error = "rbxassetid://773391094262923",
-	success = "rbxassetid://773391086914667",
+	info = "i",
+	error = "!",
+	success = "\u2713",
 }
 
 local function notify(title, message, duration, color, notifType)
@@ -138,7 +138,7 @@ local function notify(title, message, duration, color, notifType)
 	else
 		playSound(SOUND_NOTIF, 0.5)
 	end
-	local iconId = NOTIF_ICONS[notifType] or NOTIF_ICONS.info
+	local iconSymbol = NOTIF_ICONS[notifType] or NOTIF_ICONS.info
 	local iconColor = notifType == "error" and RED or color
 
 	local y = 0
@@ -173,14 +173,17 @@ local function notify(title, message, duration, color, notifType)
 	iconArea.BackgroundTransparency = 1
 	iconArea.Parent = card
 
-	local icon = Instance.new("ImageLabel")
+	local icon = Instance.new("TextLabel")
 	icon.Name = "NotifIcon"
 	icon.Size = UDim2.new(0, 36, 0, 36)
 	icon.Position = UDim2.new(0, 10, 0, 14)
 	icon.BackgroundTransparency = 1
-	icon.Image = iconId
-	icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-	icon.ScaleType = Enum.ScaleType.Fit
+	icon.Font = Enum.Font.GothamBold
+	icon.TextSize = 24
+	icon.Text = iconSymbol
+	icon.TextColor3 = iconColor
+	icon.TextXAlignment = Enum.TextXAlignment.Center
+	icon.TextYAlignment = Enum.TextYAlignment.Center
 	icon.ZIndex = 6
 	icon.Parent = iconArea
 
@@ -403,11 +406,11 @@ local pages = {}
 local navButtons = {}
 
 local NAV_ICONS = {
-	["Movement"] = "rbxassetid://773391098118939",
-	["Combat"] = "rbxassetid://773391094262923",
-	["Visuals"] = "rbxassetid://773391086914667",
-	["Player"] = "rbxassetid://773391090508219",
-	["Settings"] = "rbxassetid://773391102756043",
+	["Movement"] = "\u26A1",
+	["Combat"] = "\u2694",
+	["Visuals"] = "\u25C9",
+	["Player"] = "\u263A",
+	["Settings"] = "\u2699",
 }
 
 local function createNavButton(name)
@@ -422,14 +425,17 @@ local function createNavButton(name)
 	btn.Size = UDim2.new(1, 0, 0, 40)
 	btn.Parent = navFrame
 
-	local icon = Instance.new("ImageLabel")
+	local icon = Instance.new("TextLabel")
 	icon.Name = "Icon"
 	icon.Size = UDim2.new(0, 24, 0, 24)
 	icon.Position = UDim2.new(0, 12, 0, 8)
 	icon.BackgroundTransparency = 1
-	icon.Image = NAV_ICONS[name] or ""
-	icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-	icon.ScaleType = Enum.ScaleType.Fit
+	icon.Font = Enum.Font.GothamBold
+	icon.TextSize = 16
+	icon.Text = NAV_ICONS[name] or ""
+	icon.TextColor3 = Color3.fromRGB(255, 255, 255)
+	icon.TextXAlignment = Enum.TextXAlignment.Center
+	icon.TextYAlignment = Enum.TextYAlignment.Center
 	icon.ZIndex = 2
 	icon.Parent = btn
 
@@ -502,7 +508,7 @@ local function showPage(name)
 		local oldData = navButtons[currentPage]
 		oldData.btn.TextColor3 = TEXT_GRAY
 		oldData.btn.BackgroundColor3 = BG_DARK
-		oldData.icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+		oldData.icon.TextColor3 = Color3.fromRGB(255, 255, 255)
 		oldData.label.TextColor3 = TEXT_GRAY
 	end
 
@@ -528,7 +534,7 @@ local function showPage(name)
 	if newData then
 		newData.btn.TextColor3 = TEXT_WHITE
 		newData.btn.BackgroundColor3 = BG_LIGHT
-		newData.icon.ImageColor3 = GREEN
+		newData.icon.TextColor3 = GREEN
 		newData.label.TextColor3 = TEXT_WHITE
 	end
 
@@ -869,13 +875,16 @@ confirmBtn.Position = UDim2.new(1, -120, 0, 145)
 confirmBtn.Parent = dialogFrame
 
 -- Info text below buttons
-local infoIcon = Instance.new("ImageLabel")
+local infoIcon = Instance.new("TextLabel")
 infoIcon.Size = UDim2.new(0, 14, 0, 14)
 infoIcon.Position = UDim2.new(0, 30, 0, 190)
 infoIcon.BackgroundTransparency = 1
-infoIcon.Image = "rbxassetid://773391098118939"
-infoIcon.ImageColor3 = ACCENT
-infoIcon.ScaleType = Enum.ScaleType.Fit
+infoIcon.Font = Enum.Font.GothamBold
+infoIcon.TextSize = 12
+infoIcon.Text = "i"
+infoIcon.TextColor3 = ACCENT
+infoIcon.TextXAlignment = Enum.TextXAlignment.Center
+infoIcon.TextYAlignment = Enum.TextYAlignment.Center
 infoIcon.ZIndex = 11
 infoIcon.Parent = dialogFrame
 
@@ -902,13 +911,16 @@ local function createTooltip(btn, text)
 	tooltip.ZIndex = 100
 	tooltip.Parent = exitDialogGui
 
-	local infoIcon = Instance.new("ImageLabel")
+	local infoIcon = Instance.new("TextLabel")
 	infoIcon.Size = UDim2.new(0, 16, 0, 16)
 	infoIcon.Position = UDim2.new(0, 8, 0, 6)
 	infoIcon.BackgroundTransparency = 1
-	infoIcon.Image = "rbxassetid://773391098118939"
-	infoIcon.ImageColor3 = ACCENT
-	infoIcon.ScaleType = Enum.ScaleType.Fit
+	infoIcon.Font = Enum.Font.GothamBold
+	infoIcon.TextSize = 13
+	infoIcon.Text = "i"
+	infoIcon.TextColor3 = ACCENT
+	infoIcon.TextXAlignment = Enum.TextXAlignment.Center
+	infoIcon.TextYAlignment = Enum.TextYAlignment.Center
 	infoIcon.ZIndex = 101
 	infoIcon.Parent = tooltip
 
@@ -934,10 +946,12 @@ local function createTooltip(btn, text)
 		playSound(SOUND_HOVER, 0.15)
 		local btnPos = btn.AbsolutePosition
 		local btnSize = btn.AbsoluteSize
+		local tipX = btnPos.X + btnSize.X / 2 - 110
+		local tipY = btnPos.Y - 30
 		tooltip.Visible = true
 		tooltip.Size = UDim2.new(0, 220, 0, 0)
-		tooltip.Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 2)
-		local tween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 220, 0, 28), Position = UDim2.new(0, btnPos.X + btnSize.X / 2 - 110, 0, btnPos.Y - 30) })
+		tooltip.Position = UDim2.new(0, tipX, 0, tipY + 28)
+		local tween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 220, 0, 28), Position = UDim2.new(0, tipX, 0, tipY) })
 		tween:Play()
 	end)
 
@@ -1648,7 +1662,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.0.2"
+local SCRIPT_VERSION = "1.0.3"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?t=" .. tostring(os.time())
 
 task.spawn(function()
