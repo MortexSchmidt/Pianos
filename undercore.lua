@@ -246,8 +246,9 @@ protectGui(gui)
 gui.Parent = uiParent
 
 local menuVisible = false
+local openMenu, closeMenu
 
-local mainFrame = Instance.new("Frame")
+local mainFrame = Instance.new("CanvasGroup")
 mainFrame.Name = "MainFrame"
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -273,15 +274,8 @@ titleText.TextYAlignment = Enum.TextYAlignment.Center
 titleText.BackgroundTransparency = 1
 titleText.Size = UDim2.new(1, -80, 1, 0)
 titleText.Position = UDim2.new(0, 15, 0, 0)
-titleText.Text = "Undercore"
+titleText.Text = "  Undercore"
 titleText.Parent = titleBar
-
-local statusDot = Instance.new("Frame")
-statusDot.Size = UDim2.new(0, 6, 0, 6)
-statusDot.Position = UDim2.new(0, -15, 0.5, -3)
-statusDot.BackgroundColor3 = GREEN
-statusDot.BorderSizePixel = 0
-statusDot.Parent = titleText
 
 local closeBtn = Instance.new("TextButton")
 closeBtn.Font = Enum.Font.GothamBold
@@ -294,9 +288,7 @@ closeBtn.Position = UDim2.new(1, -35, 0, 2)
 closeBtn.Parent = titleBar
 
 closeBtn.MouseButton1Click:Connect(function()
-	playSound(SOUND_CLICK, 0.3)
-	menuVisible = false
-	mainFrame.Visible = false
+	closeMenu()
 end)
 
 closeBtn.MouseEnter:Connect(function()
@@ -341,27 +333,57 @@ contentPad.Parent = contentFrame
 local pages = {}
 local navButtons = {}
 
-local function createNavButton(name, iconName)
+local NAV_ICONS = {
+	["Movement"] = "rbxassetid://95237403972033",
+	["Combat"] = "rbxassetid://108927893786063",
+	["Visuals"] = "rbxassetid://93101474340373",
+	["Player"] = "rbxassetid://132798719741410",
+	["Settings"] = "rbxassetid://136432877080343",
+}
+
+local function createNavButton(name)
 	local btn = Instance.new("TextButton")
 	btn.Font = Enum.Font.Gotham
 	btn.TextSize = 13
 	btn.TextColor3 = TEXT_GRAY
-	btn.Text = name
+	btn.Text = "  " .. name
 	btn.TextXAlignment = Enum.TextXAlignment.Left
 	btn.BackgroundColor3 = BG_DARK
 	btn.BorderSizePixel = 0
-	btn.Size = UDim2.new(1, 0, 0, 32)
+	btn.Size = UDim2.new(1, 0, 0, 36)
 	btn.Parent = navFrame
 
+	local icon = Instance.new("ImageLabel")
+	icon.Name = "Icon"
+	icon.Size = UDim2.new(0, 16, 0, 16)
+	icon.Position = UDim2.new(0, 12, 0.5, -8)
+	icon.BackgroundTransparency = 1
+	icon.Image = NAV_ICONS[name] or ""
+	icon.ImageColor3 = TEXT_GRAY
+	icon.Parent = btn
+
+	-- Shift text right to make room for icon
+	btn.TextXAlignment = Enum.TextXAlignment.Left
 	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 15)
+	pad.PaddingLeft = UDim.new(0, 34)
 	pad.Parent = btn
+
+	-- Active green strip (hidden by default)
+	local activeStrip = Instance.new("Frame")
+	activeStrip.Name = "ActiveStrip"
+	activeStrip.Size = UDim2.new(0, 3, 1, 0)
+	activeStrip.Position = UDim2.new(0, 0, 0, 0)
+	activeStrip.BackgroundColor3 = GREEN
+	activeStrip.BorderSizePixel = 0
+	activeStrip.ZIndex = 5
+	activeStrip.Visible = false
+	activeStrip.Parent = btn
 
 	btn.MouseEnter:Connect(function()
 		playSound(SOUND_HOVER, 0.15)
 	end)
 
-	return btn
+	return btn, activeStrip, icon
 end
 
 local function createPage(name)
@@ -387,10 +409,36 @@ local function createPage(name)
 	return page
 end
 
+local currentPage = nil
+
 local function showPage(name)
+	if currentPage == name then return end
 	playRandomPageSound()
 
-	-- Page sweep effect
+	-- Animate old nav strip: sweep right then hide
+	if currentPage and navButtons[currentPage] then
+		local oldData = navButtons[currentPage]
+		local oldStrip = oldData.strip
+		local oldIcon = oldData.icon
+		local oldBtn = oldData.btn
+
+		-- Sweep the strip to the right
+		if oldStrip then
+			oldStrip.Visible = true
+			local sweepStrip = TweenService:Create(oldStrip, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 })
+			sweepStrip:Play()
+			sweepStrip.Completed:Wait()
+			oldStrip.Size = UDim2.new(0, 3, 1, 0)
+			oldStrip.BackgroundTransparency = 0
+			oldStrip.Visible = false
+		end
+
+		oldBtn.TextColor3 = TEXT_GRAY
+		oldBtn.BackgroundColor3 = BG_DARK
+		if oldIcon then oldIcon.ImageColor3 = TEXT_GRAY end
+	end
+
+	-- Page content sweep
 	local sweepOverlay = Instance.new("Frame")
 	sweepOverlay.Size = UDim2.new(0, 0, 1, 0)
 	sweepOverlay.Position = UDim2.new(0, 0, 0, 0)
@@ -406,20 +454,34 @@ local function showPage(name)
 	for pageName, page in pairs(pages) do
 		page.Visible = (pageName == name)
 	end
-	for btnName, btn in pairs(navButtons) do
-		if btnName == name then
-			btn.TextColor3 = TEXT_WHITE
-			btn.BackgroundColor3 = BG_LIGHT
-		else
-			btn.TextColor3 = TEXT_GRAY
-			btn.BackgroundColor3 = BG_DARK
+
+	-- Activate new nav strip: sweep from left
+	local newData = navButtons[name]
+	if newData then
+		local newStrip = newData.strip
+		local newIcon = newData.icon
+		local newBtn = newData.btn
+
+		if newStrip then
+			newStrip.Size = UDim2.new(0, 0, 1, 0)
+			newStrip.Position = UDim2.new(0, 0, 0, 0)
+			newStrip.Visible = true
+			newStrip.BackgroundTransparency = 0
+			local stripIn = TweenService:Create(newStrip, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 3, 1, 0) })
+			stripIn:Play()
 		end
+
+		newBtn.TextColor3 = TEXT_WHITE
+		newBtn.BackgroundColor3 = BG_LIGHT
+		if newIcon then newIcon.ImageColor3 = GREEN end
 	end
 
 	local sweepOut = TweenService:Create(sweepOverlay, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
 	sweepOut:Play()
 	sweepOut.Completed:Wait()
 	sweepOverlay:Destroy()
+
+	currentPage = name
 end
 
 -- UI helpers
@@ -550,8 +612,8 @@ end
 
 -- MOVEMENT
 local movementPage = createPage("Movement")
-local navMovement = createNavButton("Movement")
-navButtons["Movement"] = navMovement
+local navMovement, navMovementStrip, navMovementIcon = createNavButton("Movement")
+navButtons["Movement"] = { btn = navMovement, strip = navMovementStrip, icon = navMovementIcon }
 navMovement.MouseButton1Click:Connect(function() showPage("Movement") end)
 
 createLabel(movementPage, "Movement")
@@ -565,8 +627,8 @@ local noclipToggle = createToggle(movementPage, "Noclip", function(v) _G.Underco
 
 -- COMBAT
 local combatPage = createPage("Combat")
-local navCombat = createNavButton("Combat")
-navButtons["Combat"] = navCombat
+local navCombat, navCombatStrip, navCombatIcon = createNavButton("Combat")
+navButtons["Combat"] = { btn = navCombat, strip = navCombatStrip, icon = navCombatIcon }
 navCombat.MouseButton1Click:Connect(function() showPage("Combat") end)
 
 createLabel(combatPage, "Combat")
@@ -576,8 +638,8 @@ local flingRange = createSlider(combatPage, "Fling Range", 5, 50, 15, function(v
 
 -- VISUAL
 local visualPage = createPage("Visuals")
-local navVisual = createNavButton("Visuals")
-navButtons["Visuals"] = navVisual
+local navVisual, navVisualStrip, navVisualIcon = createNavButton("Visuals")
+navButtons["Visuals"] = { btn = navVisual, strip = navVisualStrip, icon = navVisualIcon }
 navVisual.MouseButton1Click:Connect(function() showPage("Visuals") end)
 
 createLabel(visualPage, "ESP")
@@ -589,8 +651,8 @@ local espTracer = createToggle(visualPage, "ESP Tracers", function(v) _G.Underco
 
 -- PLAYER
 local playerPage = createPage("Player")
-local navPlayer = createNavButton("Player")
-navButtons["Player"] = navPlayer
+local navPlayer, navPlayerStrip, navPlayerIcon = createNavButton("Player")
+navButtons["Player"] = { btn = navPlayer, strip = navPlayerStrip, icon = navPlayerIcon }
 navPlayer.MouseButton1Click:Connect(function() showPage("Player") end)
 
 createLabel(playerPage, "Player")
@@ -607,8 +669,8 @@ end)
 
 -- SETTINGS
 local settingsPage = createPage("Settings")
-local navSettings = createNavButton("Settings")
-navButtons["Settings"] = navSettings
+local navSettings, navSettingsStrip, navSettingsIcon = createNavButton("Settings")
+navButtons["Settings"] = { btn = navSettings, strip = navSettingsStrip, icon = navSettingsIcon }
 navSettings.MouseButton1Click:Connect(function() showPage("Settings") end)
 
 createLabel(settingsPage, "Settings")
@@ -639,10 +701,56 @@ toggleBtn.Position = UDim2.new(0, 10, 0, 10)
 toggleBtn.ZIndex = 50
 toggleBtn.Parent = gui
 
-toggleBtn.MouseButton1Click:Connect(function()
+openMenu = function()
 	playSound(SOUND_CLICK, 0.3)
-	menuVisible = not menuVisible
-	mainFrame.Visible = menuVisible
+	menuVisible = true
+	mainFrame.Visible = true
+	mainFrame.Size = UDim2.new(0, 0, 0, 0)
+	mainFrame.GroupTransparency = 0
+
+	-- Green sweep overlay on menu
+	local menuSweep = Instance.new("Frame")
+	menuSweep.Size = UDim2.new(1, 0, 1, 0)
+	menuSweep.BackgroundColor3 = GREEN
+	menuSweep.BorderSizePixel = 0
+	menuSweep.ZIndex = 100
+	menuSweep.Parent = mainFrame
+
+	local sizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 600, 0, 400) })
+	sizeTween:Play()
+
+	task.wait(0.15)
+
+	local sweepOut = TweenService:Create(menuSweep, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
+	sweepOut:Play()
+	sweepOut.Completed:Wait()
+	menuSweep:Destroy()
+end
+
+closeMenu = function()
+	playSound(SOUND_CLICK, 0.3)
+
+	-- Green sweep in
+	local menuSweep = Instance.new("Frame")
+	menuSweep.Size = UDim2.new(0, 0, 1, 0)
+	menuSweep.Position = UDim2.new(0, 0, 0, 0)
+	menuSweep.BackgroundColor3 = GREEN
+	menuSweep.BorderSizePixel = 0
+	menuSweep.ZIndex = 100
+	menuSweep.Parent = mainFrame
+
+	local sweepIn = TweenService:Create(menuSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+	sweepIn:Play()
+	sweepIn.Completed:Wait()
+
+	menuVisible = false
+	mainFrame.Visible = false
+	mainFrame.Size = UDim2.new(0, 600, 0, 400)
+	menuSweep:Destroy()
+end
+
+toggleBtn.MouseButton1Click:Connect(function()
+	if menuVisible then closeMenu() else openMenu() end
 end)
 
 toggleBtn.MouseEnter:Connect(function()
@@ -655,8 +763,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		or input.KeyCode == Enum.KeyCode.K
 		or input.KeyCode == Enum.KeyCode.F8
 	then
-		menuVisible = not menuVisible
-		mainFrame.Visible = menuVisible
+		if menuVisible then closeMenu() else openMenu() end
 	end
 end)
 
