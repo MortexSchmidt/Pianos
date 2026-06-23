@@ -559,7 +559,7 @@ local function createToggle(parent, text, callback)
 	toggle.Parent = frame
 
 	toggle.MouseButton1Click:Connect(function()
-		playSound(SOUND_CLICK, 0.3)
+		playRandomPageSound()
 		enabled = not enabled
 		if enabled then
 			toggle.Text = "ON"
@@ -837,7 +837,7 @@ end
 local function hideExitDialog()
 	if not exitDialogVisible then return end
 	exitDialogVisible = false
-	playSound(SOUND_CLICK, 0.3)
+	playRandomPageSound()
 
 	-- Green sweep in on dialog
 	local dialogSweep = Instance.new("Frame")
@@ -929,7 +929,7 @@ exitBtn.Size = UDim2.new(1, 0, 0, 36)
 exitBtn.Parent = settingsPage
 
 exitBtn.MouseButton1Click:Connect(function()
-	playSound(SOUND_CLICK, 0.3)
+	playRandomPageSound()
 	showExitDialog()
 end)
 
@@ -957,7 +957,7 @@ toggleBtn.ZIndex = 50
 toggleBtn.Parent = gui
 
 openMenu = function()
-	playSound(SOUND_CLICK, 0.3)
+	playRandomPageSound()
 	menuVisible = true
 	mainFrame.Visible = true
 	mainFrame.Size = UDim2.new(0, 0, 0, 0)
@@ -983,7 +983,7 @@ openMenu = function()
 end
 
 closeMenu = function()
-	playSound(SOUND_CLICK, 0.3)
+	playRandomPageSound()
 
 	-- Green sweep in
 	local menuSweep = Instance.new("Frame")
