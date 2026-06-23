@@ -1,4 +1,4 @@
--- Undercore v1.1.3 - Custom Cheat Menu
+-- Undercore v1.1.4 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -154,6 +154,8 @@ local function notify(title, message, duration, color, notifType)
 	notifType = notifType or "info"
 	if notifType == "error" then
 		playSound(SOUND_ERROR, 0.5)
+	elseif notifType == "success" then
+		playSound(SOUND_INJECT, 0.8)
 	else
 		playSound(SOUND_NOTIF, 0.5)
 	end
@@ -1075,7 +1077,6 @@ end
 local function hideExitDialog()
 	if not exitDialogVisible then return end
 	exitDialogVisible = false
-	playSound(SOUND_MODAL, 0.5)
 
 	-- Green sweep in on dialog
 	local dialogSweep = Instance.new("Frame")
@@ -1148,7 +1149,12 @@ local function resetAllCheats()
 end
 
 cancelBtn.MouseButton1Click:Connect(function()
+	playRandomPageSound()
 	hideExitDialog()
+end)
+
+cancelBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
 end)
 
 -- Block all clicks on background while dialog is open
@@ -1156,6 +1162,7 @@ blurFrame.MouseButton1Click:Connect(function()
 end)
 
 reloadBtn.MouseButton1Click:Connect(function()
+	playRandomPageSound()
 	hideExitDialog()
 
 	-- Close menu with animation
@@ -1182,12 +1189,10 @@ reloadBtn.MouseButton1Click:Connect(function()
 	gui:Destroy()
 
 	-- Blue: Restarting (real delay)
-	playSound(SOUND_NOTIF, 0.5)
 	notify("Undercore", "Restarting script...", 3, ACCENT, "info")
 	task.wait(3)
 
 	-- Green: Script closed, relaunching (real delay)
-	playSound(SOUND_INJECT, 0.8)
 	notify("Undercore", "Script closed. Relaunching...", 3, GREEN, "success")
 	task.wait(3)
 
@@ -1219,6 +1224,7 @@ reloadBtn.MouseButton1Click:Connect(function()
 end)
 
 confirmBtn.MouseButton1Click:Connect(function()
+	playRandomPageSound()
 	hideExitDialog()
 	hideExitDialog = nil
 
@@ -1245,6 +1251,14 @@ confirmBtn.MouseButton1Click:Connect(function()
 	exitDialogGui:Destroy()
 	gui:Destroy()
 	notifGui:Destroy()
+end)
+
+reloadBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
+end)
+
+confirmBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
 end)
 
 -- SETTINGS
@@ -1752,14 +1766,13 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.1.3"
+local SCRIPT_VERSION = "1.1.4"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
 	task.wait(0.5)
 
 	-- Step 1: Checking for updates
-	playSound(SOUND_NOTIF, 0.5)
 	notify("Undercore", "Checking for updates...", 3, ACCENT, "info")
 
 	-- Actually fetch version from GitHub
@@ -1778,16 +1791,13 @@ task.spawn(function()
 
 	if updateAvailable then
 		-- Step 2: Update found, installing
-		playSound(SOUND_NOTIF, 0.5)
 		notify("Undercore", "Update found (v" .. remoteVersion .. "). Installing...", 3, ACCENT, "info")
 		task.wait(2.5)
 
 		-- Step 3: Installation complete
-		playSound(SOUND_INJECT, 0.8)
 		notify("Undercore", "Installation complete. v" .. remoteVersion .. " injected.", 4, GREEN, "success")
 	else
 		-- No update needed
-		playSound(SOUND_INJECT, 0.8)
 		notify("Undercore", "Latest version (v" .. SCRIPT_VERSION .. ") injected.", 4, GREEN, "success")
 	end
 
