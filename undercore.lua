@@ -1193,6 +1193,7 @@ showPage("Movement")
 -- ===================
 -- TOGGLE BUTTON
 -- ===================
+local scriptReady = false
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleBtn"
 toggleBtn.Text = "U"
@@ -1204,6 +1205,7 @@ toggleBtn.BorderSizePixel = 0
 toggleBtn.Size = UDim2.new(0, 32, 0, 32)
 toggleBtn.Position = UDim2.new(0, 10, 0, 10)
 toggleBtn.ZIndex = 50
+toggleBtn.Visible = false
 toggleBtn.Parent = gui
 
 openMenu = function()
@@ -1297,6 +1299,7 @@ toggleBtn.MouseLeave:Connect(function()
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
+	if not scriptReady then return end
 	if holdTriggered then
 		holdTriggered = false
 		return
@@ -1312,6 +1315,7 @@ end)
 
 -- Keys
 trackConn(UserInputService.InputBegan:Connect(function(input, processed)
+	if not scriptReady then return end
 	if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.K then
 		if menuVisible then closeMenu() else openMenu() end
 	elseif input.KeyCode == Enum.KeyCode.F8 then
@@ -1678,6 +1682,12 @@ task.spawn(function()
 		playSound(SOUND_INJECT, 0.8)
 		notify("Undercore", "Latest version (v" .. SCRIPT_VERSION .. ") injected.", 4, GREEN, "success")
 	end
+
+	task.wait(1)
+
+	-- Reveal toggle button and enable script
+	scriptReady = true
+	toggleBtn.Visible = true
 end)
 
 -- Expose
