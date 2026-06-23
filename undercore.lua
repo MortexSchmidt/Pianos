@@ -1,4 +1,4 @@
--- Undercore v1.2.0 - Custom Cheat Menu
+-- Undercore v1.3.0 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -805,13 +805,14 @@ navButtons["Movement"] = { btn = navMovement, icon = navMovementIcon, label = na
 navMovement.MouseButton1Click:Connect(function() showPage("Movement") end)
 
 createLabel(movementPage, "Movement")
-local flyToggle = createToggle(movementPage, "Fly", function(v) _G.Undercore.Fly = v end)
-local flySpeed = createSlider(movementPage, "Fly Speed", 10, 200, 50, function(v) _G.Undercore.FlySpeed = v end)
-local speedToggle = createToggle(movementPage, "Speed", function(v) _G.Undercore.Speed = v end)
-local speedVal = createSlider(movementPage, "Walk Speed", 16, 200, 50, function(v) _G.Undercore.SpeedVal = v end)
+local flyToggle = createToggle(movementPage, "Fly (CFrame)", function(v) _G.Undercore.Fly = v end)
+local flySpeed = createSlider(movementPage, "Fly Speed", 10, 500, 50, function(v) _G.Undercore.FlySpeed = v end)
+local speedToggle = createToggle(movementPage, "Speed (CFrame)", function(v) _G.Undercore.Speed = v end)
+local speedVal = createSlider(movementPage, "Walk Speed", 16, 500, 50, function(v) _G.Undercore.SpeedVal = v end)
 local jumpToggle = createToggle(movementPage, "Jump Power", function(v) _G.Undercore.Jump = v end)
-local jumpVal = createSlider(movementPage, "Jump Power", 50, 300, 100, function(v) _G.Undercore.JumpVal = v end)
+local jumpVal = createSlider(movementPage, "Jump Power", 50, 500, 100, function(v) _G.Undercore.JumpVal = v end)
 local noclipToggle = createToggle(movementPage, "Noclip", function(v) _G.Undercore.Noclip = v end)
+local noFallToggle = createToggle(movementPage, "No Fall Damage", function(v) _G.Undercore.NoFall = v end)
 
 -- COMBAT
 local combatPage = createPage("Combat")
@@ -846,6 +847,7 @@ navPlayer.MouseButton1Click:Connect(function() showPage("Player") end)
 createLabel(playerPage, "Player")
 local infJump = createToggle(playerPage, "Infinite Jump", function(v) _G.Undercore.InfJump = v end)
 local godMode = createToggle(playerPage, "God Mode", function(v) _G.Undercore.GodMode = v end)
+local antiFlingToggle = createToggle(playerPage, "Anti-Fling", function(v) _G.Undercore.AntiFling = v end)
 local resetBtn = createToggle(playerPage, "Reset Character (click)", function(v)
 	if v then
 		local char = player.Character
@@ -1459,22 +1461,19 @@ _G.Undercore = {
 	Fly = false, FlySpeed = 50,
 	Speed = false, SpeedVal = 50,
 	Jump = false, JumpVal = 100,
-	Noclip = false,
+	Noclip = false, NoFall = false,
 	Fling = false, FlingPower = 1000, FlingRange = 15,
 	ESP = false, ESPName = false, ESPDist = false, ESPHealth = false, ESPTracer = false,
-	InfJump = false, GodMode = false,
+	InfJump = false, GodMode = false, AntiFling = false,
 }
 
--- FLY (smooth, collision-safe, camera-locked)
-local flyBodyVelocity
-local flyBodyGyro
+-- FLY (CFrame-based, bypasses anti-fly that detects BodyVelocity)
 local flyEnabled = false
+local flyConn
 
 local function setupFly()
-	trackConn(RunService.RenderStepped:Connect(function()
+	flyConn = RunService.RenderStepped:Connect(function()
 		if not _G.Undercore.Fly then
-			if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
-			if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
 			if flyEnabled then
 				flyEnabled = false
 				local char = player.Character
@@ -1490,18 +1489,8 @@ local function setupFly()
 		local hum = char:FindFirstChildOfClass("Humanoid")
 		if not root or not hum then return end
 
-		if not flyBodyVelocity then
-			flyBodyVelocity = Instance.new("BodyVelocity")
-			flyBodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 9e9
-			flyBodyVelocity.Velocity = Vector3.zero
-			flyBodyVelocity.Parent = root
-
-			flyBodyGyro = Instance.new("BodyGyro")
-			flyBodyGyro.MaxForce = Vector3.new(1, 1, 1) * 9e9
-			flyBodyGyro.P = 1e5
-			flyBodyGyro.Parent = root
-			flyEnabled = true
-		end
+		flyEnabled = true
+		hum.PlatformStand = true
 
 		local cam = Workspace.CurrentCamera
 		local dir = Vector3.zero
@@ -1513,13 +1502,14 @@ local function setupFly()
 		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0, 1, 0) end
 
 		if dir.Magnitude > 0 then
-			dir = dir.Unit * _G.Undercore.FlySpeed
+			local speed = _G.Undercore.FlySpeed
+			-- CFrame teleport (bypasses anti-fly that checks for BodyVelocity)
+			pcall(function()
+				root.CFrame = root.CFrame + dir.Unit * speed * 0.016
+			end)
 		end
-
-		flyBodyVelocity.Velocity = dir
-		flyBodyGyro.CFrame = cam.CFrame
-		hum.PlatformStand = true
-	end))
+	end)
+	trackConn(flyConn)
 end
 setupFly()
 
@@ -1663,6 +1653,57 @@ trackConn(RunService.RenderStepped:Connect(function()
 			end
 		end
 	end
+end))
+
+-- NO FALL DAMAGE (cancel fall damage by resetting velocity before landing + state bypass)
+trackConn(RunService.Stepped:Connect(function()
+	if not _G.Undercore.NoFall then return end
+	local char = player.Character
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not hum or not root then return end
+	-- Prevent Landed state (which triggers fall damage)
+	if hum:GetState() == Enum.HumanoidStateType.Landed then
+		pcall(function()
+			hum:ChangeState(Enum.HumanoidStateType.None)
+			root.Velocity = Vector3.new(root.Velocity.X, 0, root.Velocity.Z)
+		end)
+	end
+	-- Also prevent Freefall -> Landed transition by capping Y velocity
+	if root.Velocity.Y < -75 then
+		pcall(function()
+			root.Velocity = Vector3.new(root.Velocity.X, -50, root.Velocity.Z)
+		end)
+	end
+end))
+
+-- ANTI-FLING (detect abnormal velocity/position changes and counter them)
+local lastPos = Vector3.zero
+local lastTick = tick()
+trackConn(RunService.RenderStepped:Connect(function()
+	if not _G.Undercore.AntiFling then return end
+	local char = player.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local currentPos = root.Position
+	local currentTick = tick()
+	local dt = currentTick - lastTick
+	if dt > 0 then
+		local velocity = (currentPos - lastPos) / dt
+		-- If we're being flung (abnormal velocity), counter it
+		if velocity.Magnitude > 200 then
+			pcall(function()
+				root.Velocity = Vector3.zero
+				root.RotVelocity = Vector3.zero
+				root.CFrame = CFrame.new(lastPos)
+			end)
+		end
+	end
+	lastPos = currentPos
+	lastTick = currentTick
 end))
 
 -- ESP
@@ -1823,7 +1864,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.2.0"
+local SCRIPT_VERSION = "1.3.0"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
