@@ -1005,11 +1005,12 @@ local function createTooltip(btn, text)
 		local btnPos = btn.AbsolutePosition
 		local btnSize = btn.AbsoluteSize
 		local tipX = btnPos.X + btnSize.X / 2 - 110
+		-- Position tooltip so its bottom edge is 2px above the button
 		local tipY = btnPos.Y - 30
-		print("[Undercore Tooltip] btnPos:", btnPos, "tipY:", tipY, "gap:", btnPos.Y - (tipY + 28))
 		tooltip.Visible = true
 		tooltip.Size = UDim2.new(0, 220, 0, 28)
 		tooltip.Position = UDim2.new(0, tipX, 0, tipY)
+		print("[Undercore Tooltip] btnY:", btnPos.Y, "tipY:", tipY, "bottom:", tipY + 28, "gap:", btnPos.Y - (tipY + 28))
 	end)
 
 	btn.MouseLeave:Connect(function()
@@ -1030,7 +1031,7 @@ local exitDialogVisible = false
 local function showExitDialog()
 	if exitDialogVisible then return end
 	exitDialogVisible = true
-	playSound(SOUND_MODAL, 0.5)
+	playSound(SOUND_NOTIF, 0.5)
 
 	blurFrame.Visible = true
 	blurFrame.BackgroundTransparency = 1
@@ -1066,7 +1067,7 @@ end
 local function hideExitDialog()
 	if not exitDialogVisible then return end
 	exitDialogVisible = false
-	playRandomPageSound()
+	playSound(SOUND_MODAL, 0.5)
 
 	-- Green sweep in on dialog
 	local dialogSweep = Instance.new("Frame")
@@ -1730,7 +1731,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.0.8"
+local SCRIPT_VERSION = "1.0.9"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
