@@ -454,18 +454,49 @@ stopBtn.MouseButton1Click:Connect(function()
 	notify("TALENTLESS", "Воспроизведение остановлено", 3, "STOPPED", SOUND_BYE)
 end)
 
--- Toggle key (RightShift)
+-- Visible toggle button (always on screen)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Name = "ToggleBtn"
+toggleBtn.Text = "T"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 14
+toggleBtn.TextColor3 = TEXT_WHITE
+toggleBtn.BackgroundColor3 = CARD_DARK
+toggleBtn.BorderSizePixel = 0
+toggleBtn.Size = UDim2.new(0, 30, 0, 30)
+toggleBtn.Position = UDim2.new(0, 10, 0, 10)
+toggleBtn.ZIndex = 50
+toggleBtn.Parent = menuGui
+
+local toggleStrip = Instance.new("Frame")
+toggleStrip.Name = "AccentStrip"
+toggleStrip.Size = UDim2.new(0, STRIP_WIDTH, 1, 0)
+toggleStrip.BackgroundColor3 = ACCENT
+toggleStrip.BorderSizePixel = 0
+toggleStrip.ZIndex = 51
+toggleStrip.Parent = toggleBtn
+
+local function toggleMenu()
+	menuVisible = not menuVisible
+	mainFrame.Visible = menuVisible
+	print("[TALENTLESS] Menu toggled, visible: " .. tostring(menuVisible))
+	if menuVisible then
+		playSound(SOUND_UI_OPEN, 0.1)
+	else
+		playSound(SOUND_UI_CLOSE, 0.1)
+	end
+end
+
+toggleBtn.MouseButton1Click:Connect(toggleMenu)
+
+-- Toggle keys: RightShift, F8, RightCtrl, K
 UserInputService.InputBegan:Connect(function(input, processed)
-	if input.KeyCode == Enum.KeyCode.RightShift then
-		menuVisible = not menuVisible
-		mainFrame.Visible = menuVisible
-		print("[TALENTLESS] RightShift pressed, menu visible: " .. tostring(menuVisible))
-		mainFrame.ZIndex = 100
-		if menuVisible then
-			playSound(SOUND_UI_OPEN, 0.1)
-		else
-			playSound(SOUND_UI_CLOSE, 0.1)
-		end
+	if input.KeyCode == Enum.KeyCode.RightShift
+		or input.KeyCode == Enum.KeyCode.F8
+		or input.KeyCode == Enum.KeyCode.RightControl
+		or input.KeyCode == Enum.KeyCode.K
+	then
+		toggleMenu()
 	end
 end)
 
