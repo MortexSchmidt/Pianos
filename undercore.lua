@@ -752,12 +752,16 @@ exitDialogGui.IgnoreGuiInset = true
 protectGui(exitDialogGui)
 exitDialogGui.Parent = uiParent
 
-local blurFrame = Instance.new("Frame")
+local blurFrame = Instance.new("TextButton")
+blurFrame.Text = ""
 blurFrame.Size = UDim2.new(1, 0, 1, 0)
 blurFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 blurFrame.BackgroundTransparency = 1
 blurFrame.BorderSizePixel = 0
 blurFrame.Visible = false
+blurFrame.AutoButtonColor = false
+blurFrame.Active = true
+blurFrame.Modal = true
 blurFrame.Parent = exitDialogGui
 
 local blurEffect = Instance.new("BlurEffect")
@@ -900,6 +904,10 @@ end)
 
 cancelBtn.MouseEnter:Connect(function()
 	playSound(SOUND_HOVER, 0.15)
+end)
+
+-- Block all clicks on background while dialog is open
+blurFrame.MouseButton1Click:Connect(function()
 end)
 
 confirmBtn.MouseButton1Click:Connect(function()
