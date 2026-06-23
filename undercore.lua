@@ -296,6 +296,7 @@ mainFrame.Size = UDim2.new(0, 600, 0, 400)
 mainFrame.BackgroundColor3 = BG
 mainFrame.BorderSizePixel = 0
 mainFrame.Visible = false
+mainFrame.Active = false
 mainFrame.Parent = gui
 
 -- Title bar
@@ -303,6 +304,30 @@ local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 40)
 titleBar.BackgroundColor3 = BG_DARK
 titleBar.BorderSizePixel = 0
+titleBar.Active = true
+-- Dragging
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+titleBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then dragging = false end
+		end)
+	end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
 titleBar.Parent = mainFrame
 
 local titleText = Instance.new("TextLabel")
@@ -341,6 +366,7 @@ navFrame.Size = UDim2.new(0, 140, 1, -40)
 navFrame.Position = UDim2.new(0, 0, 0, 40)
 navFrame.BackgroundColor3 = BG_DARK
 navFrame.BorderSizePixel = 0
+navFrame.Active = false
 navFrame.Parent = mainFrame
 
 local navLayout = Instance.new("UIListLayout")
@@ -360,6 +386,7 @@ contentFrame.Size = UDim2.new(1, -140, 1, -40)
 contentFrame.Position = UDim2.new(0, 140, 0, 40)
 contentFrame.BackgroundColor3 = BG
 contentFrame.BorderSizePixel = 0
+contentFrame.Active = false
 contentFrame.Parent = mainFrame
 
 local contentPad = Instance.new("UIPadding")
@@ -772,7 +799,7 @@ blurEffect.Parent = game:GetService("Lighting")
 local dialogFrame = Instance.new("CanvasGroup")
 dialogFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 dialogFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-dialogFrame.Size = UDim2.new(0, 360, 0, 180)
+dialogFrame.Size = UDim2.new(0, 380, 0, 200)
 dialogFrame.BackgroundColor3 = BG
 dialogFrame.BorderSizePixel = 0
 dialogFrame.Visible = false
@@ -787,9 +814,9 @@ dialogTitle.TextColor3 = TEXT_WHITE
 dialogTitle.TextXAlignment = Enum.TextXAlignment.Center
 dialogTitle.TextYAlignment = Enum.TextYAlignment.Center
 dialogTitle.BackgroundTransparency = 1
-dialogTitle.Size = UDim2.new(1, 0, 0, 50)
-dialogTitle.Position = UDim2.new(0, 0, 0, 20)
-dialogTitle.Text = "Terminate Undercore"
+dialogTitle.Size = UDim2.new(1, 0, 0, 40)
+dialogTitle.Position = UDim2.new(0, 0, 0, 15)
+dialogTitle.Text = "Undercore"
 dialogTitle.Parent = dialogFrame
 
 local dialogMsg = Instance.new("TextLabel")
@@ -799,10 +826,10 @@ dialogMsg.TextColor3 = TEXT_GRAY
 dialogMsg.TextXAlignment = Enum.TextXAlignment.Center
 dialogMsg.TextYAlignment = Enum.TextYAlignment.Top
 dialogMsg.BackgroundTransparency = 1
-dialogMsg.Size = UDim2.new(1, -40, 0, 40)
-dialogMsg.Position = UDim2.new(0, 20, 0, 65)
+dialogMsg.Size = UDim2.new(1, -40, 0, 30)
+dialogMsg.Position = UDim2.new(0, 20, 0, 55)
 dialogMsg.TextWrapped = true
-dialogMsg.Text = "Are you sure you want to terminate the script? All features will be disabled."
+dialogMsg.Text = "Select an action:"
 dialogMsg.Parent = dialogFrame
 
 local cancelBtn = Instance.new("TextButton")
@@ -812,19 +839,30 @@ cancelBtn.TextColor3 = TEXT_WHITE
 cancelBtn.Text = "Cancel"
 cancelBtn.BackgroundColor3 = BG_LIGHT
 cancelBtn.BorderSizePixel = 0
-cancelBtn.Size = UDim2.new(0, 130, 0, 36)
-cancelBtn.Position = UDim2.new(0, 30, 0, 125)
+cancelBtn.Size = UDim2.new(0, 100, 0, 36)
+cancelBtn.Position = UDim2.new(0, 20, 0, 145)
 cancelBtn.Parent = dialogFrame
+
+local reloadBtn = Instance.new("TextButton")
+reloadBtn.Font = Enum.Font.GothamBold
+reloadBtn.TextSize = 13
+reloadBtn.TextColor3 = TEXT_WHITE
+reloadBtn.Text = "Reload"
+reloadBtn.BackgroundColor3 = ACCENT
+reloadBtn.BorderSizePixel = 0
+reloadBtn.Size = UDim2.new(0, 100, 0, 36)
+reloadBtn.Position = UDim2.new(0.5, -50, 0, 145)
+reloadBtn.Parent = dialogFrame
 
 local confirmBtn = Instance.new("TextButton")
 confirmBtn.Font = Enum.Font.GothamBold
 confirmBtn.TextSize = 13
 confirmBtn.TextColor3 = TEXT_WHITE
-confirmBtn.Text = "Confirm"
+confirmBtn.Text = "Terminate"
 confirmBtn.BackgroundColor3 = RED
 confirmBtn.BorderSizePixel = 0
-confirmBtn.Size = UDim2.new(0, 130, 0, 36)
-confirmBtn.Position = UDim2.new(1, -160, 0, 125)
+confirmBtn.Size = UDim2.new(0, 100, 0, 36)
+confirmBtn.Position = UDim2.new(1, -120, 0, 145)
 confirmBtn.Parent = dialogFrame
 
 local exitDialogVisible = false
@@ -854,7 +892,7 @@ local function showExitDialog()
 	local bgTween = TweenService:Create(blurFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundTransparency = 0.5 })
 	bgTween:Play()
 
-	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 360, 0, 180), GroupTransparency = 0 })
+	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 380, 0, 200), GroupTransparency = 0 })
 	dialogTween:Play()
 
 	task.wait(0.15)
@@ -908,6 +946,54 @@ end)
 
 -- Block all clicks on background while dialog is open
 blurFrame.MouseButton1Click:Connect(function()
+end)
+
+reloadBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
+end)
+
+reloadBtn.MouseButton1Click:Connect(function()
+	hideExitDialog()
+
+	-- Close menu with animation
+	if menuVisible then
+		closeMenu()
+		task.wait(0.8)
+	end
+
+	-- Blue: Restarting
+	playSound(SOUND_NOTIF, 0.5)
+	notify("Undercore", "Restarting script...", 3, ACCENT, "info")
+	task.wait(2.5)
+
+	-- Cleanup
+	blurEffect:Destroy()
+	exitDialogGui:Destroy()
+	gui:Destroy()
+
+	-- Green: Script closed, relaunching
+	playSound(SOUND_INJECT, 0.8)
+	notify("Undercore", "Script closed. Relaunching...", 3, GREEN, "success")
+	task.wait(2)
+
+	-- Disable all features
+	_G.Undercore = {}
+	for _, conn in ipairs(_G.UndercoreConnections or {}) do
+		pcall(function() conn:Disconnect() end)
+	end
+	_G.UndercoreConnections = nil
+
+	-- Reload the script
+	local reloadUrl = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
+	local ok, content = pcall(function()
+		return game:HttpGet(reloadUrl, true)
+	end)
+	if ok and content then
+		local fn, err = loadstring(content)
+		if fn then
+			fn()
+		end
+	end
 end)
 
 confirmBtn.MouseButton1Click:Connect(function()
@@ -1118,31 +1204,7 @@ trackConn(UserInputService.InputEnded:Connect(function(input)
 	end
 end))
 
--- Dragging
-local dragging = false
-local dragInput
-local dragStart
-local startPos
-
-mainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		if input.Position.Y < mainFrame.AbsolutePosition.Y + 40 then
-			dragging = true
-			dragStart = input.Position
-			startPos = mainFrame.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then dragging = false end
-			end)
-		end
-	end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
-	end
-end)
-
+-- Input handling for drag
 trackConn(UserInputService.InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
 		local delta = input.Position - dragStart
