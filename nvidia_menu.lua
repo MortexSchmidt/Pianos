@@ -10,12 +10,21 @@ local player = Players.LocalPlayer
 
 -- Get UI parent (executor compatible)
 local function getUiParent()
-	if gethui then return gethui() end
+	if gethui then 
+		local ok, hui = pcall(gethui)
+		if ok and hui then return hui end
+	end
+	if syn and syn.protect_gui then
+		local ok, cg = pcall(function() return game:GetService("CoreGui") end)
+		if ok then return cg end
+	end
 	local ok, cg = pcall(function() return game:GetService("CoreGui") end)
-	if ok then return cg end
+	if ok and cg then return cg end
 	return player:WaitForChild("PlayerGui")
 end
 local uiParent = getUiParent()
+
+print("[TALENTLESS] nvidia_menu loaded, UI parent: " .. tostring(uiParent))
 
 -- Colors
 local ACCENT = Color3.fromRGB(255, 200, 0) -- yellow accent
@@ -277,6 +286,8 @@ menuGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 menuGui.DisplayOrder = 99
 menuGui.Parent = uiParent
 
+print("[TALENTLESS] Menu GUI created, parent: " .. tostring(menuGui.Parent))
+
 local menuVisible = false
 
 -- Main frame
@@ -336,7 +347,6 @@ closeBtn.Name = "Close"
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 16
 closeBtn.TextColor3 = TEXT_GRAY
-closeText = "X"
 closeBtn.Text = "X"
 closeBtn.BackgroundTransparency = 1
 closeBtn.Size = UDim2.new(0, 35, 0, 35)
@@ -449,6 +459,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	if input.KeyCode == Enum.KeyCode.RightShift then
 		menuVisible = not menuVisible
 		mainFrame.Visible = menuVisible
+		print("[TALENTLESS] RightShift pressed, menu visible: " .. tostring(menuVisible))
 		mainFrame.ZIndex = 100
 		if menuVisible then
 			playSound(SOUND_UI_OPEN, 0.1)
