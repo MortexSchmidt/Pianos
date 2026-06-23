@@ -542,7 +542,7 @@ local function showPage(name)
 		oldSweep.Position = UDim2.new(0, 0, 0, 0)
 		oldSweep.BackgroundColor3 = GREEN
 		oldSweep.BorderSizePixel = 0
-		oldSweep.ZIndex = 15
+		oldSweep.ZIndex = 1
 		oldSweep.Parent = oldBtn
 
 		local oldSweepOut = TweenService:Create(oldSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
@@ -584,7 +584,7 @@ local function showPage(name)
 		newSweep.Position = UDim2.new(0, 0, 0, 0)
 		newSweep.BackgroundColor3 = GREEN
 		newSweep.BorderSizePixel = 0
-		newSweep.ZIndex = 15
+		newSweep.ZIndex = 1
 		newSweep.Parent = newBtn
 
 		local newSweepIn = TweenService:Create(newSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
@@ -1005,12 +1005,10 @@ local function createTooltip(btn, text)
 		local btnPos = btn.AbsolutePosition
 		local btnSize = btn.AbsoluteSize
 		local tipX = btnPos.X + btnSize.X / 2 - 110
-		-- Position tooltip so its bottom edge is 2px above the button
 		local tipY = btnPos.Y - 30
 		tooltip.Visible = true
 		tooltip.Size = UDim2.new(0, 220, 0, 28)
 		tooltip.Position = UDim2.new(0, tipX, 0, tipY)
-		print("[Undercore Tooltip] btnY:", btnPos.Y, "tipY:", tipY, "bottom:", tipY + 28, "gap:", btnPos.Y - (tipY + 28))
 	end)
 
 	btn.MouseLeave:Connect(function()
@@ -1731,7 +1729,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.0.9"
+local SCRIPT_VERSION = "1.1.0"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
