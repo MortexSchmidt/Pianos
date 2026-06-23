@@ -531,21 +531,28 @@ local function showPage(name)
 	pageSwitching = true
 	playRandomPageSound()
 
-	-- Deactivate old button with green sweep (right to left)
+	-- Deactivate old button with green glow sweep (right to left)
 	if currentPage and navButtons[currentPage] then
 		local oldData = navButtons[currentPage]
 		local oldBtn = oldData.btn
 
-		-- Green sweep on old nav button (right to left)
+		-- Green glow sweep on old nav button (right to left)
 		local oldSweep = Instance.new("Frame")
 		oldSweep.Size = UDim2.new(1, 0, 1, 0)
 		oldSweep.Position = UDim2.new(0, 0, 0, 0)
 		oldSweep.BackgroundColor3 = GREEN
+		oldSweep.BackgroundTransparency = 0.7
 		oldSweep.BorderSizePixel = 0
 		oldSweep.ZIndex = 1
 		oldSweep.Parent = oldBtn
 
-		local oldSweepOut = TweenService:Create(oldSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
+		local oldStroke = Instance.new("UIStroke")
+		oldStroke.Color = GREEN
+		oldStroke.Thickness = 1.5
+		oldStroke.Transparency = 0.5
+		oldStroke.Parent = oldSweep
+
+		local oldSweepOut = TweenService:Create(oldSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1 })
 		oldSweepOut:Play()
 		oldSweepOut.Completed:Wait()
 		oldSweep:Destroy()
@@ -573,27 +580,42 @@ local function showPage(name)
 		page.Visible = (pageName == name)
 	end
 
-	-- Activate new button with green sweep (left to right)
+	-- Activate new button with green glow sweep (left to right, then exit right)
 	local newData = navButtons[name]
 	if newData then
 		local newBtn = newData.btn
 
-		-- Green sweep on new nav button (left to right)
+		-- Green glow sweep on new nav button (left to right)
 		local newSweep = Instance.new("Frame")
 		newSweep.Size = UDim2.new(0, 0, 1, 0)
 		newSweep.Position = UDim2.new(0, 0, 0, 0)
 		newSweep.BackgroundColor3 = GREEN
+		newSweep.BackgroundTransparency = 0.7
 		newSweep.BorderSizePixel = 0
 		newSweep.ZIndex = 1
 		newSweep.Parent = newBtn
 
-		local newSweepIn = TweenService:Create(newSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+		local newStroke = Instance.new("UIStroke")
+		newStroke.Color = GREEN
+		newStroke.Thickness = 1.5
+		newStroke.Transparency = 0.5
+		newStroke.Parent = newSweep
+
+		-- Phase 1: sweep in left to right
+		local newSweepIn = TweenService:Create(newSweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
 		newSweepIn:Play()
+		newSweepIn.Completed:Wait()
 
 		newData.btn.TextColor3 = TEXT_WHITE
 		newData.btn.BackgroundColor3 = BG_LIGHT
 		newData.icon.ImageColor3 = GREEN
 		newData.label.TextColor3 = TEXT_WHITE
+
+		-- Phase 2: sweep exits to the right (slides out)
+		local newSweepOut = TweenService:Create(newSweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1 })
+		newSweepOut:Play()
+		newSweepOut.Completed:Wait()
+		newSweep:Destroy()
 
 		-- Green indicator strip: slide from left to right on new button
 		local btn = newData.btn
@@ -607,13 +629,6 @@ local function showPage(name)
 
 		local indicatorTween = TweenService:Create(navIndicator, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 3, 0, targetH) })
 		indicatorTween:Play()
-
-		-- Clean up sweep after it finishes
-		task.delay(0.3, function()
-			if newSweep and newSweep.Parent then
-				newSweep:Destroy()
-			end
-		end)
 	end
 
 	local sweepOut = TweenService:Create(sweepOverlay, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
@@ -1019,10 +1034,6 @@ local function createTooltip(btn, text)
 		hideTooltip()
 	end)
 end
-
-createTooltip(cancelBtn, "Close this dialog without any changes")
-createTooltip(reloadBtn, "Restart the script with update check")
-createTooltip(confirmBtn, "Fully terminate and remove all features")
 
 local exitDialogVisible = false
 
@@ -1729,7 +1740,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.1.0"
+local SCRIPT_VERSION = "1.1.1"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
