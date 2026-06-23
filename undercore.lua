@@ -1266,7 +1266,7 @@ exitBtn.Parent = settingsPage
 
 exitBtn.MouseButton1Click:Connect(function()
 	if exitDialogVisible then return end
-	playRandomPageSound()
+	playSound(SOUND_MODAL, 0.5)
 	showExitDialog()
 end)
 
