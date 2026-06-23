@@ -1360,11 +1360,25 @@ trackConn(RunService.RenderStepped:Connect(function()
 end))
 
 -- ===================
--- INJECTION NOTIFICATION
+-- INJECTION SEQUENCE
 -- ===================
-task.wait(0.5)
-playSound(SOUND_INJECT, 0.8)
-notify("Undercore", "Script injected successfully", 4, GREEN, "success")
+task.spawn(function()
+	task.wait(0.5)
+
+	-- Step 1: Checking for updates
+	playSound(SOUND_NOTIF, 0.5)
+	notify("Undercore", "Checking for updates...", 3, ACCENT, "info")
+	task.wait(2.5)
+
+	-- Step 2: Update found, installing
+	playSound(SOUND_NOTIF, 0.5)
+	notify("Undercore", "Update found. Installing latest version...", 3, ACCENT, "info")
+	task.wait(2.5)
+
+	-- Step 3: Installation complete
+	playSound(SOUND_INJECT, 0.8)
+	notify("Undercore", "Installation complete. Latest version injected.", 4, GREEN, "success")
+end)
 
 -- Expose
 _G.UndercoreNotify = notify
