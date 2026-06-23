@@ -156,10 +156,10 @@ local function notify(title, message, duration, color, notifType)
 	bar.ZIndex = 5
 	bar.Parent = card
 
-	-- Icon (right of strip)
+	-- Icon (right of strip, 48x48 area)
 	local iconArea = Instance.new("Frame")
 	iconArea.Name = "IconArea"
-	iconArea.Size = UDim2.new(0, 36, 0, 0)
+	iconArea.Size = UDim2.new(0, 52, 0, 0)
 	iconArea.Position = UDim2.new(0, 3, 0, 0)
 	iconArea.AutomaticSize = Enum.AutomaticSize.Y
 	iconArea.BackgroundTransparency = 1
@@ -167,19 +167,20 @@ local function notify(title, message, duration, color, notifType)
 
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "NotifIcon"
-	icon.Size = UDim2.new(0, 20, 0, 20)
-	icon.AnchorPoint = Vector2.new(0.5, 0.5)
-	icon.Position = UDim2.new(0.5, 0, 0, 24)
+	icon.Size = UDim2.new(0, 28, 0, 28)
+	icon.AnchorPoint = Vector2.new(0.5, 0)
+	icon.Position = UDim2.new(0.5, 0, 0, 14)
 	icon.BackgroundTransparency = 1
 	icon.Image = iconId
 	icon.ImageColor3 = iconColor
+	icon.ScaleType = Enum.ScaleType.Fit
 	icon.ZIndex = 6
 	icon.Parent = iconArea
 
 	-- Content (right of icon)
 	local content = Instance.new("Frame")
-	content.Size = UDim2.new(1, -42, 0, 0)
-	content.Position = UDim2.new(0, 42, 0, 0)
+	content.Size = UDim2.new(1, -58, 0, 0)
+	content.Position = UDim2.new(0, 58, 0, 0)
 	content.AutomaticSize = Enum.AutomaticSize.Y
 	content.BackgroundTransparency = 1
 	content.Parent = card
@@ -383,21 +384,22 @@ local function createNavButton(name)
 	btn.TextXAlignment = Enum.TextXAlignment.Left
 	btn.BackgroundColor3 = BG_DARK
 	btn.BorderSizePixel = 0
-	btn.Size = UDim2.new(1, 0, 0, 36)
+	btn.Size = UDim2.new(1, 0, 0, 40)
 	btn.Parent = navFrame
 
 	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 38)
+	pad.PaddingLeft = UDim.new(0, 44)
 	pad.Parent = btn
 
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "Icon"
-	icon.Size = UDim2.new(0, 18, 0, 18)
-	icon.Position = UDim2.new(0, 14, 0.5, -9)
+	icon.Size = UDim2.new(0, 22, 0, 22)
+	icon.AnchorPoint = Vector2.new(0, 0.5)
+	icon.Position = UDim2.new(0, 14, 0.5, 0)
 	icon.BackgroundTransparency = 1
 	icon.Image = NAV_ICONS[name] or ""
-	icon.ImageColor3 = TEXT_GRAY
-	icon.ImageTransparency = 0
+	icon.ImageColor3 = Color3.fromRGB(160, 160, 160)
+	icon.ScaleType = Enum.ScaleType.Fit
 	icon.ZIndex = 2
 	icon.Parent = btn
 
@@ -434,16 +436,16 @@ end
 local currentPage = nil
 local pageSwitching = false
 
--- Global green indicator strip on navFrame (leftmost edge)
+-- Global green indicator strip on mainFrame left edge (outside navFrame to avoid UIListLayout)
 local navIndicator = Instance.new("Frame")
 navIndicator.Name = "NavIndicator"
-navIndicator.Size = UDim2.new(0, 3, 0, 36)
-navIndicator.Position = UDim2.new(0, 0, 0, 10)
+navIndicator.Size = UDim2.new(0, 3, 0, 40)
+navIndicator.Position = UDim2.new(0, 0, 0, 50)
 navIndicator.BackgroundColor3 = GREEN
 navIndicator.BorderSizePixel = 0
-navIndicator.ZIndex = 10
+navIndicator.ZIndex = 20
 navIndicator.Visible = false
-navIndicator.Parent = navFrame
+navIndicator.Parent = mainFrame
 
 local function showPage(name)
 	if currentPage == name then return end
@@ -456,7 +458,7 @@ local function showPage(name)
 		local oldData = navButtons[currentPage]
 		oldData.btn.TextColor3 = TEXT_GRAY
 		oldData.btn.BackgroundColor3 = BG_DARK
-		oldData.icon.ImageColor3 = TEXT_GRAY
+		oldData.icon.ImageColor3 = Color3.fromRGB(160, 160, 160)
 	end
 
 	-- Page content sweep
@@ -484,10 +486,10 @@ local function showPage(name)
 		newData.icon.ImageColor3 = GREEN
 	end
 
-	-- Move indicator strip with sweep
+	-- Move indicator strip to active button position
 	local btn = newData and newData.btn
 	if btn then
-		local targetY = btn.AbsolutePosition.Y - navFrame.AbsolutePosition.Y
+		local targetY = btn.AbsolutePosition.Y - mainFrame.AbsolutePosition.Y
 		local targetH = btn.AbsoluteSize.Y
 
 		navIndicator.Visible = true
