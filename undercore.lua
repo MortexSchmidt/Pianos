@@ -1040,11 +1040,14 @@ end
 
 local holdTimer = nil
 local holdCancelled = false
+local holdTriggered = false
 
 local function startHold()
 	holdCancelled = false
+	holdTriggered = false
 	holdTimer = task.delay(5, function()
 		if not holdCancelled then
+			holdTriggered = true
 			showExitDialog()
 		end
 	end)
@@ -1072,6 +1075,10 @@ toggleBtn.MouseLeave:Connect(function()
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
+	if holdTriggered then
+		holdTriggered = false
+		return
+	end
 	if not exitDialogVisible then
 		if menuVisible then closeMenu() else openMenu() end
 	end
@@ -1093,8 +1100,11 @@ end))
 trackConn(UserInputService.InputEnded:Connect(function(input)
 	if input.KeyCode == Enum.KeyCode.F8 then
 		cancelHold()
-		if not exitDialogVisible and not holdCancelled then
-			-- Quick tap, not held long enough for terminate
+		if holdTriggered then
+			holdTriggered = false
+			return
+		end
+		if not exitDialogVisible then
 			if menuVisible then closeMenu() else openMenu() end
 		end
 	end
