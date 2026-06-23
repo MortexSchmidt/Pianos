@@ -1,4 +1,4 @@
--- Undercore v1.3.0 - Custom Cheat Menu
+-- Undercore v1.3.1 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1467,7 +1467,7 @@ _G.Undercore = {
 	InfJump = false, GodMode = false, AntiFling = false,
 }
 
--- FLY (CFrame-based, bypasses anti-fly that detects BodyVelocity)
+-- FLY (CFrame-based, smooth steps to avoid teleport detection, no BodyVelocity)
 local flyEnabled = false
 local flyConn
 
@@ -1503,9 +1503,9 @@ local function setupFly()
 
 		if dir.Magnitude > 0 then
 			local speed = _G.Undercore.FlySpeed
-			-- CFrame teleport (bypasses anti-fly that checks for BodyVelocity)
+			-- Smooth CFrame movement in small steps (anti-teleport: server sees gradual movement)
 			pcall(function()
-				root.CFrame = root.CFrame + dir.Unit * speed * 0.016
+				root.CFrame = root.CFrame + dir.Unit * math.min(speed * 0.016, 8)
 			end)
 		end
 	end)
@@ -1513,21 +1513,37 @@ local function setupFly()
 end
 setupFly()
 
--- SPEED & JUMP & GOD MODE (force-set every frame, pcall for safety)
+-- SPEED (CFrame-based, WalkSpeed stays 16 so server doesn't detect speed change)
+local speedConn
+local function setupSpeed()
+	speedConn = RunService.RenderStepped:Connect(function()
+		local char = player.Character
+		if not char then return end
+		local root = char:FindFirstChild("HumanoidRootPart")
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if not root or not hum then return end
+
+		if _G.Undercore.Speed and not _G.Undercore.Fly then
+			-- Don't change WalkSpeed (server can detect it)
+			-- Instead, move via CFrame in the direction the player is walking
+			local moveDir = hum.MoveDirection
+			if moveDir.Magnitude > 0 then
+				pcall(function()
+					root.CFrame = root.CFrame + moveDir * math.min(_G.Undercore.SpeedVal * 0.016, 8)
+				end)
+			end
+		end
+	end)
+	trackConn(speedConn)
+end
+setupSpeed()
+
+-- JUMP & GOD MODE (force-set every frame, pcall for safety)
 trackConn(RunService.RenderStepped:Connect(function()
 	local char = player.Character
 	if not char then return end
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	if not hum then return end
-
-	-- Speed: force set every frame (bypasses server resets)
-	if _G.Undercore.Speed then
-		pcall(function() hum.WalkSpeed = _G.Undercore.SpeedVal end)
-	else
-		if hum.WalkSpeed ~= 16 and not _G.Undercore.Fly then
-			pcall(function() hum.WalkSpeed = 16 end)
-		end
-	end
 
 	-- Jump: force set every frame
 	if _G.Undercore.Jump then
@@ -1864,7 +1880,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.3.0"
+local SCRIPT_VERSION = "1.3.1"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
