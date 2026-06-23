@@ -124,9 +124,9 @@ end
 
 -- Notification icons
 local NOTIF_ICONS = {
-	info = "rbxassetid://73066542305011",
-	error = "rbxassetid://92764807583562",
-	success = "rbxassetid://110829184303076",
+	info = "rbxassetid://72432575303550",
+	error = "rbxassetid://117665558668208",
+	success = "rbxassetid://92239767679742",
 }
 
 local function notify(title, message, duration, color, notifType)
@@ -403,11 +403,11 @@ local pages = {}
 local navButtons = {}
 
 local NAV_ICONS = {
-	["Movement"] = "rbxassetid://74200429526475",
-	["Combat"] = "rbxassetid://134800816586514",
-	["Visuals"] = "rbxassetid://124299594122884",
-	["Player"] = "rbxassetid://95591265192473",
-	["Settings"] = "rbxassetid://79390594829837",
+	["Movement"] = "rbxassetid://79374753045626",
+	["Combat"] = "rbxassetid://111071395331628",
+	["Visuals"] = "rbxassetid://109825947197428",
+	["Player"] = "rbxassetid://114284249768955",
+	["Settings"] = "rbxassetid://93982901670694",
 }
 
 local function createNavButton(name)
@@ -873,7 +873,7 @@ local infoIcon = Instance.new("ImageLabel")
 infoIcon.Size = UDim2.new(0, 14, 0, 14)
 infoIcon.Position = UDim2.new(0, 30, 0, 190)
 infoIcon.BackgroundTransparency = 1
-infoIcon.Image = "rbxassetid://73066542305011"
+infoIcon.Image = "rbxassetid://72432575303550"
 infoIcon.ImageColor3 = ACCENT
 infoIcon.ScaleType = Enum.ScaleType.Fit
 infoIcon.ZIndex = 11
@@ -906,7 +906,7 @@ local function createTooltip(btn, text)
 	infoIcon.Size = UDim2.new(0, 16, 0, 16)
 	infoIcon.Position = UDim2.new(0, 8, 0, 6)
 	infoIcon.BackgroundTransparency = 1
-	infoIcon.Image = "rbxassetid://73066542305011"
+	infoIcon.Image = "rbxassetid://72432575303550"
 	infoIcon.ImageColor3 = ACCENT
 	infoIcon.ScaleType = Enum.ScaleType.Fit
 	infoIcon.ZIndex = 101
