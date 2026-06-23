@@ -1121,11 +1121,22 @@ reloadBtn.MouseButton1Click:Connect(function()
 	local ok, content = pcall(function()
 		return game:HttpGet(reloadUrl, true)
 	end)
+	if not ok or not content then
+		-- Reload failed - try raw.githubusercontent
+		reloadUrl = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
+		ok, content = pcall(function()
+			return game:HttpGet(reloadUrl, true)
+		end)
+	end
 	if ok and content then
 		local fn, err = loadstring(content)
 		if fn then
 			fn()
+		else
+			print("[Undercore] Reload failed - loadstring error:", err)
 		end
+	else
+		print("[Undercore] Reload failed - HttpGet error:", content)
 	end
 end)
 
