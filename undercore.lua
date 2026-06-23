@@ -115,14 +115,25 @@ local function dismiss(data)
 	recalcPositions()
 end
 
-local function notify(title, message, duration, color, isError)
+-- Notification icons
+local NOTIF_ICONS = {
+	info = "rbxassetid://139569684809135",
+	error = "rbxassetid://84067697271969",
+	success = "rbxassetid://119144319810956",
+}
+
+local function notify(title, message, duration, color, notifType)
 	duration = duration or 4
 	color = color or ACCENT
-	if isError then
+	notifType = notifType or "info"
+	if notifType == "error" then
 		playSound(SOUND_ERROR, 0.5)
 	else
 		playSound(SOUND_NOTIF, 0.5)
 	end
+	local iconId = NOTIF_ICONS[notifType] or NOTIF_ICONS.info
+	local iconColor = notifType == "error" and RED or color
+
 	local y = 0
 	for _, n in ipairs(notifications) do
 		if not n.dismissed then y = y + n.height + 6 end
@@ -137,6 +148,7 @@ local function notify(title, message, duration, color, isError)
 	card.Position = UDim2.new(0, NOTIF_WIDTH + 10, 0, y)
 	card.Parent = container
 
+	-- Green/accent strip (leftmost)
 	local bar = Instance.new("Frame")
 	bar.Size = UDim2.new(0, 3, 1, 0)
 	bar.BackgroundColor3 = color
@@ -144,9 +156,30 @@ local function notify(title, message, duration, color, isError)
 	bar.ZIndex = 5
 	bar.Parent = card
 
+	-- Icon (right of strip)
+	local iconArea = Instance.new("Frame")
+	iconArea.Name = "IconArea"
+	iconArea.Size = UDim2.new(0, 36, 0, 0)
+	iconArea.Position = UDim2.new(0, 3, 0, 0)
+	iconArea.AutomaticSize = Enum.AutomaticSize.Y
+	iconArea.BackgroundTransparency = 1
+	iconArea.Parent = card
+
+	local icon = Instance.new("ImageLabel")
+	icon.Name = "NotifIcon"
+	icon.Size = UDim2.new(0, 20, 0, 20)
+	icon.AnchorPoint = Vector2.new(0.5, 0.5)
+	icon.Position = UDim2.new(0.5, 0, 0, 24)
+	icon.BackgroundTransparency = 1
+	icon.Image = iconId
+	icon.ImageColor3 = iconColor
+	icon.ZIndex = 6
+	icon.Parent = iconArea
+
+	-- Content (right of icon)
 	local content = Instance.new("Frame")
-	content.Size = UDim2.new(1, -3, 0, 0)
-	content.Position = UDim2.new(0, 3, 0, 0)
+	content.Size = UDim2.new(1, -42, 0, 0)
+	content.Position = UDim2.new(0, 42, 0, 0)
 	content.AutomaticSize = Enum.AutomaticSize.Y
 	content.BackgroundTransparency = 1
 	content.Parent = card
@@ -154,7 +187,7 @@ local function notify(title, message, duration, color, isError)
 	local pad = Instance.new("UIPadding")
 	pad.PaddingTop = UDim.new(0, 12)
 	pad.PaddingBottom = UDim.new(0, 12)
-	pad.PaddingLeft = UDim.new(0, 14)
+	pad.PaddingLeft = UDim.new(0, 10)
 	pad.PaddingRight = UDim.new(0, 14)
 	pad.Parent = content
 
@@ -667,7 +700,7 @@ createLabel(settingsPage, "Settings")
 createLabel(settingsPage, "Toggle Key: RightShift / K / F8")
 local testNotif = createToggle(settingsPage, "Test Notification", function(v)
 	if v then
-		notify("Undercore", "Test notification works!", 3, ACCENT)
+		notify("Undercore", "Test notification works!", 3, ACCENT, "info")
 		task.wait(1)
 	end
 end)
@@ -1099,7 +1132,7 @@ end)
 -- ===================
 task.wait(0.5)
 playSound(SOUND_INJECT, 0.8)
-notify("Undercore", "Script injected successfully", 4, GREEN)
+notify("Undercore", "Script injected successfully", 4, GREEN, "success")
 
 -- Expose
 _G.UndercoreNotify = notify
