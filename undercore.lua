@@ -126,7 +126,7 @@ end
 local NOTIF_ICONS = {
 	info = "i",
 	error = "!",
-	success = "\u2713",
+	success = "+",
 }
 
 local function notify(title, message, duration, color, notifType)
@@ -406,11 +406,11 @@ local pages = {}
 local navButtons = {}
 
 local NAV_ICONS = {
-	["Movement"] = "\u26A1",
-	["Combat"] = "\u2694",
-	["Visuals"] = "\u25C9",
-	["Player"] = "\u263A",
-	["Settings"] = "\u2699",
+	["Movement"] = ">",
+	["Combat"] = "*",
+	["Visuals"] = "O",
+	["Player"] = "@",
+	["Settings"] = "#",
 }
 
 local function createNavButton(name)
@@ -1129,7 +1129,7 @@ reloadBtn.MouseButton1Click:Connect(function()
 	notifGui:Destroy()
 
 	-- Actually reload the script
-	local reloadUrl = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua?t=" .. tostring(os.time())
+	local reloadUrl = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
 	local ok, content = pcall(function()
 		return game:HttpGet(reloadUrl, true)
 	end)
@@ -1663,7 +1663,7 @@ end))
 -- INJECTION SEQUENCE
 -- ===================
 local SCRIPT_VERSION = "1.0.3"
-local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?t=" .. tostring(os.time())
+local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
 
 task.spawn(function()
 	task.wait(0.5)
