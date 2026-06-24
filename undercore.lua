@@ -1,4 +1,4 @@
--- Undercore v1.7.3 - Custom Cheat Menu
+-- Undercore v1.7.4 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1258,13 +1258,13 @@ reloadBtn.MouseButton1Click:Connect(function()
 	notifGui:Destroy()
 
 	-- Actually reload the script
-	local reloadUrl = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua?v=" .. tostring(tick())
+	local reloadUrl = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/undercore.lua/raw?ref=main&v=" .. tostring(tick())
 	local ok, content = pcall(function()
 		return game:HttpGet(reloadUrl, true)
 	end)
 	if not ok or not content then
-		-- Reload failed - try jsDelivr
-		reloadUrl = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua?v=" .. tostring(tick())
+		-- Reload failed - try GitHub raw
+		reloadUrl = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua?v=" .. tostring(tick())
 		ok, content = pcall(function()
 			return game:HttpGet(reloadUrl, true)
 		end)
@@ -2123,7 +2123,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.7.3"
+local SCRIPT_VERSION = "1.7.4"
 local GITLAB_API = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/"
 local SCRIPT_URL_PRIMARY = GITLAB_API .. "undercore.lua/raw?ref=main"
 local VERSION_URL_PRIMARY = GITLAB_API .. "version.txt/raw?ref=main"
@@ -2169,32 +2169,18 @@ local function hideUpdateBanner()
 	updateText.Visible = false
 end
 
--- Click banner to reinject
+-- Click banner to go to Settings with update dialog
 updateBanner.MouseButton1Click:Connect(function()
-	notify("Undercore", "Restarting with update...", 3, ACCENT, "info")
-	task.wait(1)
-	local success = false
-	local oldConnections = _G.UndercoreConnections
-
-	pcall(function()
-		loadstring(game:HttpGet(SCRIPT_URL_PRIMARY .. "&v=" .. tostring(tick()), true))()
-		success = true
-	end)
-	if not success then
-		pcall(function()
-			loadstring(game:HttpGet(SCRIPT_URL_FALLBACK .. "?v=" .. tostring(tick()), true))()
-			success = true
-		end)
+	-- Open menu if not visible
+	if not menuVisible then
+		openMenu()
+		task.wait(0.5)
 	end
-	if success then
-		if oldConnections then
-			for _, conn in ipairs(oldConnections) do
-				pcall(function() conn:Disconnect() end)
-			end
-		end
-	else
-		notify("Undercore", "Update failed. Try again later.", 3, RED, "error")
-	end
+	-- Switch to Settings page
+	showPage("Settings")
+	task.wait(0.5)
+	-- Show the update/exit dialog
+	showExitDialog()
 end)
 
 task.spawn(function()
@@ -2209,7 +2195,7 @@ task.spawn(function()
 
 	if remoteVersion and remoteVersion ~= "" then
 		if remoteVersion ~= SCRIPT_VERSION then
-			notify("Undercore", "Update found (v" .. remoteVersion .. "). Click banner to restart.", 4, ACCENT, "info")
+			notify("Undercore", "Update found (v" .. remoteVersion .. "). Click banner to update.", 4, ACCENT, "info")
 			showUpdateBanner(remoteVersion)
 		else
 			notify("Undercore", "Latest version (v" .. SCRIPT_VERSION .. ") injected.", 4, GREEN, "success")
@@ -2230,7 +2216,7 @@ task.spawn(function()
 			if latestVersion and latestVersion ~= "" and latestVersion ~= SCRIPT_VERSION then
 				if not updateBanner.Visible then
 					showUpdateBanner(latestVersion)
-					notify("Undercore", "New update available (v" .. latestVersion .. "). Click banner to restart.", 5, ACCENT, "info")
+					notify("Undercore", "New update available (v" .. latestVersion .. "). Click banner to update.", 5, ACCENT, "info")
 				end
 			end
 		end
