@@ -1,4 +1,4 @@
--- Undercore v1.5.0 - Custom Cheat Menu
+-- Undercore v1.5.1 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -227,7 +227,7 @@ local function notify(title, message, duration, color, notifType)
 	lay.Parent = content
 
 	local status = Instance.new("TextLabel")
-	status.Font = Enum.Font.GothamBold
+	status.Font = Enum.Font.RobotoBold
 	status.TextSize = 10
 	status.TextColor3 = color
 	status.TextXAlignment = Enum.TextXAlignment.Left
@@ -239,7 +239,7 @@ local function notify(title, message, duration, color, notifType)
 	status.Parent = content
 
 	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Font = Enum.Font.GothamBold
+	titleLabel.Font = Enum.Font.RobotoBold
 	titleLabel.TextSize = 14
 	titleLabel.TextColor3 = TEXT_WHITE
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -354,7 +354,7 @@ end)
 titleBar.Parent = mainFrame
 
 local titleText = Instance.new("TextLabel")
-titleText.Font = Enum.Font.GothamBold
+titleText.Font = Enum.Font.Michroma
 titleText.TextSize = 16
 titleText.TextColor3 = TEXT_WHITE
 titleText.TextXAlignment = Enum.TextXAlignment.Left
@@ -366,7 +366,7 @@ titleText.Text = "Undercore"
 titleText.Parent = titleBar
 
 local closeBtn = Instance.new("TextButton")
-closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Font = Enum.Font.RobotoBold
 closeBtn.TextSize = 14
 closeBtn.TextColor3 = TEXT_GRAY
 closeBtn.Text = "X"
@@ -790,7 +790,7 @@ end
 
 local function createLabel(parent, text)
 	local label = Instance.new("TextLabel")
-	label.Font = Enum.Font.GothamBold
+	label.Font = Enum.Font.RobotoBold
 	label.TextSize = 14
 	label.TextColor3 = ACCENT
 	label.TextXAlignment = Enum.TextXAlignment.Left
@@ -907,7 +907,7 @@ dialogFrame.ZIndex = 10
 dialogFrame.Parent = blurFrame
 
 local dialogTitle = Instance.new("TextLabel")
-dialogTitle.Font = Enum.Font.GothamBold
+dialogTitle.Font = Enum.Font.RobotoBold
 dialogTitle.TextSize = 16
 dialogTitle.TextColor3 = TEXT_WHITE
 dialogTitle.TextXAlignment = Enum.TextXAlignment.Center
@@ -932,7 +932,7 @@ dialogMsg.Text = "Select an action:"
 dialogMsg.Parent = dialogFrame
 
 local cancelBtn = Instance.new("TextButton")
-cancelBtn.Font = Enum.Font.GothamBold
+cancelBtn.Font = Enum.Font.RobotoBold
 cancelBtn.TextSize = 13
 cancelBtn.TextColor3 = TEXT_WHITE
 cancelBtn.Text = "Cancel"
@@ -943,7 +943,7 @@ cancelBtn.Position = UDim2.new(0, 20, 0, 145)
 cancelBtn.Parent = dialogFrame
 
 local reloadBtn = Instance.new("TextButton")
-reloadBtn.Font = Enum.Font.GothamBold
+reloadBtn.Font = Enum.Font.RobotoBold
 reloadBtn.TextSize = 13
 reloadBtn.TextColor3 = TEXT_WHITE
 reloadBtn.Text = "Reload"
@@ -954,7 +954,7 @@ reloadBtn.Position = UDim2.new(0.5, -50, 0, 145)
 reloadBtn.Parent = dialogFrame
 
 local confirmBtn = Instance.new("TextButton")
-confirmBtn.Font = Enum.Font.GothamBold
+confirmBtn.Font = Enum.Font.RobotoBold
 confirmBtn.TextSize = 13
 confirmBtn.TextColor3 = TEXT_WHITE
 confirmBtn.Text = "Terminate"
@@ -1287,7 +1287,7 @@ local testNotif = createToggle(settingsPage, "Test Notification", function(v)
 end)
 
 local exitBtn = Instance.new("TextButton")
-exitBtn.Font = Enum.Font.GothamBold
+exitBtn.Font = Enum.Font.RobotoBold
 exitBtn.TextSize = 13
 exitBtn.TextColor3 = TEXT_WHITE
 exitBtn.Text = "TERMINATE SCRIPT"
@@ -1315,7 +1315,7 @@ local scriptReady = false
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleBtn"
 toggleBtn.Text = "U"
-toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.Font = Enum.Font.RobotoBold
 toggleBtn.TextSize = 14
 toggleBtn.TextColor3 = TEXT_WHITE
 toggleBtn.BackgroundColor3 = BG_DARK
@@ -2030,7 +2030,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.5.0"
+local SCRIPT_VERSION = "1.5.1"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
