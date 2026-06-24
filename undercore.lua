@@ -1,4 +1,4 @@
--- Undercore v1.7.5 - Custom Cheat Menu
+-- Undercore v1.7.6 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1766,11 +1766,31 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
+	-- Anti-fling bypass: increase simulation radius for physics authority
+	pcall(function() setsimulationradius(math.huge) end)
+	pcall(function() sethiddenproperty(root, "SimulationRadius", math.huge) end)
+
 	local function FPos(basePart, pos, ang)
 		root.CFrame = CFrame.new(basePart.Position) * pos * ang
 		char:SetPrimaryPartCFrame(CFrame.new(basePart.Position) * pos * ang)
 		root.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
 		root.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+		-- Anti-fling bypass: directly set target's velocity too
+		pcall(function()
+			basePart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			basePart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+		end)
+		-- Also try to fling all target's body parts
+		if tChar then
+			for _, part in ipairs(tChar:GetDescendants()) do
+				if part:IsA("BasePart") then
+					pcall(function()
+						part.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+						part.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+					end)
+				end
+			end
+		end
 	end
 
 	local function SFBasePart(basePart)
@@ -2162,7 +2182,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.7.5"
+local SCRIPT_VERSION = "1.7.6"
 local GITLAB_API = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/"
 local SCRIPT_URL_PRIMARY = GITLAB_API .. "undercore.lua/raw?ref=main"
 local VERSION_URL_PRIMARY = GITLAB_API .. "version.txt/raw?ref=main"
