@@ -1,4 +1,4 @@
--- Undercore v1.7.1 - Custom Cheat Menu
+-- Undercore v1.7.2 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1531,15 +1531,32 @@ local flyEnabled = false
 local function setupFly()
 	trackConn(RunService.RenderStepped:Connect(function()
 		if not _G.Undercore.Fly then
-			if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
-			if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
 			if flyEnabled then
 				flyEnabled = false
+				if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
+				if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
 				local char = player.Character
-				local hum = char and char:FindFirstChildOfClass("Humanoid")
-				if hum then
-					hum.PlatformStand = false
-					pcall(function() hum:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+				if char then
+					local root = char:FindFirstChild("HumanoidRootPart")
+					local hum = char:FindFirstChildOfClass("Humanoid")
+					if root then
+						pcall(function()
+							root.Velocity = Vector3.zero
+							root.RotVelocity = Vector3.zero
+							root.AssemblyLinearVelocity = Vector3.zero
+							root.AssemblyAngularVelocity = Vector3.zero
+						end)
+					end
+					if hum then
+						pcall(function()
+							hum.PlatformStand = false
+							hum.Sit = false
+							hum.WalkSpeed = _G.Undercore.Speed and _G.Undercore.SpeedVal or 16
+							hum.JumpPower = 50
+							hum.JumpHeight = 7.2
+							hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+						end)
+					end
 				end
 			end
 			return
@@ -1705,7 +1722,8 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING (spin in place on Heartbeat, physics collision flings anyone who touches you)
+-- FLING (classic: set RotVelocity on Heartbeat, no PlatformStand, no velocity zeroing)
+-- Player walks normally, but anyone who touches them gets flung by angular momentum
 local flingHeartbeatConn
 local flingBusy = false
 
@@ -1715,17 +1733,10 @@ local function startFlingSpin()
 		local char = player.Character
 		if not char then return end
 		local root = char:FindFirstChild("HumanoidRootPart")
-		local hum = char:FindFirstChildOfClass("Humanoid")
 		if not root then return end
 		pcall(function()
 			root.RotVelocity = Vector3.new(0, 99999, 0)
 			root.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
-			-- Zero linear velocity so we don't fly ourselves
-			root.Velocity = Vector3.zero
-			root.AssemblyLinearVelocity = Vector3.zero
-			if hum then
-				hum.PlatformStand = true
-			end
 		end)
 	end)
 end
@@ -1738,32 +1749,21 @@ local function stopFlingSpin()
 	local char = player.Character
 	if char then
 		local root = char:FindFirstChild("HumanoidRootPart")
-		local hum = char:FindFirstChildOfClass("Humanoid")
 		if root then
 			pcall(function()
 				root.RotVelocity = Vector3.zero
 				root.AssemblyAngularVelocity = Vector3.zero
-				root.Velocity = Vector3.zero
-				root.AssemblyLinearVelocity = Vector3.zero
-			end)
-		end
-		if hum then
-			pcall(function()
-				hum.PlatformStand = false
-				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 			end)
 		end
 	end
 end
 
--- FLING AURA: spin in place, anyone who touches you gets flung by physics
+-- FLING AURA: spin in place, anyone who touches you gets flung
 trackConn(RunService.Heartbeat:Connect(function()
 	if _G.Undercore.Fling and not flingBusy then
 		startFlingSpin()
-	else
-		if not _G.Undercore.Fling and not _G.Undercore.FlingAuto and flingHeartbeatConn then
-			stopFlingSpin()
-		end
+	elseif not _G.Undercore.Fling and not _G.Undercore.FlingAuto and flingHeartbeatConn then
+		stopFlingSpin()
 	end
 end))
 
@@ -1777,8 +1777,7 @@ task.spawn(function()
 		local char = player.Character
 		if not char then continue end
 		local root = char:FindFirstChild("HumanoidRootPart")
-		local hum = char:FindFirstChildOfClass("Humanoid")
-		if not root or not hum then continue end
+		if not root then continue end
 
 		flingBusy = true
 		local savedCFrame = root.CFrame
@@ -1793,8 +1792,7 @@ task.spawn(function()
 					pcall(function()
 						root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
 						root.RotVelocity = Vector3.new(0, 99999, 0)
-						root.Velocity = Vector3.zero
-						root.AssemblyLinearVelocity = Vector3.zero
+						root.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
 					end)
 					task.wait(0.07)
 				end
@@ -1806,10 +1804,6 @@ task.spawn(function()
 			root.CFrame = savedCFrame + Vector3.new(0, 3, 0)
 			root.RotVelocity = Vector3.zero
 			root.AssemblyAngularVelocity = Vector3.zero
-			root.Velocity = Vector3.zero
-			root.AssemblyLinearVelocity = Vector3.zero
-			hum.PlatformStand = false
-			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 		end)
 
 		if not _G.Undercore.Fling then
@@ -2053,7 +2047,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.7.1"
+local SCRIPT_VERSION = "1.7.2"
 local GITLAB_API = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/"
 local SCRIPT_URL_PRIMARY = GITLAB_API .. "undercore.lua/raw?ref=main"
 local VERSION_URL_PRIMARY = GITLAB_API .. "version.txt/raw?ref=main"
