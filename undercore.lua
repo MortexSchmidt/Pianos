@@ -1,4 +1,4 @@
--- Undercore v1.6.1 - Custom Cheat Menu
+-- Undercore v1.6.2 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -2030,16 +2030,17 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.6.1"
-local VERSION_URL_BASE = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
-local SCRIPT_URL_BASE = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua"
-local VERSION_URL_FALLBACK = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
-local SCRIPT_URL_FALLBACK = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
+local SCRIPT_VERSION = "1.6.2"
+local VERSION_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
+local SCRIPT_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
+local VERSION_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
+local SCRIPT_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua"
 
 local function fetchRemoteVersion()
 	local version = nil
+	-- Try raw GitHub first (less caching)
 	pcall(function()
-		version = game:HttpGet(VERSION_URL_BASE .. "?v=" .. tostring(tick()), true)
+		version = game:HttpGet(VERSION_URL_PRIMARY .. "?v=" .. tostring(tick()), true)
 		version = version:gsub("%s+", "")
 	end)
 	if not version or version == "" then
@@ -2069,7 +2070,7 @@ updateBanner.MouseButton1Click:Connect(function()
 	task.wait(1)
 	local success = false
 	pcall(function()
-		loadstring(game:HttpGet(SCRIPT_URL_BASE .. "?v=" .. tostring(tick()), true))()
+		loadstring(game:HttpGet(SCRIPT_URL_PRIMARY .. "?v=" .. tostring(tick()), true))()
 		success = true
 	end)
 	if not success then
@@ -2115,10 +2116,10 @@ task.spawn(function()
 	scriptReady = true
 	toggleBtn.Visible = true
 
-	-- Background real-time update check (every 30 seconds)
+	-- Background real-time update check (every 10 seconds)
 	task.spawn(function()
 		while true do
-			task.wait(30)
+			task.wait(10)
 			local latestVersion = fetchRemoteVersion()
 			if latestVersion and latestVersion ~= "" and latestVersion ~= SCRIPT_VERSION then
 				if not updateBanner.Visible then
