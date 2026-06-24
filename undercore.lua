@@ -1,7 +1,7 @@
--- Undercore v2.0.0 - Custom Cheat Menu
+-- Undercore v2.0.1 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.0.0"
+local SCRIPT_VERSION = "2.0.1"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -2081,11 +2081,31 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING (refactored: no spinning/ragdoll for local player, impulse via collision + direct target velocity)
+-- FLING (contactless: invisible hitbox impulse via Heartbeat, no teleport into target)
 local flingBusy = false
 local oldFallenHeight = nil
 local autoFlingSavedPos = nil
 local flingChar = nil
+local flingHitbox = nil
+
+-- Create or reuse invisible hitbox part for contactless impulse transfer
+local function getFlingHitbox()
+	if flingHitbox and flingHitbox.Parent then
+		return flingHitbox
+	end
+	local part = Instance.new("Part")
+	part.Name = "FlingHitbox"
+	part.Size = Vector3.new(2, 2, 2)
+	part.Transparency = 1
+	part.CanCollide = true
+	part.CanQuery = false
+	part.CanTouch = false
+	part.Anchored = false
+	part.Massless = true
+	part.Parent = Workspace
+	flingHitbox = part
+	return part
+end
 
 local function flingTarget(targetPlayer, duration, returnCFrame)
 	if flingBusy then return end
@@ -2112,7 +2132,6 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	if not tRoot then return end
 
 	flingBusy = true
-	local savedCFrame = returnCFrame or root.CFrame
 
 	-- Safety timeout
 	local safetyTimer = task.delay(10, function()
@@ -2123,13 +2142,13 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	pcall(function() setsimulationradius(1e9) end)
 	pcall(function() if sethiddenproperty then sethiddenproperty(root, "SimulationRadius", 1e9) end end)
 
-	-- Disable FallenPartsDestroyHeight
+	-- Disable FallenPartsDestroyHeight so flung target doesn't get destroyed
 	if not oldFallenHeight then
 		oldFallenHeight = Workspace.FallenPartsDestroyHeight
 	end
 	Workspace.FallenPartsDestroyHeight = 0/0
 
-	-- Keep local player upright with AlignOrientation (no spinning/ragdoll)
+	-- Keep local player upright (prevent incidental spinning from physics)
 	local alignOri = Instance.new("AlignOrientation")
 	alignOri.Mode = Enum.OrientationAlignmentMode.OneAttachment
 	alignOri.Attachment0 = Instance.new("Attachment", root)
@@ -2138,7 +2157,7 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	alignOri.CFrame = CFrame.new(0, 0, 0)
 	alignOri.Parent = root
 
-	-- Keep local player in place with AlignPosition (no sticking to target)
+	-- Soft position stability (follows player's natural movement, resists external push)
 	local alignPos = Instance.new("AlignPosition")
 	alignPos.Mode = Enum.PositionAlignmentMode.OneAttachment
 	alignPos.Attachment0 = Instance.new("Attachment", root)
@@ -2150,47 +2169,50 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	hum.PlatformStand = false
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
-	local function applyFlingImpulse()
-		pcall(function()
-			-- Direct velocity on target parts (client-side, but some replicates)
-			tRoot.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-			tRoot.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
-			tRoot.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-			tRoot.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+	-- Get invisible hitbox for contactless impulse
+	local hitbox = getFlingHitbox()
 
-			-- Also apply to all target body parts
-			for _, part in ipairs(tChar:GetDescendants()) do
-				if part:IsA("BasePart") and part.CanCollide then
-					part.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-					part.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
-					part.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-					part.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
-				end
-			end
-
-			-- Teleport our root into target for collision-based impulse transfer
-			-- But keep us upright via AlignOrientation + AlignPosition
-			local offset = CFrame.new(math.random(-2, 2), 0, math.random(-2, 2))
-			root.CFrame = tRoot.CFrame * offset
-			-- Set our velocity high for collision impulse, AlignPosition will pull us back
-			root.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-			root.AssemblyAngularVelocity = Vector3.zero  -- we don't spin
-		end)
-	end
-
-	-- Quick burst: apply impulse rapidly for the duration
+	-- Contactless fling: project hitbox at target with extreme velocity each Heartbeat
+	-- Physics engine processes collision → target gets flung
+	-- Local player never touches target → no sticking
 	local timeToWait = duration or 2
 	local startTime = tick()
+	local conn
+	conn = RunService.Heartbeat:Connect(function()
+		if not tHum or tHum.Health <= 0 or not tRoot or not tRoot.Parent then
+			return
+		end
+		pcall(function()
+			-- Project hitbox onto target position with extreme velocity
+			hitbox.CFrame = tRoot.CFrame
+			hitbox.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			hitbox.AssemblyAngularVelocity = Vector3.new(math.huge, math.huge, math.huge)
+			hitbox.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			hitbox.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+		end)
+		-- Update AlignPosition to follow player's current position (no locking)
+		alignPos.Position = root.Position
+	end)
+
+	-- Wait for duration
 	repeat
-		if tHum and tHum.Health > 0 and tRoot and tRoot.Parent then
-			applyFlingImpulse()
-			-- Update AlignPosition target to our saved position so we don't stick
-			alignPos.Position = savedCFrame.Position
-			task.wait(0.02)
-		else
+		if not (tHum and tHum.Health > 0 and tRoot and tRoot.Parent) then
 			break
 		end
+		task.wait(0.02)
 	until startTime + timeToWait < tick() or not _G.Undercore.Fling or not _G.Undercore.FlingAuto
+
+	-- Disconnect Heartbeat
+	if conn then
+		pcall(function() conn:Disconnect() end)
+	end
+
+	-- Park hitbox far away
+	pcall(function()
+		hitbox.CFrame = CFrame.new(0, -1e6, 0)
+		hitbox.AssemblyLinearVelocity = Vector3.zero
+		hitbox.AssemblyAngularVelocity = Vector3.zero
+	end)
 
 	-- Cleanup: remove AlignOrientation and AlignPosition
 	pcall(function()
@@ -2206,12 +2228,11 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 
-	-- Restore position
-	if returnCFrame or not _G.Undercore.FlingAuto then
+	-- No teleport happened — player stays where they are
+	-- Only restore if explicit returnCFrame was provided
+	if returnCFrame then
 		pcall(function()
-			root.CFrame = savedCFrame * CFrame.new(0, 0.5, 0)
-			root.Velocity = Vector3.zero
-			root.RotVelocity = Vector3.zero
+			root.CFrame = returnCFrame * CFrame.new(0, 0.5, 0)
 			root.AssemblyLinearVelocity = Vector3.zero
 			root.AssemblyAngularVelocity = Vector3.zero
 			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
