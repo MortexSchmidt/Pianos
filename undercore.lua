@@ -1,7 +1,7 @@
--- Undercore v2.0.2 - Custom Cheat Menu
+-- Undercore v2.0.3 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.0.2"
+local SCRIPT_VERSION = "2.0.3"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -2081,7 +2081,7 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING (contactless: direct velocity on target via simulation radius, no teleport, no constraints on local player)
+-- FLING (refactored: no spinning/ragdoll for local player, impulse via collision + direct target velocity)
 local flingBusy = false
 local oldFallenHeight = nil
 local autoFlingSavedPos = nil
@@ -2112,64 +2112,110 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	if not tRoot then return end
 
 	flingBusy = true
+	local savedCFrame = returnCFrame or root.CFrame
 
 	-- Safety timeout
 	local safetyTimer = task.delay(10, function()
 		flingBusy = false
 	end)
 
-	-- Increase simulation radius for physics authority over target
+	-- Increase simulation radius for physics authority
 	pcall(function() setsimulationradius(1e9) end)
 	pcall(function() if sethiddenproperty then sethiddenproperty(root, "SimulationRadius", 1e9) end end)
 
-	-- Disable FallenPartsDestroyHeight so flung target doesn't get destroyed
+	-- Disable FallenPartsDestroyHeight
 	if not oldFallenHeight then
 		oldFallenHeight = Workspace.FallenPartsDestroyHeight
 	end
 	Workspace.FallenPartsDestroyHeight = 0/0
 
-	-- NO constraints on local player — no AlignOrientation, no AlignPosition
-	-- Local player is completely untouched, stays where they are
+	-- Keep local player upright with AlignOrientation (no spinning/ragdoll)
+	local alignOri = Instance.new("AlignOrientation")
+	alignOri.Mode = Enum.OrientationAlignmentMode.OneAttachment
+	alignOri.Attachment0 = Instance.new("Attachment", root)
+	alignOri.MaxTorque = math.huge
+	alignOri.Responsiveness = 200
+	alignOri.CFrame = CFrame.new(0, 0, 0)
+	alignOri.Parent = root
 
-	-- Contactless fling: directly set extreme velocity on target's parts each Heartbeat
-	-- With simulation radius 1e9, client has physics authority → velocity replicates to server
-	local timeToWait = duration or 2
-	local startTime = tick()
-	local conn
-	conn = RunService.Heartbeat:Connect(function()
-		if not tHum or tHum.Health <= 0 or not tRoot or not tRoot.Parent then
-			return
-		end
+	-- Keep local player in place with AlignPosition (no sticking to target)
+	local alignPos = Instance.new("AlignPosition")
+	alignPos.Mode = Enum.PositionAlignmentMode.OneAttachment
+	alignPos.Attachment0 = Instance.new("Attachment", root)
+	alignPos.MaxForce = math.huge
+	alignPos.Responsiveness = 100
+	alignPos.Position = root.Position
+	alignPos.Parent = root
+
+	hum.PlatformStand = false
+	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+	local function applyFlingImpulse()
 		pcall(function()
-			-- Extreme velocity on target root
+			-- Direct velocity on target parts (client-side, but some replicates)
 			tRoot.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
 			tRoot.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
 			tRoot.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
 			tRoot.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
 
-			-- Also apply to all target body parts for maximum effect
+			-- Also apply to all target body parts
 			for _, part in ipairs(tChar:GetDescendants()) do
-				if part:IsA("BasePart") then
+				if part:IsA("BasePart") and part.CanCollide then
 					part.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
 					part.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
 					part.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
 					part.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
 				end
 			end
-		end)
-	end)
 
-	-- Wait for duration
+			-- Teleport our root into target for collision-based impulse transfer
+			-- But keep us upright via AlignOrientation + AlignPosition
+			local offset = CFrame.new(math.random(-2, 2), 0, math.random(-2, 2))
+			root.CFrame = tRoot.CFrame * offset
+			-- Set our velocity high for collision impulse, AlignPosition will pull us back
+			root.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			root.AssemblyAngularVelocity = Vector3.zero  -- we don't spin
+		end)
+	end
+
+	-- Quick burst: apply impulse rapidly for the duration
+	local timeToWait = duration or 2
+	local startTime = tick()
 	repeat
-		if not (tHum and tHum.Health > 0 and tRoot and tRoot.Parent) then
+		if tHum and tHum.Health > 0 and tRoot and tRoot.Parent then
+			applyFlingImpulse()
+			-- Update AlignPosition target to our saved position so we don't stick
+			alignPos.Position = savedCFrame.Position
+			task.wait(0.02)
+		else
 			break
 		end
-		task.wait(0.02)
 	until startTime + timeToWait < tick() or not _G.Undercore.Fling or not _G.Undercore.FlingAuto
 
-	-- Disconnect Heartbeat
-	if conn then
-		pcall(function() conn:Disconnect() end)
+	-- Cleanup: remove AlignOrientation and AlignPosition
+	pcall(function()
+		if alignOri then
+			if alignOri.Attachment0 then alignOri.Attachment0:Destroy() end
+			alignOri:Destroy()
+		end
+		if alignPos then
+			if alignPos.Attachment0 then alignPos.Attachment0:Destroy() end
+			alignPos:Destroy()
+		end
+	end)
+
+	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+
+	-- Restore position
+	if returnCFrame or not _G.Undercore.FlingAuto then
+		pcall(function()
+			root.CFrame = savedCFrame * CFrame.new(0, 0.5, 0)
+			root.Velocity = Vector3.zero
+			root.RotVelocity = Vector3.zero
+			root.AssemblyLinearVelocity = Vector3.zero
+			root.AssemblyAngularVelocity = Vector3.zero
+			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+		end)
 	end
 
 	if oldFallenHeight then
