@@ -1,7 +1,7 @@
--- Undercore v1.9.8 - Custom Cheat Menu
+-- Undercore v2.0.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.9.8"
+local SCRIPT_VERSION = "2.0.0"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -2081,7 +2081,7 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING (based on zqyDSUWX/KILASIK method: teleport into target with massive velocity+rotvelocity)
+-- FLING (refactored: no spinning/ragdoll for local player, impulse via collision + direct target velocity)
 local flingBusy = false
 local oldFallenHeight = nil
 local autoFlingSavedPos = nil
@@ -2109,106 +2109,112 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	if tHum.Health <= 0 then return end
 
 	local tRoot = tHum.RootPart
-	local tHead = tChar:FindFirstChild("Head")
-	local accessory = tChar:FindFirstChildOfClass("Accessory")
-	local handle = accessory and accessory:FindFirstChild("Handle")
-
-	local targetPart = tRoot or tHead or handle
-	if not targetPart then return end
+	if not tRoot then return end
 
 	flingBusy = true
 	local savedCFrame = returnCFrame or root.CFrame
 
-	-- Safety timeout: force-reset flingBusy after 10 seconds no matter what
+	-- Safety timeout
 	local safetyTimer = task.delay(10, function()
 		flingBusy = false
 	end)
 
-	-- Anti-fling bypass: increase simulation radius for physics authority
+	-- Increase simulation radius for physics authority
 	pcall(function() setsimulationradius(1e9) end)
 	pcall(function() if sethiddenproperty then sethiddenproperty(root, "SimulationRadius", 1e9) end end)
 
-	-- Save and disable FallenPartsDestroyHeight
+	-- Disable FallenPartsDestroyHeight
 	if not oldFallenHeight then
 		oldFallenHeight = Workspace.FallenPartsDestroyHeight
 	end
 	Workspace.FallenPartsDestroyHeight = 0/0
 
-	-- PlatformStand prevents ragdoll without zeroing our velocity
-	-- DO NOT use BodyVelocity with zero - it kills our momentum on server
-	hum.PlatformStand = true
+	-- Keep local player upright with AlignOrientation (no spinning/ragdoll)
+	local alignOri = Instance.new("AlignOrientation")
+	alignOri.Mode = Enum.OrientationAlignmentMode.OneAttachment
+	alignOri.Attachment0 = Instance.new("Attachment", root)
+	alignOri.MaxTorque = math.huge
+	alignOri.Responsiveness = 200
+	alignOri.CFrame = CFrame.new(0, 0, 0)
+	alignOri.Parent = root
+
+	-- Keep local player in place with AlignPosition (no sticking to target)
+	local alignPos = Instance.new("AlignPosition")
+	alignPos.Mode = Enum.PositionAlignmentMode.OneAttachment
+	alignPos.Attachment0 = Instance.new("Attachment", root)
+	alignPos.MaxForce = math.huge
+	alignPos.Responsiveness = 100
+	alignPos.Position = root.Position
+	alignPos.Parent = root
+
+	hum.PlatformStand = false
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
-	-- Collision-based fling: teleport OUR body into target with massive velocity
-	-- Our velocity REPLICATES to server because we own our character
-	-- Server physics engine handles collision and transfers momentum to target
-	local function FPos(basePart, pos, ang)
+	local function applyFlingImpulse()
 		pcall(function()
-			-- Teleport our root directly into the target
-			root.CFrame = CFrame.new(basePart.Position) * pos * ang
-			char:SetPrimaryPartCFrame(CFrame.new(basePart.Position) * pos * ang)
-			-- Massive linear velocity - REPLICATES to server, transfers to target on collision
-			root.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-			-- Massive rotational velocity - REPLICATES and spins target on collision
-			root.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
-			-- Also set assembly velocities for newer physics engine
+			-- Direct velocity on target parts (client-side, but some replicates)
+			tRoot.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			tRoot.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+			tRoot.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			tRoot.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+
+			-- Also apply to all target body parts
+			for _, part in ipairs(tChar:GetDescendants()) do
+				if part:IsA("BasePart") and part.CanCollide then
+					part.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+					part.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+					part.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+					part.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				end
+			end
+
+			-- Teleport our root into target for collision-based impulse transfer
+			-- But keep us upright via AlignOrientation + AlignPosition
+			local offset = CFrame.new(math.random(-2, 2), 0, math.random(-2, 2))
+			root.CFrame = tRoot.CFrame * offset
+			-- Set our velocity high for collision impulse, AlignPosition will pull us back
 			root.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-			root.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+			root.AssemblyAngularVelocity = Vector3.zero  -- we don't spin
 		end)
 	end
 
-	local function SFBasePart(basePart)
-		local timeToWait = duration or 2
-		local startTime = tick()
-		local angle = 0
-		repeat
-			if root and tHum and tHum.Health > 0 then
-				angle = angle + 30
-				-- Teleport directly INTO target from different angles
-				-- Use random offsets to hit from all sides for maximum collision
-				local rx = math.random(-3, 3)
-				local rz = math.random(-3, 3)
-				local ry = math.random(-2, 2)
-				FPos(basePart, CFrame.new(rx, 1.5 + ry, rz), CFrame.Angles(math.rad(angle), math.rad(angle), 0))
-				task.wait(0.01)
-				FPos(basePart, CFrame.new(-rx, -1.5 + ry, -rz), CFrame.Angles(math.rad(angle + 90), math.rad(angle), 0))
-				task.wait(0.01)
-				FPos(basePart, CFrame.new(rz, 1.5 + ry, -rx), CFrame.Angles(math.rad(angle + 180), math.rad(angle + 90), 0))
-				task.wait(0.01)
-				FPos(basePart, CFrame.new(-rz, -1.5 + ry, rx), CFrame.Angles(math.rad(angle + 270), math.rad(angle + 180), 0))
-				task.wait(0.01)
-				-- Direct hit: teleport exactly on target
-				FPos(basePart, CFrame.new(0, 0, 0), CFrame.Angles(math.rad(angle), math.rad(angle), math.rad(angle)))
-				task.wait(0.01)
-				FPos(basePart, CFrame.new(0, 1, 0), CFrame.Angles(math.rad(angle + 45), 0, math.rad(angle)))
-				task.wait(0.01)
-			end
-		until startTime + timeToWait < tick() or not _G.Undercore.Fling or not _G.Undercore.FlingAuto
-	end
+	-- Quick burst: apply impulse rapidly for the duration
+	local timeToWait = duration or 2
+	local startTime = tick()
+	repeat
+		if tHum and tHum.Health > 0 and tRoot and tRoot.Parent then
+			applyFlingImpulse()
+			-- Update AlignPosition target to our saved position so we don't stick
+			alignPos.Position = savedCFrame.Position
+			task.wait(0.02)
+		else
+			break
+		end
+	until startTime + timeToWait < tick() or not _G.Undercore.Fling or not _G.Undercore.FlingAuto
 
+	-- Cleanup: remove AlignOrientation and AlignPosition
 	pcall(function()
-		SFBasePart(targetPart)
+		if alignOri then
+			if alignOri.Attachment0 then alignOri.Attachment0:Destroy() end
+			alignOri:Destroy()
+		end
+		if alignPos then
+			if alignPos.Attachment0 then alignPos.Attachment0:Destroy() end
+			alignPos:Destroy()
+		end
 	end)
 
-	-- Cleanup
-	hum.PlatformStand = false
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 
-	-- Restore position (only if not in auto-fling continuous mode, or if returnCFrame provided)
+	-- Restore position
 	if returnCFrame or not _G.Undercore.FlingAuto then
 		pcall(function()
-			repeat
-				root.CFrame = savedCFrame * CFrame.new(0, 0.5, 0)
-				char:SetPrimaryPartCFrame(savedCFrame * CFrame.new(0, 0.5, 0))
-				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-				for _, part in ipairs(char:GetChildren()) do
-					if part:IsA("BasePart") then
-						part.Velocity = Vector3.zero
-						part.RotVelocity = Vector3.zero
-					end
-				end
-				task.wait()
-			until (root.Position - savedCFrame.Position).Magnitude < 25
+			root.CFrame = savedCFrame * CFrame.new(0, 0.5, 0)
+			root.Velocity = Vector3.zero
+			root.RotVelocity = Vector3.zero
+			root.AssemblyLinearVelocity = Vector3.zero
+			root.AssemblyAngularVelocity = Vector3.zero
+			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 		end)
 	end
 
@@ -2217,14 +2223,11 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 		oldFallenHeight = nil
 	end
 
-	-- Cancel safety timer
 	if safetyTimer then
 		task.cancel(safetyTimer)
 	end
 
-	-- Restore simulation radius
 	pcall(function() setsimulationradius(100) end)
-
 	flingBusy = false
 end
 
@@ -2254,12 +2257,12 @@ task.spawn(function()
 	end
 end)
 
--- AUTO FLING: save position on enable, cycle through all players, return on disable
+-- AUTO FLING: cycle through targets, fast switching, skip dead/flung players
 task.spawn(function()
 	while not terminated do
 		task.wait(0.1)
 		if not _G.Undercore.FlingAuto then
-			-- If auto fling just turned off, return to saved position
+			-- Return to saved position when auto fling turns off
 			if autoFlingSavedPos then
 				local char = player.Character
 				if char then
@@ -2295,13 +2298,18 @@ task.spawn(function()
 			continue
 		end
 
-		-- Cycle through all players and fling each one (3s per target, no return between)
+		-- Cycle through all players - 1s per target, skip dead/flung instantly
 		for _, other in ipairs(Players:GetPlayers()) do
-			if not _G.Undercore.FlingAuto then break end
+			if not _G.Undercore.FlingAuto or terminated then break end
 			if other ~= player and other.Character then
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
-				if otherHum and otherHum.Health > 0 then
-					flingTarget(other, 3, nil)
+				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
+				-- Skip dead, seated, or already flung (high velocity = already flung)
+				if otherHum and otherHum.Health > 0 and not otherHum.Sit and otherRoot then
+					local vel = otherRoot.AssemblyLinearVelocity
+					if vel.Magnitude < 200 then
+						flingTarget(other, 1, nil)
+					end
 				end
 			end
 		end
@@ -2345,11 +2353,12 @@ trackConn(RunService.Stepped:Connect(function()
 	end
 end))
 
--- ANTI-FLING (aggressive: zero velocity every frame + detect and restore position)
+-- ANTI-FLING (refactored: collision disable + impulse zeroing + position restore)
 -- Disabled while flingBusy to avoid conflict with own fling
 local antiFlingLastCFrame = nil
 local antiFlingLastTick = tick()
-trackConn(RunService.RenderStepped:Connect(function()
+
+trackConn(RunService.Stepped:Connect(function()
 	if not _G.Undercore.AntiFling then
 		antiFlingLastCFrame = nil
 		return
@@ -2360,12 +2369,47 @@ trackConn(RunService.RenderStepped:Connect(function()
 	local char = player.Character
 	if not char then return end
 	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not root or not hum then return end
 
+	-- 1. Disable collision with any player whose velocity is abnormally high
+	for _, other in ipairs(Players:GetPlayers()) do
+		if other ~= player and other.Character then
+			local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
+			if otherRoot then
+				local otherVel = otherRoot.AssemblyLinearVelocity
+				if otherVel.Magnitude > 200 then
+					-- Set CanCollide false on our parts to avoid collision impulse
+					for _, myPart in ipairs(char:GetDescendants()) do
+						if myPart:IsA("BasePart") and myPart.CanCollide then
+							pcall(function() myPart.CanCollide = false end)
+							-- Restore collision after delay
+							task.delay(1, function()
+								pcall(function() myPart.CanCollide = true end)
+							end)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- 2. Zero out abnormal velocity/rotation on our root
+	pcall(function()
+		if root.AssemblyLinearVelocity.Magnitude > 300 then
+			root.AssemblyLinearVelocity = Vector3.zero
+			root.Velocity = Vector3.zero
+		end
+		if root.AssemblyAngularVelocity.Magnitude > 50 then
+			root.AssemblyAngularVelocity = Vector3.zero
+			root.RotVelocity = Vector3.zero
+		end
+	end)
+
+	-- 3. Position restore if we got moved significantly
 	local currentPos = root.Position
 	local currentTick = tick()
 
-	-- Initialize saved position
 	if not antiFlingLastCFrame then
 		antiFlingLastCFrame = root.CFrame
 		antiFlingLastTick = currentTick
@@ -2373,29 +2417,19 @@ trackConn(RunService.RenderStepped:Connect(function()
 	end
 
 	local dt = currentTick - antiFlingLastTick
-
-	-- Always zero out abnormal rotation
-	pcall(function()
-		if root.RotVelocity.Magnitude > 50 then
-			root.RotVelocity = Vector3.zero
-			root.AssemblyAngularVelocity = Vector3.zero
-		end
-	end)
-
 	if dt > 0 then
 		local velocity = (currentPos - antiFlingLastCFrame.Position) / dt
-		-- If we're being flung (lower threshold = more sensitive)
-		if velocity.Magnitude > 80 then
+		if velocity.Magnitude > 100 then
+			-- Being flung - restore position, keep camera rotation
 			pcall(function()
-				root.Velocity = Vector3.zero
-				root.RotVelocity = Vector3.zero
+				root.CFrame = CFrame.new(antiFlingLastCFrame.Position) * (root.CFrame - root.CFrame.Position)
 				root.AssemblyLinearVelocity = Vector3.zero
 				root.AssemblyAngularVelocity = Vector3.zero
-				-- Restore position but keep current camera rotation
-				root.CFrame = CFrame.new(antiFlingLastCFrame.Position) * (root.CFrame - root.CFrame.Position)
+				root.Velocity = Vector3.zero
+				root.RotVelocity = Vector3.zero
+				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 			end)
 		else
-			-- Update saved CFrame only when not being flung
 			antiFlingLastCFrame = root.CFrame
 		end
 	end
