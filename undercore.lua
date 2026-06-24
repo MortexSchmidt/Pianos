@@ -1,4 +1,4 @@
--- Undercore v1.6.2 - Custom Cheat Menu
+-- Undercore v1.6.3 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1691,59 +1691,109 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING AURA (classic spin-fling: separate loop, NO yields in RenderStepped)
+-- FLING AURA
 local flingDebounce = {}
-local flingSpinSpeed = 99999
+local flingBusy = false
 
--- Only keep rotation updated in RenderStepped (no yields!)
-trackConn(RunService.RenderStepped:Connect(function()
-	if not _G.Undercore.Fling then return end
-	local char = player.Character
-	if not char then return end
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
+local function resetFlingRoot(root, cf)
 	pcall(function()
-		root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
+		root.CFrame = cf + Vector3.new(0, 6, 0)
+		root.Velocity = Vector3.zero
+		root.RotVelocity = Vector3.zero
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
 	end)
-end))
+end
 
--- Fling Aura logic in separate loop (safe to yield here)
+local function setFlingHumanoidSafe(hum, enabled)
+	pcall(function()
+		hum.Sit = false
+		hum.PlatformStand = false
+		hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, not enabled)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, not enabled)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Physics, not enabled)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Dead, not enabled)
+		if not enabled then
+			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+		end
+	end)
+end
+
+local function burstFlingTarget(root, hum, targetRoot)
+	if flingBusy then return false end
+	if not root or not hum or not targetRoot then return false end
+	if targetRoot.Position.Y < -100 then return false end
+
+	flingBusy = true
+	local originalPos = root.CFrame
+	local oldAutoRotate = hum.AutoRotate
+	local power = math.clamp(_G.Undercore.FlingPower or 1000, 500, 5000)
+	local speed = math.clamp(power * 3, 1500, 12000)
+	local spin = math.clamp(power * 10, 4000, 20000)
+	local offsets = {
+		Vector3.new(4, 1.5, 0),
+		Vector3.new(-4, 1.5, 0),
+		Vector3.new(0, 1.5, 4),
+		Vector3.new(0, 1.5, -4),
+	}
+
+	setFlingHumanoidSafe(hum, true)
+	pcall(function() hum.AutoRotate = false end)
+
+	local ok = pcall(function()
+		for _, offset in ipairs(offsets) do
+			local targetPos = targetRoot.Position
+			local fromPos = targetPos + offset
+			local toPos = targetPos - offset + Vector3.new(0, 0.5, 0)
+			local dir = toPos - fromPos
+			if dir.Magnitude <= 0 then
+				dir = Vector3.new(1, 0, 0)
+			else
+				dir = dir.Unit
+			end
+
+			root.CFrame = CFrame.new(fromPos, toPos)
+			root.Velocity = dir * speed + Vector3.new(0, 120, 0)
+			root.RotVelocity = Vector3.new(0, spin, 0)
+			root.AssemblyLinearVelocity = dir * speed + Vector3.new(0, 120, 0)
+			root.AssemblyAngularVelocity = Vector3.new(0, spin, 0)
+			task.wait(0.025)
+
+			root.CFrame = CFrame.new(toPos, fromPos)
+			root.Velocity = dir * speed + Vector3.new(0, 120, 0)
+			root.AssemblyLinearVelocity = dir * speed + Vector3.new(0, 120, 0)
+			task.wait(0.015)
+		end
+	end)
+
+	resetFlingRoot(root, originalPos)
+	pcall(function() hum.AutoRotate = oldAutoRotate end)
+	setFlingHumanoidSafe(hum, false)
+	flingBusy = false
+	return ok
+end
+
 task.spawn(function()
 	while true do
-		task.wait(0.1)
-		if not _G.Undercore.Fling then continue end
+		task.wait(0.12)
+		if not _G.Undercore.Fling or flingBusy then continue end
 		local char = player.Character
 		if not char then continue end
 		local root = char:FindFirstChild("HumanoidRootPart")
-		if not root then continue end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if not root or not hum then continue end
 
 		for _, other in ipairs(Players:GetPlayers()) do
-			if not _G.Undercore.Fling then break end
+			if not _G.Undercore.Fling or flingBusy then break end
 			if other ~= player and other.Character then
 				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
 				if otherRoot and otherHum and otherHum.Health > 0 then
 					local dist = (otherRoot.Position - root.Position).Magnitude
 					if dist <= _G.Undercore.FlingRange then
-						if not flingDebounce[other] or tick() - flingDebounce[other] > 0.5 then
+						if not flingDebounce[other] or tick() - flingDebounce[other] > 0.7 then
 							flingDebounce[other] = tick()
-
-							local myPos = root.CFrame
-
-							-- Teleport our spinning root part INTO the target
-							pcall(function()
-								root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
-								root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
-							end)
-							task.wait(0.05)
-
-							-- Return to our position (+5 Y to avoid floor clip)
-							pcall(function()
-								root.CFrame = myPos + Vector3.new(0, 5, 0)
-								root.Velocity = Vector3.zero
-								root.AssemblyLinearVelocity = Vector3.zero
-								root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
-							end)
+							burstFlingTarget(root, hum, otherRoot)
 						end
 					end
 				end
@@ -1752,24 +1802,17 @@ task.spawn(function()
 	end
 end)
 
--- AUTO FLING (teleport to each player while spinning on Y, physics flings them, return to original position)
+-- AUTO FLING
 task.spawn(function()
 	while true do
 		task.wait(0.1)
-		if not _G.Undercore.FlingAuto then continue end
+		if not _G.Undercore.FlingAuto or flingBusy then continue end
 
 		local char = player.Character
 		if not char then continue end
 		local root = char:FindFirstChild("HumanoidRootPart")
-		if not root then continue end
-
-		local originalPos = root.CFrame
-
-		-- Spin only on Y axis
-		pcall(function()
-			root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
-			root.AssemblyAngularVelocity = Vector3.new(0, flingSpinSpeed, 0)
-		end)
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if not root or not hum then continue end
 
 		for _, other in ipairs(Players:GetPlayers()) do
 			if not _G.Undercore.FlingAuto then break end
@@ -1777,31 +1820,11 @@ task.spawn(function()
 				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
 				if otherRoot and otherHum and otherHum.Health > 0 then
-					-- Teleport our spinning body directly into them
-					pcall(function()
-						root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
-						root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
-					end)
-					task.wait(0.05)
-
-					-- Extra hit: teleport slightly above for second collision
-					pcall(function()
-						root.CFrame = CFrame.new(otherRoot.Position + Vector3.new(0, 3, 0)) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
-						root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
-					end)
-					task.wait(0.05)
+					burstFlingTarget(root, hum, otherRoot)
+					task.wait(0.08)
 				end
 			end
 		end
-
-		-- Return to original position (+5 Y to avoid floor clip) and stop spinning
-		pcall(function()
-			root.CFrame = originalPos + Vector3.new(0, 5, 0)
-			root.RotVelocity = Vector3.zero
-			root.AssemblyAngularVelocity = Vector3.zero
-			root.Velocity = Vector3.zero
-			root.AssemblyLinearVelocity = Vector3.zero
-		end)
 	end
 end)
 
@@ -2030,7 +2053,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.6.2"
+local SCRIPT_VERSION = "1.6.3"
 local VERSION_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
 local SCRIPT_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
 local VERSION_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
