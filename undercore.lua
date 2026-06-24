@@ -1,7 +1,7 @@
--- Undercore v1.8.2 - Custom Cheat Menu
+-- Undercore v1.9.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.8.2"
+local SCRIPT_VERSION = "1.9.0"
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -907,6 +907,301 @@ createLabel(playerPage, "Player")
 local infJump = createToggle(playerPage, "Infinite Jump", function(v) _G.Undercore.InfJump = v end)
 local godMode = createToggle(playerPage, "God Mode", function(v) _G.Undercore.GodMode = v end)
 local antiFlingToggle = createToggle(playerPage, "Anti-Fling", function(v) _G.Undercore.AntiFling = v end)
+
+-- TELEPORT SUBMENU
+local teleportSubmenuVisible = false
+
+-- Teleport button (styled like a toggle but acts as a button)
+local teleportBtnFrame = Instance.new("Frame")
+teleportBtnFrame.Size = UDim2.new(1, 0, 0, 35)
+teleportBtnFrame.BackgroundColor3 = BG_LIGHT
+teleportBtnFrame.BorderSizePixel = 0
+teleportBtnFrame.Parent = playerPage
+
+local teleportBtnLabel = Instance.new("TextLabel")
+teleportBtnLabel.Font = Enum.Font.Gotham
+teleportBtnLabel.TextSize = 13
+teleportBtnLabel.TextColor3 = TEXT_WHITE
+teleportBtnLabel.TextXAlignment = Enum.TextXAlignment.Left
+teleportBtnLabel.BackgroundTransparency = 1
+teleportBtnLabel.Size = UDim2.new(1, -60, 1, 0)
+teleportBtnLabel.Position = UDim2.new(0, 12, 0, 0)
+teleportBtnLabel.Text = "Teleport to Player"
+teleportBtnLabel.Parent = teleportBtnFrame
+
+local teleportBtnSwitch = Instance.new("TextButton")
+teleportBtnSwitch.Text = ""
+teleportBtnSwitch.BackgroundColor3 = ACCENT
+teleportBtnSwitch.BorderSizePixel = 0
+teleportBtnSwitch.Size = UDim2.new(0, 40, 0, 20)
+teleportBtnSwitch.Position = UDim2.new(1, -50, 0.5, -10)
+teleportBtnSwitch.AutoButtonColor = false
+teleportBtnSwitch.Parent = teleportBtnFrame
+
+-- Submenu panel (attached to right side of mainFrame)
+local teleportPanel = Instance.new("Frame")
+teleportPanel.Name = "TeleportPanel"
+teleportPanel.Size = UDim2.new(0, 250, 1, 0)
+teleportPanel.Position = UDim2.new(1, 0, 0, 0)
+teleportPanel.BackgroundColor3 = BG
+teleportPanel.BorderSizePixel = 0
+teleportPanel.Visible = false
+teleportPanel.ZIndex = 50
+teleportPanel.Parent = mainFrame
+
+-- Divider on left edge of submenu
+local teleportDivider = Instance.new("Frame")
+teleportDivider.Size = UDim2.new(0, 2, 1, 0)
+teleportDivider.Position = UDim2.new(0, 0, 0, 0)
+teleportDivider.BackgroundColor3 = GREEN
+teleportDivider.BorderSizePixel = 0
+teleportDivider.ZIndex = 51
+teleportDivider.Parent = teleportPanel
+
+-- Submenu title
+local teleportTitle = Instance.new("TextLabel")
+teleportTitle.Font = Enum.Font.GothamBold
+teleportTitle.TextSize = 14
+teleportTitle.TextColor3 = ACCENT
+teleportTitle.TextXAlignment = Enum.TextXAlignment.Left
+teleportTitle.BackgroundTransparency = 1
+teleportTitle.Size = UDim2.new(1, -20, 0, 30)
+teleportTitle.Position = UDim2.new(0, 12, 0, 8)
+teleportTitle.Text = "Teleport to Player"
+teleportTitle.Parent = teleportPanel
+
+-- Close button for submenu
+local teleportCloseBtn = Instance.new("TextButton")
+teleportCloseBtn.Font = Enum.Font.GothamBold
+teleportCloseBtn.TextSize = 14
+teleportCloseBtn.TextColor3 = TEXT_GRAY
+teleportCloseBtn.Text = "X"
+teleportCloseBtn.BackgroundColor3 = BG_DARK
+teleportCloseBtn.BorderSizePixel = 0
+teleportCloseBtn.Size = UDim2.new(0, 24, 0, 24)
+teleportCloseBtn.Position = UDim2.new(1, -30, 0, 8)
+teleportCloseBtn.Parent = teleportPanel
+
+-- Scrollable player list
+local teleportListFrame = Instance.new("ScrollingFrame")
+teleportListFrame.Size = UDim2.new(1, -12, 1, -50)
+teleportListFrame.Position = UDim2.new(0, 6, 0, 42)
+teleportListFrame.BackgroundColor3 = BG_DARK
+teleportListFrame.BorderSizePixel = 0
+teleportListFrame.ScrollBarThickness = 3
+teleportListFrame.ScrollBarImageColor3 = GREEN
+teleportListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+teleportListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+teleportListFrame.Parent = teleportPanel
+
+local teleportListLayout = Instance.new("UIListLayout")
+teleportListLayout.FillDirection = Enum.FillDirection.Vertical
+teleportListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+teleportListLayout.Padding = UDim.new(0, 2)
+teleportListLayout.Parent = teleportListFrame
+
+local teleportListPad = Instance.new("UIPadding")
+teleportListPad.PaddingTop = UDim.new(0, 4)
+teleportListPad.PaddingBottom = UDim.new(0, 4)
+teleportListPad.PaddingLeft = UDim.new(0, 4)
+teleportListPad.PaddingRight = UDim.new(0, 4)
+teleportListPad.Parent = teleportListFrame
+
+-- Store player entry buttons for refresh
+local teleportEntries = {}
+
+local function clearTeleportList()
+	for _, entry in ipairs(teleportEntries) do
+		if entry.frame then entry.frame:Destroy() end
+	end
+	teleportEntries = {}
+end
+
+local function refreshTeleportList()
+	clearTeleportList()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local entryFrame = Instance.new("TextButton")
+			entryFrame.Size = UDim2.new(1, 0, 0, 40)
+			entryFrame.BackgroundColor3 = BG_LIGHT
+			entryFrame.BorderSizePixel = 0
+			entryFrame.Text = ""
+			entryFrame.AutoButtonColor = false
+			entryFrame.LayoutOrder = #teleportEntries
+			entryFrame.Parent = teleportListFrame
+
+			-- Avatar image
+			local avatar = Instance.new("ImageLabel")
+			avatar.Size = UDim2.new(0, 32, 0, 32)
+			avatar.Position = UDim2.new(0, 4, 0.5, -16)
+			avatar.BackgroundTransparency = 1
+			avatar.ScaleType = Enum.ScaleType.Crop
+			avatar.Parent = entryFrame
+
+			-- Get avatar thumbnail
+			task.spawn(function()
+				pcall(function()
+					local thumbType = Enum.ThumbnailType.HeadShot
+					local thumbSize = Enum.ThumbnailSize.Size48x48
+					local content, isReady = Players:GetUserThumbnailAsync(plr.UserId, thumbType, thumbSize)
+					if isReady then
+						avatar.Image = content
+					end
+				end)
+			end)
+
+			-- Player name
+			local nameLabel = Instance.new("TextLabel")
+			nameLabel.Font = Enum.Font.Gotham
+			nameLabel.TextSize = 12
+			nameLabel.TextColor3 = TEXT_WHITE
+			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+			nameLabel.BackgroundTransparency = 1
+			nameLabel.Size = UDim2.new(1, -44, 0, 20)
+			nameLabel.Position = UDim2.new(0, 42, 0, 4)
+			nameLabel.Text = plr.DisplayName
+			nameLabel.Parent = entryFrame
+
+			-- @username
+			local userLabel = Instance.new("TextLabel")
+			userLabel.Font = Enum.Font.Gotham
+			userLabel.TextSize = 10
+			userLabel.TextColor3 = TEXT_GRAY
+			userLabel.TextXAlignment = Enum.TextXAlignment.Left
+			userLabel.BackgroundTransparency = 1
+			userLabel.Size = UDim2.new(1, -44, 0, 14)
+			userLabel.Position = UDim2.new(0, 42, 0, 22)
+			userLabel.Text = "@" .. plr.Name
+			userLabel.Parent = entryFrame
+
+			-- Teleport on click
+			entryFrame.MouseButton1Click:Connect(function()
+				playRandomPageSound()
+				local targetChar = plr.Character
+				if targetChar then
+					local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+					local myChar = player.Character
+					if targetRoot and myChar then
+						local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+						local myHum = myChar:FindFirstChildOfClass("Humanoid")
+						if myRoot and myHum then
+							pcall(function()
+								myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 5)
+								myHum:ChangeState(Enum.HumanoidStateType.GettingUp)
+							end)
+							notify("Undercore", "Teleported to " .. plr.DisplayName, 3, GREEN, "success")
+						end
+					end
+				end
+			end)
+
+			entryFrame.MouseEnter:Connect(function()
+				playSound(SOUND_HOVER, 0.15)
+				entryFrame.BackgroundColor3 = BG_DARK
+			end)
+
+			entryFrame.MouseLeave:Connect(function()
+				entryFrame.BackgroundColor3 = BG_LIGHT
+			end)
+
+			table.insert(teleportEntries, { frame = entryFrame, player = plr })
+		end
+	end
+end
+
+local function showTeleportSubmenu()
+	if teleportSubmenuVisible then return end
+	teleportSubmenuVisible = true
+	playRandomPageSound()
+
+	refreshTeleportList()
+
+	teleportPanel.Visible = true
+	teleportPanel.Size = UDim2.new(0, 0, 1, 0)
+
+	-- Green sweep overlay
+	local sweep = Instance.new("Frame")
+	sweep.Size = UDim2.new(0, 0, 1, 0)
+	sweep.BackgroundColor3 = GREEN
+	sweep.BorderSizePixel = 0
+	sweep.ZIndex = 60
+	sweep.Parent = teleportPanel
+
+	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 1, 0) })
+	sizeTween:Play()
+
+	local sweepTween = TweenService:Create(sweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+	sweepTween:Play()
+
+	task.wait(0.2)
+
+	local sweepOut = TweenService:Create(sweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
+	sweepOut:Play()
+	sweepOut.Completed:Wait()
+	sweep:Destroy()
+end
+
+local function hideTeleportSubmenu()
+	if not teleportSubmenuVisible then return end
+	teleportSubmenuVisible = false
+	playRandomPageSound()
+
+	-- Green sweep in
+	local sweep = Instance.new("Frame")
+	sweep.Size = UDim2.new(0, 0, 1, 0)
+	sweep.BackgroundColor3 = GREEN
+	sweep.BorderSizePixel = 0
+	sweep.ZIndex = 60
+	sweep.Parent = teleportPanel
+
+	local sweepIn = TweenService:Create(sweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+	sweepIn:Play()
+	sweepIn.Completed:Wait()
+
+	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0) })
+	sizeTween:Play()
+	sizeTween.Completed:Wait()
+
+	teleportPanel.Visible = false
+	sweep:Destroy()
+end
+
+teleportBtnSwitch.MouseButton1Click:Connect(function()
+	if teleportSubmenuVisible then
+		hideTeleportSubmenu()
+	else
+		showTeleportSubmenu()
+	end
+end)
+
+teleportBtnFrame.MouseButton1Click:Connect(function()
+	if teleportSubmenuVisible then
+		hideTeleportSubmenu()
+	else
+		showTeleportSubmenu()
+	end
+end)
+
+teleportCloseBtn.MouseButton1Click:Connect(function()
+	hideTeleportSubmenu()
+end)
+
+teleportBtnFrame.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
+end)
+
+-- Refresh list when players join/leave
+Players.PlayerAdded:Connect(function()
+	if teleportSubmenuVisible then
+		refreshTeleportList()
+	end
+end)
+Players.PlayerRemoving:Connect(function()
+	if teleportSubmenuVisible then
+		refreshTeleportList()
+	end
+end)
+
 local resetBtn = createToggle(playerPage, "Reset Character (click)", function(v)
 	if v then
 		-- Turn off all toggles visually and in _G.Undercore
@@ -1493,6 +1788,12 @@ end
 
 closeMenu = function()
 	playRandomPageSound()
+
+	-- Close teleport submenu if open
+	if teleportSubmenuVisible then
+		teleportSubmenuVisible = false
+		teleportPanel.Visible = false
+	end
 
 	-- Green sweep in
 	local menuSweep = Instance.new("Frame")
