@@ -1,4 +1,4 @@
--- Undercore v1.7.2 - Custom Cheat Menu
+-- Undercore v1.7.3 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1722,94 +1722,170 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING (classic: set RotVelocity on Heartbeat, no PlatformStand, no velocity zeroing)
--- Player walks normally, but anyone who touches them gets flung by angular momentum
-local flingHeartbeatConn
+-- FLING (based on zqyDSUWX/KILASIK method: teleport into target with massive velocity+rotvelocity)
 local flingBusy = false
+local oldFallenHeight = nil
 
-local function startFlingSpin()
-	if flingHeartbeatConn then return end
-	flingHeartbeatConn = RunService.Heartbeat:Connect(function()
-		local char = player.Character
-		if not char then return end
-		local root = char:FindFirstChild("HumanoidRootPart")
-		if not root then return end
-		pcall(function()
-			root.RotVelocity = Vector3.new(0, 99999, 0)
-			root.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
-		end)
-	end)
-end
-
-local function stopFlingSpin()
-	if flingHeartbeatConn then
-		flingHeartbeatConn:Disconnect()
-		flingHeartbeatConn = nil
-	end
+local function flingTarget(targetPlayer)
+	if flingBusy then return end
 	local char = player.Character
-	if char then
-		local root = char:FindFirstChild("HumanoidRootPart")
-		if root then
-			pcall(function()
-				root.RotVelocity = Vector3.zero
-				root.AssemblyAngularVelocity = Vector3.zero
-			end)
-		end
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	local root = hum and hum.RootPart
+	if not hum or not root then return end
+
+	local tChar = targetPlayer.Character
+	if not tChar then return end
+	local tHum = tChar:FindFirstChildOfClass("Humanoid")
+	if not tHum then return end
+	if tHum.Sit then return end
+
+	local tRoot = tHum.RootPart
+	local tHead = tChar:FindFirstChild("Head")
+	local accessory = tChar:FindFirstChildOfClass("Accessory")
+	local handle = accessory and accessory:FindFirstChild("Handle")
+
+	local targetPart = tRoot or tHead or handle
+	if not targetPart then return end
+
+	flingBusy = true
+	local savedCFrame = root.CFrame
+	if root.Velocity.Magnitude < 50 then
+		savedCFrame = root.CFrame
 	end
+
+	-- Save and disable FallenPartsDestroyHeight
+	oldFallenHeight = Workspace.FallenPartsDestroyHeight
+	Workspace.FallenPartsDestroyHeight = 0/0
+
+	-- Anchor local player with BodyVelocity
+	local bv = Instance.new("BodyVelocity")
+	bv.Velocity = Vector3.zero
+	bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+	bv.Parent = root
+
+	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+
+	local function FPos(basePart, pos, ang)
+		root.CFrame = CFrame.new(basePart.Position) * pos * ang
+		char:SetPrimaryPartCFrame(CFrame.new(basePart.Position) * pos * ang)
+		root.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+		root.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+	end
+
+	local function SFBasePart(basePart)
+		local timeToWait = 2
+		local startTime = tick()
+		local angle = 0
+		repeat
+			if root and tHum then
+				if basePart.Velocity.Magnitude < 50 then
+					angle = angle + 100
+					FPos(basePart, CFrame.new(0, 1.5, 0) + tHum.MoveDirection * basePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(angle), 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, -1.5, 0) + tHum.MoveDirection * basePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(angle), 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, 1.5, 0) + tHum.MoveDirection * basePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(angle), 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, -1.5, 0) + tHum.MoveDirection * basePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(angle), 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, 1.5, 0) + tHum.MoveDirection, CFrame.Angles(math.rad(angle), 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, -1.5, 0) + tHum.MoveDirection, CFrame.Angles(math.rad(angle), 0, 0))
+					task.wait()
+				else
+					FPos(basePart, CFrame.new(0, 1.5, tHum.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, -1.5, -tHum.WalkSpeed), CFrame.Angles(0, 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, 1.5, tHum.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+					task.wait()
+					FPos(basePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+					task.wait()
+				end
+			end
+		until startTime + timeToWait < tick() or not _G.Undercore.Fling or not _G.Undercore.FlingAuto
+	end
+
+	pcall(function()
+		SFBasePart(targetPart)
+	end)
+
+	-- Cleanup
+	bv:Destroy()
+	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+
+	-- Restore position
+	pcall(function()
+		repeat
+			root.CFrame = savedCFrame * CFrame.new(0, 0.5, 0)
+			char:SetPrimaryPartCFrame(savedCFrame * CFrame.new(0, 0.5, 0))
+			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+			for _, part in ipairs(char:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.Velocity = Vector3.zero
+					part.RotVelocity = Vector3.zero
+				end
+			end
+			task.wait()
+		until (root.Position - savedCFrame.Position).Magnitude < 25
+	end)
+
+	if oldFallenHeight then
+		Workspace.FallenPartsDestroyHeight = oldFallenHeight
+	end
+
+	flingBusy = false
 end
 
--- FLING AURA: spin in place, anyone who touches you gets flung
-trackConn(RunService.Heartbeat:Connect(function()
-	if _G.Undercore.Fling and not flingBusy then
-		startFlingSpin()
-	elseif not _G.Undercore.Fling and not _G.Undercore.FlingAuto and flingHeartbeatConn then
-		stopFlingSpin()
-	end
-end))
-
--- AUTO FLING: teleport to each player while spinning, return after
+-- FLING AURA: fling anyone within range
 task.spawn(function()
 	while true do
-		task.wait(0.2)
-		if not _G.Undercore.FlingAuto then continue end
-		if flingBusy then continue end
-
+		task.wait(0.1)
+		if not _G.Undercore.Fling or flingBusy then continue end
 		local char = player.Character
 		if not char then continue end
 		local root = char:FindFirstChild("HumanoidRootPart")
 		if not root then continue end
 
-		flingBusy = true
-		local savedCFrame = root.CFrame
-		startFlingSpin()
-
 		for _, other in ipairs(Players:GetPlayers()) do
-			if not _G.Undercore.FlingAuto then break end
+			if not _G.Undercore.Fling or flingBusy then break end
 			if other ~= player and other.Character then
 				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
 				if otherRoot and otherHum and otherHum.Health > 0 then
-					pcall(function()
-						root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
-						root.RotVelocity = Vector3.new(0, 99999, 0)
-						root.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
-					end)
-					task.wait(0.07)
+					local dist = (otherRoot.Position - root.Position).Magnitude
+					if dist <= 20 then
+						flingTarget(other)
+					end
 				end
 			end
 		end
+	end
+end)
 
-		-- Return and reset
-		pcall(function()
-			root.CFrame = savedCFrame + Vector3.new(0, 3, 0)
-			root.RotVelocity = Vector3.zero
-			root.AssemblyAngularVelocity = Vector3.zero
-		end)
+-- AUTO FLING: cycle through all players
+task.spawn(function()
+	while true do
+		task.wait(0.3)
+		if not _G.Undercore.FlingAuto or flingBusy then continue end
 
-		if not _G.Undercore.Fling then
-			stopFlingSpin()
+		for _, other in ipairs(Players:GetPlayers()) do
+			if not _G.Undercore.FlingAuto then break end
+			if other ~= player and other.Character then
+				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
+				if otherHum and otherHum.Health > 0 then
+					flingTarget(other)
+					task.wait(0.1)
+				end
+			end
 		end
-		flingBusy = false
 	end
 end)
 
@@ -2047,7 +2123,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.7.2"
+local SCRIPT_VERSION = "1.7.3"
 local GITLAB_API = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/"
 local SCRIPT_URL_PRIMARY = GITLAB_API .. "undercore.lua/raw?ref=main"
 local VERSION_URL_PRIMARY = GITLAB_API .. "version.txt/raw?ref=main"
