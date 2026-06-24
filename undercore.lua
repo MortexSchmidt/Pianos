@@ -481,6 +481,7 @@ local NAV_ICONS = {
 	["Visuals"] = "rbxassetid://109825947197428",
 	["Player"] = "rbxassetid://114284249768955",
 	["Settings"] = "rbxassetid://93982901670694",
+	["About"] = "rbxassetid://72432575303550",
 }
 
 -- Preload all icons so they appear instantly
@@ -1336,80 +1337,6 @@ local testNotif = createToggle(settingsPage, "Test Notification", function(v)
 	end
 end)
 
--- About button
-local aboutBtn = Instance.new("TextButton")
-aboutBtn.Font = Enum.Font.GothamBold
-aboutBtn.TextSize = 13
-aboutBtn.TextColor3 = TEXT_WHITE
-aboutBtn.Text = "  About"
-aboutBtn.BackgroundColor3 = BG_DARK
-aboutBtn.BorderSizePixel = 0
-aboutBtn.Size = UDim2.new(1, 0, 0, 36)
-aboutBtn.TextXAlignment = Enum.TextXAlignment.Left
-aboutBtn.Parent = settingsPage
-
-local aboutIcon = Instance.new("ImageLabel")
-aboutIcon.Size = UDim2.new(0, 20, 0, 20)
-aboutIcon.Position = UDim2.new(0, 8, 0.5, -10)
-aboutIcon.BackgroundTransparency = 1
-aboutIcon.Image = NOTIF_ICONS.info
-aboutIcon.ImageColor3 = ACCENT
-aboutIcon.ScaleType = Enum.ScaleType.Fit
-aboutIcon.Parent = aboutBtn
-
-local aboutVisible = false
-local aboutFrame = Instance.new("Frame")
-aboutFrame.Size = UDim2.new(1, 0, 0, 120)
-aboutFrame.BackgroundColor3 = BG_DARK
-aboutFrame.BorderSizePixel = 0
-aboutFrame.Visible = false
-aboutFrame.Parent = settingsPage
-
-local aboutTitle = Instance.new("TextLabel")
-aboutTitle.Font = Enum.Font.GothamBold
-aboutTitle.TextSize = 14
-aboutTitle.TextColor3 = ACCENT
-aboutTitle.TextXAlignment = Enum.TextXAlignment.Left
-aboutTitle.BackgroundTransparency = 1
-aboutTitle.Size = UDim2.new(1, -20, 0, 20)
-aboutTitle.Position = UDim2.new(0, 10, 0, 8)
-aboutTitle.Text = "Undercore - Custom Cheat Menu"
-aboutTitle.Parent = aboutFrame
-
-local aboutVersion = Instance.new("TextLabel")
-aboutVersion.Font = Enum.Font.Gotham
-aboutVersion.TextSize = 12
-aboutVersion.TextColor3 = TEXT_WHITE
-aboutVersion.TextXAlignment = Enum.TextXAlignment.Left
-aboutVersion.BackgroundTransparency = 1
-aboutVersion.Size = UDim2.new(1, -20, 0, 18)
-aboutVersion.Position = UDim2.new(0, 10, 0, 30)
-aboutVersion.Text = "Version: " .. SCRIPT_VERSION
-aboutVersion.Parent = aboutFrame
-
-local aboutDesc = Instance.new("TextLabel")
-aboutDesc.Font = Enum.Font.Gotham
-aboutDesc.TextSize = 12
-aboutDesc.TextColor3 = TEXT_GRAY
-aboutDesc.TextXAlignment = Enum.TextXAlignment.Left
-aboutDesc.TextYAlignment = Enum.TextYAlignment.Top
-aboutDesc.TextWrapped = true
-aboutDesc.BackgroundTransparency = 1
-aboutDesc.Size = UDim2.new(1, -20, 0, 70)
-aboutDesc.Position = UDim2.new(0, 10, 0, 50)
-aboutDesc.Text = "A custom cheat menu for Roblox with Fly, Speed, Noclip, ESP, Fling, and more. Features real-time update checking via GitLab. Toggle menu with RightShift, K, or F8. Hold F8 or U button for 5s to terminate."
-aboutDesc.Parent = aboutFrame
-
-aboutBtn.MouseButton1Click:Connect(function()
-	playRandomPageSound()
-	aboutVisible = not aboutVisible
-	aboutFrame.Visible = aboutVisible
-end)
-
-aboutBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
-end)
-
 local exitBtn = Instance.new("TextButton")
 exitBtn.Font = Enum.Font.GothamBold
 exitBtn.TextSize = 13
@@ -1428,6 +1355,49 @@ end)
 exitBtn.MouseEnter:Connect(function()
 	playSound(SOUND_HOVER, 0.15)
 end)
+
+-- ABOUT
+local aboutPage = createPage("About")
+local navAbout, navAboutIcon, navAboutLabel = createNavButton("About")
+navButtons["About"] = { btn = navAbout, icon = navAboutIcon, label = navAboutLabel }
+navAbout.MouseButton1Click:Connect(function() showPage("About") end)
+
+createLabel(aboutPage, "About")
+
+local aboutTitle = Instance.new("TextLabel")
+aboutTitle.Font = Enum.Font.GothamBold
+aboutTitle.TextSize = 16
+aboutTitle.TextColor3 = ACCENT
+aboutTitle.TextXAlignment = Enum.TextXAlignment.Left
+aboutTitle.BackgroundTransparency = 1
+aboutTitle.Size = UDim2.new(1, -20, 0, 30)
+aboutTitle.Position = UDim2.new(0, 10, 0, 35)
+aboutTitle.Text = "Undercore - Custom Cheat Menu"
+aboutTitle.Parent = aboutPage
+
+local aboutVersion = Instance.new("TextLabel")
+aboutVersion.Font = Enum.Font.GothamBold
+aboutVersion.TextSize = 14
+aboutVersion.TextColor3 = GREEN
+aboutVersion.TextXAlignment = Enum.TextXAlignment.Left
+aboutVersion.BackgroundTransparency = 1
+aboutVersion.Size = UDim2.new(1, -20, 0, 25)
+aboutVersion.Position = UDim2.new(0, 10, 0, 70)
+aboutVersion.Text = "Version: " .. SCRIPT_VERSION
+aboutVersion.Parent = aboutPage
+
+local aboutDesc = Instance.new("TextLabel")
+aboutDesc.Font = Enum.Font.Gotham
+aboutDesc.TextSize = 13
+aboutDesc.TextColor3 = TEXT_GRAY
+aboutDesc.TextXAlignment = Enum.TextXAlignment.Left
+aboutDesc.TextYAlignment = Enum.TextYAlignment.Top
+aboutDesc.TextWrapped = true
+aboutDesc.BackgroundTransparency = 1
+aboutDesc.Size = UDim2.new(1, -20, 0, 120)
+aboutDesc.Position = UDim2.new(0, 10, 0, 105)
+aboutDesc.Text = "A custom cheat menu for Roblox featuring Fly, Speed, Noclip, ESP, Fling, Auto Fling, and more.\n\nReal-time update checking via GitLab with automatic notifications.\n\nControls:\n- Toggle menu: RightShift / K / F8\n- Toggle button: U\n- Hold F8 or U for 5s to terminate\n\nMade by Neruka"
+aboutDesc.Parent = aboutPage
 
 -- Default page
 showPage("Movement")
