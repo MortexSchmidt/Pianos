@@ -1,4 +1,4 @@
--- Undercore v1.7.6 - Custom Cheat Menu
+-- Undercore v1.7.7 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1527,46 +1527,44 @@ _G.Undercore = {
 local flyBodyVelocity
 local flyBodyGyro
 local flyEnabled = false
+local currentFlyChar = nil
 
 local function setupFly()
 	trackConn(RunService.RenderStepped:Connect(function()
-		if not _G.Undercore.Fly then
-			if flyEnabled then
-				flyEnabled = false
-				if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
-				if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
-				local char = player.Character
-				if char then
-					local root = char:FindFirstChild("HumanoidRootPart")
-					local hum = char:FindFirstChildOfClass("Humanoid")
-					if root then
-						pcall(function()
-							root.Velocity = Vector3.zero
-							root.RotVelocity = Vector3.zero
-							root.AssemblyLinearVelocity = Vector3.zero
-							root.AssemblyAngularVelocity = Vector3.zero
-						end)
-					end
-					if hum then
-						pcall(function()
-							hum.PlatformStand = false
-							hum.Sit = false
-							hum.WalkSpeed = _G.Undercore.Speed and _G.Undercore.SpeedVal or 16
-							hum.JumpPower = 50
-							hum.JumpHeight = 7.2
-							hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-						end)
-					end
-				end
-			end
-			return
-		end
-
 		local char = player.Character
 		if not char then return end
 		local root = char:FindFirstChild("HumanoidRootPart")
 		local hum = char:FindFirstChildOfClass("Humanoid")
 		if not root or not hum then return end
+
+		-- Detect character change / respawn
+		if currentFlyChar ~= char then
+			currentFlyChar = char
+			flyEnabled = false
+			flyBodyVelocity = nil
+			flyBodyGyro = nil
+		end
+
+		if not _G.Undercore.Fly then
+			if flyEnabled then
+				flyEnabled = false
+				if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
+				if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
+				pcall(function()
+					root.Velocity = Vector3.zero
+					root.RotVelocity = Vector3.zero
+					root.AssemblyLinearVelocity = Vector3.zero
+					root.AssemblyAngularVelocity = Vector3.zero
+					hum.PlatformStand = false
+					hum.Sit = false
+					hum.WalkSpeed = _G.Undercore.Speed and _G.Undercore.SpeedVal or 16
+					hum.JumpPower = 50
+					hum.JumpHeight = 7.2
+					hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+				end)
+			end
+			return
+		end
 
 		if not flyBodyVelocity or not flyBodyVelocity.Parent then
 			if flyBodyVelocity then flyBodyVelocity:Destroy() end
@@ -1679,24 +1677,29 @@ end))
 
 -- NOCLIP (all parts including accessories, pcall for safety, restore on disable)
 local noclipWasOn = false
+local noclipChar = nil
 trackConn(RunService.Stepped:Connect(function()
+	local char = player.Character
+	if not char then return end
+
+	-- Reset on character change
+	if noclipChar ~= char then
+		noclipChar = char
+		noclipWasOn = false
+	end
+
 	if not _G.Undercore.Noclip then
 		if noclipWasOn then
 			noclipWasOn = false
-			local char = player.Character
-			if char then
-				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-						pcall(function() part.CanCollide = true end)
-					end
+			for _, part in ipairs(char:GetDescendants()) do
+				if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+					pcall(function() part.CanCollide = true end)
 				end
 			end
 		end
 		return
 	end
 	noclipWasOn = true
-	local char = player.Character
-	if not char then return end
 	for _, part in ipairs(char:GetDescendants()) do
 		if part:IsA("BasePart") and part.CanCollide then
 			pcall(function() part.CanCollide = false end)
@@ -1726,6 +1729,7 @@ end))
 local flingBusy = false
 local oldFallenHeight = nil
 local autoFlingSavedPos = nil
+local flingChar = nil
 
 local function flingTarget(targetPlayer, duration, returnCFrame)
 	if flingBusy then return end
@@ -1735,11 +1739,18 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	local root = hum and hum.RootPart
 	if not hum or not root then return end
 
+	-- Reset on character change
+	if flingChar ~= char then
+		flingChar = char
+		flingBusy = false
+	end
+
 	local tChar = targetPlayer.Character
 	if not tChar then return end
 	local tHum = tChar:FindFirstChildOfClass("Humanoid")
 	if not tHum then return end
 	if tHum.Sit then return end
+	if tHum.Health <= 0 then return end
 
 	local tRoot = tHum.RootPart
 	local tHead = tChar:FindFirstChild("Head")
@@ -1751,6 +1762,15 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 
 	flingBusy = true
 	local savedCFrame = returnCFrame or root.CFrame
+
+	-- Safety timeout: force-reset flingBusy after 10 seconds no matter what
+	local safetyTimer = task.delay(10, function()
+		flingBusy = false
+	end)
+
+	-- Anti-fling bypass: increase simulation radius for physics authority over targets
+	pcall(function() setsimulationradius(1e9) end)
+	pcall(function() if sethiddenproperty then sethiddenproperty(root, "SimulationRadius", 1e9) end end)
 
 	-- Save and disable FallenPartsDestroyHeight
 	if not oldFallenHeight then
@@ -1766,29 +1786,26 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
-	-- Anti-fling bypass: increase simulation radius for physics authority
-	pcall(function() setsimulationradius(math.huge) end)
-	pcall(function() sethiddenproperty(root, "SimulationRadius", math.huge) end)
-
 	local function FPos(basePart, pos, ang)
-		root.CFrame = CFrame.new(basePart.Position) * pos * ang
-		char:SetPrimaryPartCFrame(CFrame.new(basePart.Position) * pos * ang)
-		root.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-		root.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
-		-- Anti-fling bypass: directly set target's velocity too
+		pcall(function()
+			root.CFrame = CFrame.new(basePart.Position) * pos * ang
+			char:SetPrimaryPartCFrame(CFrame.new(basePart.Position) * pos * ang)
+			root.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			root.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+		end)
+		-- Anti-fling bypass: directly set ALL target body parts velocity
 		pcall(function()
 			basePart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
 			basePart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
 		end)
-		-- Also try to fling all target's body parts
-		if tChar then
-			for _, part in ipairs(tChar:GetDescendants()) do
-				if part:IsA("BasePart") then
-					pcall(function()
-						part.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-						part.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
-					end)
-				end
+		for _, part in ipairs(tChar:GetDescendants()) do
+			if part:IsA("BasePart") then
+				pcall(function()
+					part.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+					part.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+					part.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+					part.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+				end)
 			end
 		end
 	end
@@ -1863,6 +1880,14 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 		Workspace.FallenPartsDestroyHeight = oldFallenHeight
 		oldFallenHeight = nil
 	end
+
+	-- Cancel safety timer
+	if safetyTimer then
+		task.cancel(safetyTimer)
+	end
+
+	-- Restore simulation radius
+	pcall(function() setsimulationradius(100) end)
 
 	flingBusy = false
 end
@@ -2182,7 +2207,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.7.6"
+local SCRIPT_VERSION = "1.7.7"
 local GITLAB_API = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/"
 local SCRIPT_URL_PRIMARY = GITLAB_API .. "undercore.lua/raw?ref=main"
 local VERSION_URL_PRIMARY = GITLAB_API .. "version.txt/raw?ref=main"
