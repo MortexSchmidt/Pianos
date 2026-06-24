@@ -1,6 +1,8 @@
 -- Undercore v1.7.8 - Custom Cheat Menu
 -- Inject via executor
 
+local SCRIPT_VERSION = "1.7.8"
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -2281,7 +2283,6 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.7.8"
 local GITLAB_API = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/"
 local SCRIPT_URL_PRIMARY = GITLAB_API .. "undercore.lua/raw?ref=main"
 local VERSION_URL_PRIMARY = GITLAB_API .. "version.txt/raw?ref=main"
