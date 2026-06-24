@@ -1,4 +1,4 @@
--- Undercore v1.4.0 - Custom Cheat Menu
+-- Undercore v1.5.0 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1475,7 +1475,7 @@ _G.Undercore = {
 	InfJump = false, GodMode = false, AntiFling = false,
 }
 
--- FLY (BodyVelocity + BodyGyro, reliable and fast)
+-- FLY (BodyVelocity + BodyGyro, boost key, smooth, reliable)
 local flyBodyVelocity
 local flyBodyGyro
 local flyEnabled = false
@@ -1489,7 +1489,10 @@ local function setupFly()
 				flyEnabled = false
 				local char = player.Character
 				local hum = char and char:FindFirstChildOfClass("Humanoid")
-				if hum then hum.PlatformStand = false end
+				if hum then
+					hum.PlatformStand = false
+					pcall(function() hum:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+				end
 			end
 			return
 		end
@@ -1500,15 +1503,18 @@ local function setupFly()
 		local hum = char:FindFirstChildOfClass("Humanoid")
 		if not root or not hum then return end
 
-		if not flyBodyVelocity then
+		if not flyBodyVelocity or not flyBodyVelocity.Parent then
+			if flyBodyVelocity then flyBodyVelocity:Destroy() end
+			if flyBodyGyro then flyBodyGyro:Destroy() end
 			flyBodyVelocity = Instance.new("BodyVelocity")
-			flyBodyVelocity.MaxForce = Vector3.new(1, 1, 1) * 9e9
+			flyBodyVelocity.MaxForce = Vector3.new(1, 1, 1) * math.huge
 			flyBodyVelocity.Velocity = Vector3.zero
 			flyBodyVelocity.Parent = root
 
 			flyBodyGyro = Instance.new("BodyGyro")
-			flyBodyGyro.MaxForce = Vector3.new(1, 1, 1) * 9e9
-			flyBodyGyro.P = 1e5
+			flyBodyGyro.MaxForce = Vector3.new(1, 1, 1) * math.huge
+			flyBodyGyro.P = 1e6
+			flyBodyGyro.D = 100
 			flyBodyGyro.Parent = root
 			flyEnabled = true
 		end
@@ -1522,18 +1528,26 @@ local function setupFly()
 		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
 		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0, 1, 0) end
 
-		if dir.Magnitude > 0 then
-			dir = dir.Unit * _G.Undercore.FlySpeed
+		local speed = _G.Undercore.FlySpeed
+		-- Boost: hold LeftCtrl for 3x speed
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+			speed = speed * 3
 		end
 
-		flyBodyVelocity.Velocity = dir
-		flyBodyGyro.CFrame = cam.CFrame
-		hum.PlatformStand = true
+		if dir.Magnitude > 0 then
+			dir = dir.Unit * speed
+		end
+
+		pcall(function()
+			flyBodyVelocity.Velocity = dir
+			flyBodyGyro.CFrame = cam.CFrame
+			hum.PlatformStand = true
+		end)
 	end))
 end
 setupFly()
 
--- SPEED (WalkSpeed force-set every frame)
+-- SPEED (WalkSpeed force-set every frame + sprint boost with LeftCtrl)
 trackConn(RunService.RenderStepped:Connect(function()
 	local char = player.Character
 	if not char then return end
@@ -1541,7 +1555,12 @@ trackConn(RunService.RenderStepped:Connect(function()
 	if not hum then return end
 
 	if _G.Undercore.Speed then
-		pcall(function() hum.WalkSpeed = _G.Undercore.SpeedVal end)
+		local speed = _G.Undercore.SpeedVal
+		-- Sprint boost: hold LeftCtrl for 2x speed
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+			speed = speed * 2
+		end
+		pcall(function() hum.WalkSpeed = speed end)
 	else
 		if hum.WalkSpeed ~= 16 and not _G.Undercore.Fly then
 			pcall(function() hum.WalkSpeed = 16 end)
@@ -1561,6 +1580,7 @@ trackConn(RunService.RenderStepped:Connect(function()
 		pcall(function()
 			hum.UseJumpPower = true
 			hum.JumpPower = _G.Undercore.JumpVal
+			hum.JumpHeight = _G.Undercore.JumpVal / 10
 		end)
 	else
 		if hum.JumpPower ~= 50 then
@@ -1568,25 +1588,48 @@ trackConn(RunService.RenderStepped:Connect(function()
 		end
 	end
 
-	-- God Mode: maxhealth + health + prevent death state
+	-- God Mode: maxhealth + health regen + prevent ALL damaging states
 	if _G.Undercore.GodMode then
 		pcall(function()
 			hum.MaxHealth = math.huge
 			hum.Health = math.huge
 		end)
+		-- Prevent death state
 		if hum:GetState() == Enum.HumanoidStateType.Dead then
 			pcall(function() hum:ChangeState(Enum.HumanoidStateType.None) end)
 		end
+		-- Prevent ragdoll/falling down (which can lead to death)
+		if hum:GetState() == Enum.HumanoidStateType.FallingDown or hum:GetState() == Enum.HumanoidStateType.Physics then
+			pcall(function() hum:ChangeState(Enum.HumanoidStateType.GettingUp) end)
+		end
 	else
 		if hum.MaxHealth == math.huge then
-			pcall(function() hum.MaxHealth = 100 end)
+			pcall(function()
+				hum.MaxHealth = 100
+				hum.Health = 100
+			end)
 		end
 	end
 end))
 
--- NOCLIP (all parts including accessories, pcall for safety)
+-- NOCLIP (all parts including accessories, pcall for safety, restore on disable)
+local noclipWasOn = false
 trackConn(RunService.Stepped:Connect(function()
-	if not _G.Undercore.Noclip then return end
+	if not _G.Undercore.Noclip then
+		if noclipWasOn then
+			noclipWasOn = false
+			local char = player.Character
+			if char then
+				for _, part in ipairs(char:GetDescendants()) do
+					if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+						pcall(function() part.CanCollide = true end)
+					end
+				end
+			end
+		end
+		return
+	end
+	noclipWasOn = true
 	local char = player.Character
 	if not char then return end
 	for _, part in ipairs(char:GetDescendants()) do
@@ -1596,22 +1639,25 @@ trackConn(RunService.Stepped:Connect(function()
 	end
 end))
 
--- INFINITE JUMP (double-jump bypass, ignore processed state)
+-- INFINITE JUMP (instant re-jump on every JumpRequest, no cooldown)
 trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	if _G.Undercore.InfJump then
 		local char = player.Character
 		if char then
 			local hum = char:FindFirstChildOfClass("Humanoid")
-			if hum then
+			local root = char:FindFirstChild("HumanoidRootPart")
+			if hum and root then
 				pcall(function()
 					hum:ChangeState(Enum.HumanoidStateType.Jumping)
+					-- Extra boost: add upward velocity for higher jump
+					root.Velocity = Vector3.new(root.Velocity.X, math.max(root.Velocity.Y, _G.Undercore.Jump and _G.Undercore.JumpVal or 50), root.Velocity.Z)
 				end)
 			end
 		end
 	end
 end))
 
--- FLING AURA (4 methods: ApplyImpulse + Velocity + CFrame teleport + Humanoid state, with debounce + anti-fling bypass)
+-- FLING AURA (5 methods: ApplyImpulse + Velocity + RotVelocity + CFrame spin + Humanoid state, fast debounce)
 local flingDebounce = {}
 trackConn(RunService.RenderStepped:Connect(function()
 	if not _G.Undercore.Fling then return end
@@ -1627,36 +1673,28 @@ trackConn(RunService.RenderStepped:Connect(function()
 			if otherRoot and otherHum and otherHum.Health > 0 then
 				local dist = (otherRoot.Position - root.Position).Magnitude
 				if dist <= _G.Undercore.FlingRange then
-					-- Debounce per player (0.5s) to prevent self-fling
-					if not flingDebounce[other] or tick() - flingDebounce[other] > 0.5 then
+					-- Fast debounce (0.3s) for continuous fling
+					if not flingDebounce[other] or tick() - flingDebounce[other] > 0.3 then
 						flingDebounce[other] = tick()
 						local flingDir = (otherRoot.Position - root.Position).Unit
 						local force = _G.Undercore.FlingPower
+						local spin = Vector3.new(math.random(-500, 500), math.random(-500, 500), math.random(-500, 500))
 
-						-- Method 1: ApplyImpulse (works if we have network ownership)
+						-- Method 1: ApplyImpulse + ApplyAngularImpulse (mass-scaled)
 						pcall(function()
 							otherRoot:ApplyImpulse(flingDir * force * otherRoot.AssemblyMass)
-							otherRoot:ApplyAngularImpulse(Vector3.new(
-								math.random(-100, 100),
-								math.random(-100, 100),
-								math.random(-100, 100)
-							) * otherRoot.AssemblyMass * 50)
+							otherRoot:ApplyAngularImpulse(spin * otherRoot.AssemblyMass * 100)
 						end)
 
-						-- Method 2: Velocity (fallback)
+						-- Method 2: Velocity + RotVelocity (direct)
 						pcall(function()
-							otherRoot.Velocity = flingDir * force + Vector3.new(0, force * 0.5, 0)
-							otherRoot.RotVelocity = Vector3.new(
-								math.random(-100, 100),
-								math.random(-100, 100),
-								math.random(-100, 100)
-							) * 10
+							otherRoot.Velocity = flingDir * force + Vector3.new(0, force * 0.3, 0)
+							otherRoot.RotVelocity = spin
 						end)
 
-						-- Method 3: CFrame teleport (bypasses anti-fling scripts)
+						-- Method 3: CFrame teleport with random rotation (bypasses anti-fling)
 						pcall(function()
-							local newPos = otherRoot.Position + flingDir * (force * 0.01) + Vector3.new(0, force * 0.002, 0)
-							otherRoot.CFrame = CFrame.new(newPos) * CFrame.Angles(
+							otherRoot.CFrame = CFrame.new(otherRoot.Position + flingDir * (force * 0.005)) * CFrame.Angles(
 								math.rad(math.random(-180, 180)),
 								math.rad(math.random(-180, 180)),
 								math.rad(math.random(-180, 180))
@@ -1669,8 +1707,14 @@ trackConn(RunService.RenderStepped:Connect(function()
 							otherHum:ChangeState(Enum.HumanoidStateType.FallingDown)
 						end)
 
-						-- Reset after 1s
-						task.delay(1, function()
+						-- Method 5: Set other player's velocity to extreme spin
+						pcall(function()
+							otherRoot.AssemblyLinearVelocity = flingDir * force * 2
+							otherRoot.AssemblyAngularVelocity = spin * 50
+						end)
+
+						-- Reset after 1.5s
+						task.delay(1.5, function()
 							if otherHum and otherHum.Health > 0 then
 								pcall(function() otherHum:ChangeState(Enum.HumanoidStateType.GettingUp) end)
 							end
@@ -1682,10 +1726,10 @@ trackConn(RunService.RenderStepped:Connect(function()
 	end
 end))
 
--- AUTO FLING (teleport to each player, fling them, return. You stand still but pierce through everyone)
+-- AUTO FLING (teleport to each player at high speed, fling them, return to original position)
 task.spawn(function()
 	while true do
-		task.wait(0.1)
+		task.wait(0.05)
 		if not _G.Undercore.FlingAuto then continue end
 
 		local char = player.Character
@@ -1701,32 +1745,34 @@ task.spawn(function()
 				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
 				if otherRoot and otherHum and otherHum.Health > 0 then
-					-- Teleport to them at high speed (pierce through)
+					-- Teleport directly to them (pierce through)
 					pcall(function()
-						root.CFrame = CFrame.new(otherRoot.Position + otherRoot.CFrame.LookVector * 2)
+						root.CFrame = CFrame.new(otherRoot.Position + Vector3.new(0, 2, 0))
 					end)
-					task.wait(0.05)
+					task.wait(0.03)
 
-					-- Fling them with all methods
+					-- Fling with all 5 methods
 					local flingDir = (otherRoot.Position - root.Position).Unit
+					if flingDir.Magnitude == 0 then flingDir = Vector3.new(0, 1, 0) end
 					local force = _G.Undercore.FlingPower
+					local spin = Vector3.new(math.random(-500, 500), math.random(-500, 500), math.random(-500, 500))
 
 					pcall(function()
 						otherRoot:ApplyImpulse(flingDir * force * otherRoot.AssemblyMass)
-						otherRoot:ApplyAngularImpulse(Vector3.new(
-							math.random(-100, 100),
-							math.random(-100, 100),
-							math.random(-100, 100)
-						) * otherRoot.AssemblyMass * 50)
+						otherRoot:ApplyAngularImpulse(spin * otherRoot.AssemblyMass * 100)
 					end)
 
 					pcall(function()
-						otherRoot.Velocity = flingDir * force + Vector3.new(0, force * 0.5, 0)
-						otherRoot.RotVelocity = Vector3.new(
-							math.random(-100, 100),
-							math.random(-100, 100),
-							math.random(-100, 100)
-						) * 10
+						otherRoot.Velocity = flingDir * force + Vector3.new(0, force * 0.3, 0)
+						otherRoot.RotVelocity = spin
+					end)
+
+					pcall(function()
+						otherRoot.CFrame = CFrame.new(otherRoot.Position + flingDir * (force * 0.005)) * CFrame.Angles(
+							math.rad(math.random(-180, 180)),
+							math.rad(math.random(-180, 180)),
+							math.rad(math.random(-180, 180))
+						)
 					end)
 
 					pcall(function()
@@ -1734,13 +1780,18 @@ task.spawn(function()
 						otherHum:ChangeState(Enum.HumanoidStateType.FallingDown)
 					end)
 
-					task.delay(1, function()
+					pcall(function()
+						otherRoot.AssemblyLinearVelocity = flingDir * force * 2
+						otherRoot.AssemblyAngularVelocity = spin * 50
+					end)
+
+					task.delay(1.5, function()
 						if otherHum and otherHum.Health > 0 then
 							pcall(function() otherHum:ChangeState(Enum.HumanoidStateType.GettingUp) end)
 						end
 					end)
 
-					task.wait(0.05)
+					task.wait(0.03)
 				end
 			end
 		end
@@ -1748,11 +1799,13 @@ task.spawn(function()
 		-- Return to original position
 		pcall(function()
 			root.CFrame = originalPos
+			root.Velocity = Vector3.zero
+			root.RotVelocity = Vector3.zero
 		end)
 	end
 end)
 
--- NO FALL DAMAGE (cancel fall damage by resetting velocity before landing + state bypass)
+-- NO FALL DAMAGE (prevent Landed state + cap Y velocity + cancel Freefall damage)
 trackConn(RunService.Stepped:Connect(function()
 	if not _G.Undercore.NoFall then return end
 	local char = player.Character
@@ -1760,24 +1813,38 @@ trackConn(RunService.Stepped:Connect(function()
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if not hum or not root then return end
-	-- Prevent Landed state (which triggers fall damage)
-	if hum:GetState() == Enum.HumanoidStateType.Landed then
+
+	local state = hum:GetState()
+
+	-- Cancel Landed state (triggers fall damage)
+	if state == Enum.HumanoidStateType.Landed then
 		pcall(function()
 			hum:ChangeState(Enum.HumanoidStateType.None)
 			root.Velocity = Vector3.new(root.Velocity.X, 0, root.Velocity.Z)
 		end)
 	end
-	-- Also prevent Freefall -> Landed transition by capping Y velocity
-	if root.Velocity.Y < -75 then
+
+	-- Cap downward velocity to prevent lethal fall
+	if root.Velocity.Y < -50 then
 		pcall(function()
-			root.Velocity = Vector3.new(root.Velocity.X, -50, root.Velocity.Z)
+			root.Velocity = Vector3.new(root.Velocity.X, -30, root.Velocity.Z)
+		end)
+	end
+
+	-- If in Freefall and close to ground, slow down
+	if state == Enum.HumanoidStateType.Freefall then
+		pcall(function()
+			local ray = Workspace:Raycast(root.Position, Vector3.new(0, -10, 0))
+			if ray and ray.Distance < 8 then
+				root.Velocity = Vector3.new(root.Velocity.X, -10, root.Velocity.Z)
+			end
 		end)
 	end
 end))
 
--- ANTI-FLING (detect abnormal velocity/position changes and counter them)
-local lastPos = Vector3.zero
-local lastTick = tick()
+-- ANTI-FLING (detect abnormal velocity, anchor position, zero out rotation)
+local antiFlingLastPos = Vector3.zero
+local antiFlingLastTick = tick()
 trackConn(RunService.RenderStepped:Connect(function()
 	if not _G.Undercore.AntiFling then return end
 	local char = player.Character
@@ -1787,20 +1854,22 @@ trackConn(RunService.RenderStepped:Connect(function()
 
 	local currentPos = root.Position
 	local currentTick = tick()
-	local dt = currentTick - lastTick
+	local dt = currentTick - antiFlingLastTick
 	if dt > 0 then
-		local velocity = (currentPos - lastPos) / dt
-		-- If we're being flung (abnormal velocity), counter it
-		if velocity.Magnitude > 200 then
+		local velocity = (currentPos - antiFlingLastPos) / dt
+		-- If we're being flung (abnormal velocity), counter it hard
+		if velocity.Magnitude > 150 then
 			pcall(function()
 				root.Velocity = Vector3.zero
 				root.RotVelocity = Vector3.zero
-				root.CFrame = CFrame.new(lastPos)
+				root.AssemblyLinearVelocity = Vector3.zero
+				root.AssemblyAngularVelocity = Vector3.zero
+				root.CFrame = CFrame.new(antiFlingLastPos)
 			end)
 		end
 	end
-	lastPos = currentPos
-	lastTick = currentTick
+	antiFlingLastPos = currentPos
+	antiFlingLastTick = currentTick
 end))
 
 -- ESP
@@ -1961,7 +2030,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.4.0"
+local SCRIPT_VERSION = "1.5.0"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
