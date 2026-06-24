@@ -1,7 +1,7 @@
--- Undercore v1.9.6 - Custom Cheat Menu
+-- Undercore v1.9.7 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.9.6"
+local SCRIPT_VERSION = "1.9.7"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -1750,10 +1750,9 @@ end
 closeMenu = function()
 	playRandomPageSound()
 
-	-- Close teleport submenu if open
+	-- Close teleport submenu if open (with animation)
 	if teleportSubmenuVisible then
-		teleportSubmenuVisible = false
-		teleportPanel.Visible = false
+		hideTeleportSubmenu()
 	end
 
 	-- Green sweep in
