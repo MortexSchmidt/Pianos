@@ -1,7 +1,7 @@
--- Undercore v1.9.3 - Custom Cheat Menu
+-- Undercore v1.9.4 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.9.3"
+local SCRIPT_VERSION = "1.9.4"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -2189,39 +2189,26 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	end
 	Workspace.FallenPartsDestroyHeight = 0/0
 
-	-- Anchor local player with BodyVelocity (keeps us in place while spinning)
-	local bv = Instance.new("BodyVelocity")
-	bv.Velocity = Vector3.zero
-	bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-	bv.Parent = root
-
-	-- Additional: BodyAngularVelocity on OUR root to spin us aggressively
-	-- This creates massive rotational momentum that transfers to target on collision
-	local bav = Instance.new("BodyAngularVelocity")
-	bav.AngularVelocity = Vector3.new(0, 9e8, 0)
-	bav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-	bav.Parent = root
-
+	-- PlatformStand prevents ragdoll without zeroing our velocity
+	-- DO NOT use BodyVelocity with zero - it kills our momentum on server
+	hum.PlatformStand = true
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
 	-- Collision-based fling: teleport OUR body into target with massive velocity
-	-- Physics engine transfers our momentum to target on collision - this REPLICATES
+	-- Our velocity REPLICATES to server because we own our character
+	-- Server physics engine handles collision and transfers momentum to target
 	local function FPos(basePart, pos, ang)
 		pcall(function()
 			-- Teleport our root directly into the target
 			root.CFrame = CFrame.new(basePart.Position) * pos * ang
 			char:SetPrimaryPartCFrame(CFrame.new(basePart.Position) * pos * ang)
-			-- Massive linear velocity - transfers to target on collision
+			-- Massive linear velocity - REPLICATES to server, transfers to target on collision
 			root.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-			-- Massive rotational velocity - spins target on collision
+			-- Massive rotational velocity - REPLICATES and spins target on collision
 			root.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
 			-- Also set assembly velocities for newer physics engine
 			root.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
 			root.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
-		end)
-		-- Keep BodyAngularVelocity spinning us constantly
-		pcall(function()
-			bav.AngularVelocity = Vector3.new(math.random(-9e8, 9e8), 9e8, math.random(-9e8, 9e8))
 		end)
 	end
 
@@ -2259,8 +2246,7 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	end)
 
 	-- Cleanup
-	bv:Destroy()
-	pcall(function() bav:Destroy() end)
+	hum.PlatformStand = false
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 
 	-- Restore position (only if not in auto-fling continuous mode, or if returnCFrame provided)
