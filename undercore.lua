@@ -1,4 +1,4 @@
--- Undercore v1.6.7 - Custom Cheat Menu
+-- Undercore v1.6.8 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -879,9 +879,7 @@ navCombat.MouseButton1Click:Connect(function() showPage("Combat") end)
 
 createLabel(combatPage, "Combat")
 local flingToggle = createToggle(combatPage, "Fling Aura", function(v) _G.Undercore.Fling = v end)
-local flingPower = createSlider(combatPage, "Fling Power", 100, 5000, 1000, function(v) _G.Undercore.FlingPower = v end)
-local flingRange = createSlider(combatPage, "Fling Range", 5, 50, 15, function(v) _G.Undercore.FlingRange = v end)
-local flingAutoToggle = createToggle(combatPage, "Auto Fling (teleport)", function(v) _G.Undercore.FlingAuto = v end)
+local flingAutoToggle = createToggle(combatPage, "Auto Fling", function(v) _G.Undercore.FlingAuto = v end)
 
 -- VISUAL
 local visualPage = createPage("Visuals")
@@ -1520,7 +1518,7 @@ _G.Undercore = {
 	Speed = false, SpeedVal = 50,
 	Jump = false, JumpVal = 100,
 	Noclip = false, NoFall = false,
-	Fling = false, FlingPower = 1000, FlingRange = 15, FlingAuto = false,
+	Fling = false, FlingAuto = false,
 	ESP = false, ESPName = false, ESPDist = false, ESPHealth = false, ESPTracer = false,
 	InfJump = false, GodMode = false, AntiFling = false,
 }
@@ -1707,99 +1705,84 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING (classic spin method, safe version: spin only during hit, not constant)
-local flingDebounce = {}
+-- FLING (spin in place on Heartbeat, physics collision flings anyone who touches you)
+local flingHeartbeatConn
 local flingBusy = false
 
-local function doFlingHit(root, hum, targetRoot)
-	if flingBusy then return end
-	if not root or not hum or not targetRoot then return end
-
-	flingBusy = true
-	local savedCFrame = root.CFrame
-	local savedPlatformStand = hum.PlatformStand
-
-	pcall(function()
-		-- Enable PlatformStand so humanoid doesn't fight physics
-		hum.PlatformStand = true
-		-- Set extreme spin on Y axis only
-		root.RotVelocity = Vector3.new(0, 99999, 0)
-		root.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
-		-- Zero out linear velocity so we don't fly ourselves
-		root.Velocity = Vector3.zero
-		root.AssemblyLinearVelocity = Vector3.zero
-
-		-- Teleport directly into the target
-		root.CFrame = CFrame.new(targetRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
+local function startFlingSpin()
+	if flingHeartbeatConn then return end
+	flingHeartbeatConn = RunService.Heartbeat:Connect(function()
+		local char = player.Character
+		if not char then return end
+		local root = char:FindFirstChild("HumanoidRootPart")
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if not root then return end
+		pcall(function()
+			root.RotVelocity = Vector3.new(0, 99999, 0)
+			root.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
+			-- Zero linear velocity so we don't fly ourselves
+			root.Velocity = Vector3.zero
+			root.AssemblyLinearVelocity = Vector3.zero
+			if hum then
+				hum.PlatformStand = true
+			end
+		end)
 	end)
-
-	-- Let physics process the collision (brief yield, safe in task.spawn)
-	task.wait(0.03)
-
-	-- Second hit: teleport slightly offset for extra collision
-	pcall(function()
-		root.CFrame = CFrame.new(targetRoot.Position + Vector3.new(0, 2, 0)) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
-		root.RotVelocity = Vector3.new(0, 99999, 0)
-		root.Velocity = Vector3.zero
-		root.AssemblyLinearVelocity = Vector3.zero
-	end)
-	task.wait(0.02)
-
-	-- Full reset and return
-	pcall(function()
-		root.RotVelocity = Vector3.zero
-		root.AssemblyAngularVelocity = Vector3.zero
-		root.Velocity = Vector3.zero
-		root.AssemblyLinearVelocity = Vector3.zero
-		root.CFrame = savedCFrame + Vector3.new(0, 3, 0)
-		hum.PlatformStand = savedPlatformStand
-		hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-	end)
-
-	flingBusy = false
 end
 
--- FLING AURA (proximity-based)
-task.spawn(function()
-	while true do
-		task.wait(0.1)
-		if not _G.Undercore.Fling or flingBusy then continue end
-		local char = player.Character
-		if not char then continue end
+local function stopFlingSpin()
+	if flingHeartbeatConn then
+		flingHeartbeatConn:Disconnect()
+		flingHeartbeatConn = nil
+	end
+	local char = player.Character
+	if char then
 		local root = char:FindFirstChild("HumanoidRootPart")
 		local hum = char:FindFirstChildOfClass("Humanoid")
-		if not root or not hum then continue end
-
-		for _, other in ipairs(Players:GetPlayers()) do
-			if not _G.Undercore.Fling or flingBusy then break end
-			if other ~= player and other.Character then
-				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
-				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
-				if otherRoot and otherHum and otherHum.Health > 0 then
-					local dist = (otherRoot.Position - root.Position).Magnitude
-					if dist <= _G.Undercore.FlingRange then
-						if not flingDebounce[other] or tick() - flingDebounce[other] > 0.6 then
-							flingDebounce[other] = tick()
-							doFlingHit(root, hum, otherRoot)
-						end
-					end
-				end
-			end
+		if root then
+			pcall(function()
+				root.RotVelocity = Vector3.zero
+				root.AssemblyAngularVelocity = Vector3.zero
+				root.Velocity = Vector3.zero
+				root.AssemblyLinearVelocity = Vector3.zero
+			end)
+		end
+		if hum then
+			pcall(function()
+				hum.PlatformStand = false
+				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+			end)
 		end
 	end
-end)
+end
 
--- AUTO FLING (teleport to each player, fling them, return)
+-- FLING AURA: spin in place, anyone who touches you gets flung by physics
+trackConn(RunService.Heartbeat:Connect(function()
+	if _G.Undercore.Fling and not flingBusy then
+		startFlingSpin()
+	else
+		if not _G.Undercore.Fling and not _G.Undercore.FlingAuto and flingHeartbeatConn then
+			stopFlingSpin()
+		end
+	end
+end))
+
+-- AUTO FLING: teleport to each player while spinning, return after
 task.spawn(function()
 	while true do
-		task.wait(0.15)
-		if not _G.Undercore.FlingAuto or flingBusy then continue end
+		task.wait(0.2)
+		if not _G.Undercore.FlingAuto then continue end
+		if flingBusy then continue end
 
 		local char = player.Character
 		if not char then continue end
 		local root = char:FindFirstChild("HumanoidRootPart")
 		local hum = char:FindFirstChildOfClass("Humanoid")
 		if not root or not hum then continue end
+
+		flingBusy = true
+		local savedCFrame = root.CFrame
+		startFlingSpin()
 
 		for _, other in ipairs(Players:GetPlayers()) do
 			if not _G.Undercore.FlingAuto then break end
@@ -1807,11 +1790,32 @@ task.spawn(function()
 				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
 				if otherRoot and otherHum and otherHum.Health > 0 then
-					doFlingHit(root, hum, otherRoot)
-					task.wait(0.05)
+					pcall(function()
+						root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
+						root.RotVelocity = Vector3.new(0, 99999, 0)
+						root.Velocity = Vector3.zero
+						root.AssemblyLinearVelocity = Vector3.zero
+					end)
+					task.wait(0.07)
 				end
 			end
 		end
+
+		-- Return and reset
+		pcall(function()
+			root.CFrame = savedCFrame + Vector3.new(0, 3, 0)
+			root.RotVelocity = Vector3.zero
+			root.AssemblyAngularVelocity = Vector3.zero
+			root.Velocity = Vector3.zero
+			root.AssemblyLinearVelocity = Vector3.zero
+			hum.PlatformStand = false
+			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+		end)
+
+		if not _G.Undercore.Fling then
+			stopFlingSpin()
+		end
+		flingBusy = false
 	end
 end)
 
@@ -2049,7 +2053,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.6.7"
+local SCRIPT_VERSION = "1.6.8"
 local VERSION_API_URL = "https://api.github.com/repos/MortexSchmidt/Pianos/contents/version.txt?ref=main"
 local SCRIPT_API_URL = "https://api.github.com/repos/MortexSchmidt/Pianos/contents/undercore.lua?ref=main"
 local VERSION_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
