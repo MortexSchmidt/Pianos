@@ -1,7 +1,7 @@
--- Undercore v1.8.1 - Custom Cheat Menu
+-- Undercore v1.8.2 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.8.1"
+local SCRIPT_VERSION = "1.8.2"
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -1910,37 +1910,26 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 		local startTime = tick()
 		local angle = 0
 		repeat
-			if root and tHum then
-				if basePart.Velocity.Magnitude < 50 then
-					angle = angle + 100
-					FPos(basePart, CFrame.new(0, 1.5, 0) + tHum.MoveDirection * basePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(angle), 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, -1.5, 0) + tHum.MoveDirection * basePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(angle), 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, 1.5, 0) + tHum.MoveDirection * basePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(angle), 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, -1.5, 0) + tHum.MoveDirection * basePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(angle), 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, 1.5, 0) + tHum.MoveDirection, CFrame.Angles(math.rad(angle), 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, -1.5, 0) + tHum.MoveDirection, CFrame.Angles(math.rad(angle), 0, 0))
-					task.wait()
-				else
-					FPos(basePart, CFrame.new(0, 1.5, tHum.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, -1.5, -tHum.WalkSpeed), CFrame.Angles(0, 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, 1.5, tHum.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
-					task.wait()
-					FPos(basePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
-					task.wait()
-				end
+			if root and tHum and tHum.Health > 0 then
+				angle = angle + 30
+				-- Teleport directly INTO target from different angles
+				-- Use random offsets to hit from all sides for maximum collision
+				local rx = math.random(-3, 3)
+				local rz = math.random(-3, 3)
+				local ry = math.random(-2, 2)
+				FPos(basePart, CFrame.new(rx, 1.5 + ry, rz), CFrame.Angles(math.rad(angle), math.rad(angle), 0))
+				task.wait(0.01)
+				FPos(basePart, CFrame.new(-rx, -1.5 + ry, -rz), CFrame.Angles(math.rad(angle + 90), math.rad(angle), 0))
+				task.wait(0.01)
+				FPos(basePart, CFrame.new(rz, 1.5 + ry, -rx), CFrame.Angles(math.rad(angle + 180), math.rad(angle + 90), 0))
+				task.wait(0.01)
+				FPos(basePart, CFrame.new(-rz, -1.5 + ry, rx), CFrame.Angles(math.rad(angle + 270), math.rad(angle + 180), 0))
+				task.wait(0.01)
+				-- Direct hit: teleport exactly on target
+				FPos(basePart, CFrame.new(0, 0, 0), CFrame.Angles(math.rad(angle), math.rad(angle), math.rad(angle)))
+				task.wait(0.01)
+				FPos(basePart, CFrame.new(0, 1, 0), CFrame.Angles(math.rad(angle + 45), 0, math.rad(angle)))
+				task.wait(0.01)
 			end
 		until startTime + timeToWait < tick() or not _G.Undercore.Fling or not _G.Undercore.FlingAuto
 	end
@@ -2055,14 +2044,13 @@ task.spawn(function()
 			continue
 		end
 
-		-- Cycle through all players and fling each one (2s per target, no return between)
+		-- Cycle through all players and fling each one (3s per target, no return between)
 		for _, other in ipairs(Players:GetPlayers()) do
 			if not _G.Undercore.FlingAuto then break end
 			if other ~= player and other.Character then
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
 				if otherHum and otherHum.Health > 0 then
-					flingTarget(other, 2, nil)
-					task.wait(0.1)
+					flingTarget(other, 3, nil)
 				end
 			end
 		end
