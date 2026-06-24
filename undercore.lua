@@ -1,4 +1,4 @@
--- Undercore v1.6.3 - Custom Cheat Menu
+-- Undercore v1.6.4 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -2053,7 +2053,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.6.3"
+local SCRIPT_VERSION = "1.6.4"
 local VERSION_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
 local SCRIPT_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
 local VERSION_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
@@ -2061,11 +2061,22 @@ local SCRIPT_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@ma
 
 local function fetchRemoteVersion()
 	local version = nil
-	-- Try raw GitHub first (less caching)
 	pcall(function()
-		version = game:HttpGet(VERSION_URL_PRIMARY .. "?v=" .. tostring(tick()), true)
-		version = version:gsub("%s+", "")
+		local remoteScript = game:HttpGet(SCRIPT_URL_PRIMARY .. "?v=" .. tostring(tick()), true)
+		version = remoteScript:match("%-%- Undercore v([%d%.]+)")
 	end)
+	if not version or version == "" then
+		pcall(function()
+			local remoteScript = game:HttpGet(SCRIPT_URL_FALLBACK .. "?v=" .. tostring(tick()), true)
+			version = remoteScript:match("%-%- Undercore v([%d%.]+)")
+		end)
+	end
+	if not version or version == "" then
+		pcall(function()
+			version = game:HttpGet(VERSION_URL_PRIMARY .. "?v=" .. tostring(tick()), true)
+			version = version:gsub("%s+", "")
+		end)
+	end
 	if not version or version == "" then
 		pcall(function()
 			version = game:HttpGet(VERSION_URL_FALLBACK .. "?v=" .. tostring(tick()), true)
