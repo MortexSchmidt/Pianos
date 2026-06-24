@@ -1,4 +1,4 @@
--- Undercore v1.6.5 - Custom Cheat Menu
+-- Undercore v1.6.6 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -8,6 +8,12 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
+local previousConnections = _G.UndercoreConnections
+if previousConnections then
+	for _, conn in ipairs(previousConnections) do
+		pcall(function() conn:Disconnect() end)
+	end
+end
 local connections = {}
 _G.UndercoreConnections = connections
 
@@ -27,6 +33,16 @@ local function getUiParent()
 	return player:WaitForChild("PlayerGui")
 end
 local uiParent = getUiParent()
+for _, guiName in ipairs({ "Undercore", "UndercoreNotif", "UndercoreExit" }) do
+	local oldGui = uiParent:FindFirstChild(guiName)
+	if oldGui then
+		pcall(function() oldGui:Destroy() end)
+	end
+end
+local oldBlur = game:GetService("Lighting"):FindFirstChild("UndercoreExitBlur")
+if oldBlur then
+	pcall(function() oldBlur:Destroy() end)
+end
 
 local function protectGui(gui)
 	if syn and syn.protect_gui then
@@ -2053,8 +2069,9 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.6.5"
+local SCRIPT_VERSION = "1.6.6"
 local VERSION_API_URL = "https://api.github.com/repos/MortexSchmidt/Pianos/contents/version.txt?ref=main"
+local SCRIPT_API_URL = "https://api.github.com/repos/MortexSchmidt/Pianos/contents/undercore.lua?ref=main"
 local VERSION_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
 local SCRIPT_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
 local VERSION_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
@@ -2134,10 +2151,23 @@ updateBanner.MouseButton1Click:Connect(function()
 	notify("Undercore", "Restarting with update...", 3, ACCENT, "info")
 	task.wait(1)
 	local success = false
+	local oldConnections = _G.UndercoreConnections
+
 	pcall(function()
-		loadstring(game:HttpGet(SCRIPT_URL_PRIMARY .. "?v=" .. tostring(tick()), true))()
-		success = true
+		local response = game:HttpGet(SCRIPT_API_URL .. "&v=" .. tostring(tick()), true)
+		local encoded = response:match('"content"%s*:%s*"([^"]+)"')
+		if encoded then
+			local source = decodeBase64(encoded:gsub("\\n", ""))
+			loadstring(source)()
+			success = true
+		end
 	end)
+	if not success then
+		pcall(function()
+			loadstring(game:HttpGet(SCRIPT_URL_PRIMARY .. "?v=" .. tostring(tick()), true))()
+			success = true
+		end)
+	end
 	if not success then
 		pcall(function()
 			loadstring(game:HttpGet(SCRIPT_URL_FALLBACK .. "?v=" .. tostring(tick()), true))()
@@ -2145,9 +2175,8 @@ updateBanner.MouseButton1Click:Connect(function()
 		end)
 	end
 	if success then
-		-- Destroy this old instance
-		if _G.UndercoreConnections then
-			for _, conn in ipairs(_G.UndercoreConnections) do
+		if oldConnections then
+			for _, conn in ipairs(oldConnections) do
 				pcall(function() conn:Disconnect() end)
 			end
 		end
