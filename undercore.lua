@@ -1,7 +1,8 @@
--- Undercore v1.9.0 - Custom Cheat Menu
+-- Undercore v1.9.1 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.9.0"
+local SCRIPT_VERSION = "1.9.1"
+local terminated = false
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -1566,6 +1567,9 @@ reloadBtn.MouseButton1Click:Connect(function()
 	playRandomPageSound()
 	hideExitDialog()
 
+	-- Stop background loops during reload
+	terminated = true
+
 	-- Close menu with animation
 	if menuVisible then
 		closeMenu()
@@ -1628,6 +1632,9 @@ confirmBtn.MouseButton1Click:Connect(function()
 	playRandomPageSound()
 	hideExitDialog()
 	hideExitDialog = nil
+
+	-- Mark as terminated to stop all background loops
+	terminated = true
 
 	-- Close menu with animation
 	if menuVisible then
@@ -2280,7 +2287,7 @@ end
 
 -- FLING AURA: fling anyone within range (fast - 0.5s per target)
 task.spawn(function()
-	while true do
+	while not terminated do
 		task.wait(0.1)
 		if not _G.Undercore.Fling or flingBusy then continue end
 		local char = player.Character
@@ -2306,7 +2313,7 @@ end)
 
 -- AUTO FLING: save position on enable, cycle through all players, return on disable
 task.spawn(function()
-	while true do
+	while not terminated do
 		task.wait(0.1)
 		if not _G.Undercore.FlingAuto then
 			-- If auto fling just turned off, return to saved position
@@ -2696,8 +2703,9 @@ task.spawn(function()
 
 	-- Background real-time update check (every 10 seconds)
 	task.spawn(function()
-		while true do
+		while not terminated do
 			task.wait(10)
+			if terminated then break end
 			local latestVersion = fetchRemoteVersion()
 			if latestVersion and latestVersion ~= "" and latestVersion ~= SCRIPT_VERSION then
 				if not updateBanner.Visible then
