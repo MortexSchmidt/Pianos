@@ -1,4 +1,4 @@
--- Undercore v1.7.4 - Custom Cheat Menu
+-- Undercore v1.7.5 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1725,8 +1725,9 @@ end))
 -- FLING (based on zqyDSUWX/KILASIK method: teleport into target with massive velocity+rotvelocity)
 local flingBusy = false
 local oldFallenHeight = nil
+local autoFlingSavedPos = nil
 
-local function flingTarget(targetPlayer)
+local function flingTarget(targetPlayer, duration, returnCFrame)
 	if flingBusy then return end
 	local char = player.Character
 	if not char then return end
@@ -1749,13 +1750,12 @@ local function flingTarget(targetPlayer)
 	if not targetPart then return end
 
 	flingBusy = true
-	local savedCFrame = root.CFrame
-	if root.Velocity.Magnitude < 50 then
-		savedCFrame = root.CFrame
-	end
+	local savedCFrame = returnCFrame or root.CFrame
 
 	-- Save and disable FallenPartsDestroyHeight
-	oldFallenHeight = Workspace.FallenPartsDestroyHeight
+	if not oldFallenHeight then
+		oldFallenHeight = Workspace.FallenPartsDestroyHeight
+	end
 	Workspace.FallenPartsDestroyHeight = 0/0
 
 	-- Anchor local player with BodyVelocity
@@ -1774,7 +1774,7 @@ local function flingTarget(targetPlayer)
 	end
 
 	local function SFBasePart(basePart)
-		local timeToWait = 2
+		local timeToWait = duration or 2
 		local startTime = tick()
 		local angle = 0
 		repeat
@@ -1821,30 +1821,33 @@ local function flingTarget(targetPlayer)
 	bv:Destroy()
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 
-	-- Restore position
-	pcall(function()
-		repeat
-			root.CFrame = savedCFrame * CFrame.new(0, 0.5, 0)
-			char:SetPrimaryPartCFrame(savedCFrame * CFrame.new(0, 0.5, 0))
-			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-			for _, part in ipairs(char:GetChildren()) do
-				if part:IsA("BasePart") then
-					part.Velocity = Vector3.zero
-					part.RotVelocity = Vector3.zero
+	-- Restore position (only if not in auto-fling continuous mode, or if returnCFrame provided)
+	if returnCFrame or not _G.Undercore.FlingAuto then
+		pcall(function()
+			repeat
+				root.CFrame = savedCFrame * CFrame.new(0, 0.5, 0)
+				char:SetPrimaryPartCFrame(savedCFrame * CFrame.new(0, 0.5, 0))
+				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+				for _, part in ipairs(char:GetChildren()) do
+					if part:IsA("BasePart") then
+						part.Velocity = Vector3.zero
+						part.RotVelocity = Vector3.zero
+					end
 				end
-			end
-			task.wait()
-		until (root.Position - savedCFrame.Position).Magnitude < 25
-	end)
+				task.wait()
+			until (root.Position - savedCFrame.Position).Magnitude < 25
+		end)
+	end
 
 	if oldFallenHeight then
 		Workspace.FallenPartsDestroyHeight = oldFallenHeight
+		oldFallenHeight = nil
 	end
 
 	flingBusy = false
 end
 
--- FLING AURA: fling anyone within range
+-- FLING AURA: fling anyone within range (fast - 0.5s per target)
 task.spawn(function()
 	while true do
 		task.wait(0.1)
@@ -1862,7 +1865,7 @@ task.spawn(function()
 				if otherRoot and otherHum and otherHum.Health > 0 then
 					local dist = (otherRoot.Position - root.Position).Magnitude
 					if dist <= 20 then
-						flingTarget(other)
+						flingTarget(other, 0.5)
 					end
 				end
 			end
@@ -1870,18 +1873,54 @@ task.spawn(function()
 	end
 end)
 
--- AUTO FLING: cycle through all players
+-- AUTO FLING: save position on enable, cycle through all players, return on disable
 task.spawn(function()
 	while true do
-		task.wait(0.3)
-		if not _G.Undercore.FlingAuto or flingBusy then continue end
+		task.wait(0.1)
+		if not _G.Undercore.FlingAuto then
+			-- If auto fling just turned off, return to saved position
+			if autoFlingSavedPos then
+				local char = player.Character
+				if char then
+					local root = char:FindFirstChild("HumanoidRootPart")
+					local hum = char:FindFirstChildOfClass("Humanoid")
+					if root and hum then
+						pcall(function()
+							root.CFrame = autoFlingSavedPos * CFrame.new(0, 3, 0)
+							root.Velocity = Vector3.zero
+							root.RotVelocity = Vector3.zero
+							root.AssemblyLinearVelocity = Vector3.zero
+							root.AssemblyAngularVelocity = Vector3.zero
+							hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+						end)
+					end
+				end
+				autoFlingSavedPos = nil
+			end
+			continue
+		end
 
+		if flingBusy then continue end
+
+		-- Save position when auto fling starts
+		if not autoFlingSavedPos then
+			local char = player.Character
+			if char then
+				local root = char:FindFirstChild("HumanoidRootPart")
+				if root then
+					autoFlingSavedPos = root.CFrame
+				end
+			end
+			continue
+		end
+
+		-- Cycle through all players and fling each one (2s per target, no return between)
 		for _, other in ipairs(Players:GetPlayers()) do
 			if not _G.Undercore.FlingAuto then break end
 			if other ~= player and other.Character then
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
 				if otherHum and otherHum.Health > 0 then
-					flingTarget(other)
+					flingTarget(other, 2, nil)
 					task.wait(0.1)
 				end
 			end
@@ -2123,7 +2162,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.7.4"
+local SCRIPT_VERSION = "1.7.5"
 local GITLAB_API = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/"
 local SCRIPT_URL_PRIMARY = GITLAB_API .. "undercore.lua/raw?ref=main"
 local VERSION_URL_PRIMARY = GITLAB_API .. "version.txt/raw?ref=main"
