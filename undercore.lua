@@ -1,7 +1,7 @@
--- Undercore v1.9.2 - Custom Cheat Menu
+-- Undercore v1.9.3 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.9.2"
+local SCRIPT_VERSION = "1.9.3"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -941,16 +941,26 @@ teleportBtnSwitch.Position = UDim2.new(1, -50, 0.5, -10)
 teleportBtnSwitch.AutoButtonColor = false
 teleportBtnSwitch.Parent = teleportBtnFrame
 
--- Submenu panel (attached to right side of mainFrame)
+-- Submenu panel (parented to gui, not mainFrame, because CanvasGroup clips children)
 local teleportPanel = Instance.new("Frame")
 teleportPanel.Name = "TeleportPanel"
-teleportPanel.Size = UDim2.new(0, 250, 1, 0)
-teleportPanel.Position = UDim2.new(1, 0, 0, 0)
+teleportPanel.Size = UDim2.new(0, 250, 0, 400)
+teleportPanel.Position = UDim2.new(0.5, 300, 0.5, 0)
 teleportPanel.BackgroundColor3 = BG
 teleportPanel.BorderSizePixel = 0
 teleportPanel.Visible = false
 teleportPanel.ZIndex = 50
-teleportPanel.Parent = mainFrame
+teleportPanel.Parent = gui
+
+-- Sync teleport panel position with mainFrame (follows when dragged)
+trackConn(RunService.RenderStepped:Connect(function()
+	if teleportPanel.Visible then
+		teleportPanel.Position = UDim2.new(
+			mainFrame.Position.X.Scale, mainFrame.Position.X.Offset + 600,
+			mainFrame.Position.Y.Scale, mainFrame.Position.Y.Offset
+		)
+	end
+end))
 
 -- Divider on left edge of submenu
 local teleportDivider = Instance.new("Frame")
@@ -1120,7 +1130,7 @@ local function showTeleportSubmenu()
 	refreshTeleportList()
 
 	teleportPanel.Visible = true
-	teleportPanel.Size = UDim2.new(0, 0, 1, 0)
+	teleportPanel.Size = UDim2.new(0, 0, 0, 400)
 
 	-- Green sweep overlay
 	local sweep = Instance.new("Frame")
@@ -1130,7 +1140,7 @@ local function showTeleportSubmenu()
 	sweep.ZIndex = 60
 	sweep.Parent = teleportPanel
 
-	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 1, 0) })
+	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 0, 400) })
 	sizeTween:Play()
 
 	local sweepTween = TweenService:Create(sweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
@@ -1161,7 +1171,7 @@ local function hideTeleportSubmenu()
 	sweepIn:Play()
 	sweepIn.Completed:Wait()
 
-	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0) })
+	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 400) })
 	sizeTween:Play()
 	sizeTween.Completed:Wait()
 
