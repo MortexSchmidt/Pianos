@@ -1,7 +1,7 @@
--- Undercore v2.0.1 - Custom Cheat Menu
+-- Undercore v2.0.2 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.0.1"
+local SCRIPT_VERSION = "2.0.2"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -2081,31 +2081,11 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING (contactless: invisible hitbox impulse via Heartbeat, no teleport into target)
+-- FLING (contactless: direct velocity on target via simulation radius, no teleport, no constraints on local player)
 local flingBusy = false
 local oldFallenHeight = nil
 local autoFlingSavedPos = nil
 local flingChar = nil
-local flingHitbox = nil
-
--- Create or reuse invisible hitbox part for contactless impulse transfer
-local function getFlingHitbox()
-	if flingHitbox and flingHitbox.Parent then
-		return flingHitbox
-	end
-	local part = Instance.new("Part")
-	part.Name = "FlingHitbox"
-	part.Size = Vector3.new(2, 2, 2)
-	part.Transparency = 1
-	part.CanCollide = true
-	part.CanQuery = false
-	part.CanTouch = false
-	part.Anchored = false
-	part.Massless = true
-	part.Parent = Workspace
-	flingHitbox = part
-	return part
-end
 
 local function flingTarget(targetPlayer, duration, returnCFrame)
 	if flingBusy then return end
@@ -2138,7 +2118,7 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 		flingBusy = false
 	end)
 
-	-- Increase simulation radius for physics authority
+	-- Increase simulation radius for physics authority over target
 	pcall(function() setsimulationradius(1e9) end)
 	pcall(function() if sethiddenproperty then sethiddenproperty(root, "SimulationRadius", 1e9) end end)
 
@@ -2148,33 +2128,11 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	end
 	Workspace.FallenPartsDestroyHeight = 0/0
 
-	-- Keep local player upright (prevent incidental spinning from physics)
-	local alignOri = Instance.new("AlignOrientation")
-	alignOri.Mode = Enum.OrientationAlignmentMode.OneAttachment
-	alignOri.Attachment0 = Instance.new("Attachment", root)
-	alignOri.MaxTorque = math.huge
-	alignOri.Responsiveness = 200
-	alignOri.CFrame = CFrame.new(0, 0, 0)
-	alignOri.Parent = root
+	-- NO constraints on local player — no AlignOrientation, no AlignPosition
+	-- Local player is completely untouched, stays where they are
 
-	-- Soft position stability (follows player's natural movement, resists external push)
-	local alignPos = Instance.new("AlignPosition")
-	alignPos.Mode = Enum.PositionAlignmentMode.OneAttachment
-	alignPos.Attachment0 = Instance.new("Attachment", root)
-	alignPos.MaxForce = math.huge
-	alignPos.Responsiveness = 100
-	alignPos.Position = root.Position
-	alignPos.Parent = root
-
-	hum.PlatformStand = false
-	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-
-	-- Get invisible hitbox for contactless impulse
-	local hitbox = getFlingHitbox()
-
-	-- Contactless fling: project hitbox at target with extreme velocity each Heartbeat
-	-- Physics engine processes collision → target gets flung
-	-- Local player never touches target → no sticking
+	-- Contactless fling: directly set extreme velocity on target's parts each Heartbeat
+	-- With simulation radius 1e9, client has physics authority → velocity replicates to server
 	local timeToWait = duration or 2
 	local startTime = tick()
 	local conn
@@ -2183,15 +2141,22 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 			return
 		end
 		pcall(function()
-			-- Project hitbox onto target position with extreme velocity
-			hitbox.CFrame = tRoot.CFrame
-			hitbox.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-			hitbox.AssemblyAngularVelocity = Vector3.new(math.huge, math.huge, math.huge)
-			hitbox.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
-			hitbox.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+			-- Extreme velocity on target root
+			tRoot.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			tRoot.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+			tRoot.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			tRoot.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+
+			-- Also apply to all target body parts for maximum effect
+			for _, part in ipairs(tChar:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+					part.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+					part.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+					part.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+				end
+			end
 		end)
-		-- Update AlignPosition to follow player's current position (no locking)
-		alignPos.Position = root.Position
 	end)
 
 	-- Wait for duration
@@ -2205,38 +2170,6 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	-- Disconnect Heartbeat
 	if conn then
 		pcall(function() conn:Disconnect() end)
-	end
-
-	-- Park hitbox far away
-	pcall(function()
-		hitbox.CFrame = CFrame.new(0, -1e6, 0)
-		hitbox.AssemblyLinearVelocity = Vector3.zero
-		hitbox.AssemblyAngularVelocity = Vector3.zero
-	end)
-
-	-- Cleanup: remove AlignOrientation and AlignPosition
-	pcall(function()
-		if alignOri then
-			if alignOri.Attachment0 then alignOri.Attachment0:Destroy() end
-			alignOri:Destroy()
-		end
-		if alignPos then
-			if alignPos.Attachment0 then alignPos.Attachment0:Destroy() end
-			alignPos:Destroy()
-		end
-	end)
-
-	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-
-	-- No teleport happened — player stays where they are
-	-- Only restore if explicit returnCFrame was provided
-	if returnCFrame then
-		pcall(function()
-			root.CFrame = returnCFrame * CFrame.new(0, 0.5, 0)
-			root.AssemblyLinearVelocity = Vector3.zero
-			root.AssemblyAngularVelocity = Vector3.zero
-			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-		end)
 	end
 
 	if oldFallenHeight then
