@@ -1,4 +1,4 @@
--- Undercore v1.6.0 - Custom Cheat Menu
+-- Undercore v1.6.1 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1691,53 +1691,66 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING AURA (classic spin-fling: spin YOUR root part on Y axis, teleport into target, physics collision flings them)
+-- FLING AURA (classic spin-fling: separate loop, NO yields in RenderStepped)
 local flingDebounce = {}
 local flingSpinSpeed = 99999
 
+-- Only keep rotation updated in RenderStepped (no yields!)
 trackConn(RunService.RenderStepped:Connect(function()
 	if not _G.Undercore.Fling then return end
 	local char = player.Character
 	if not char then return end
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
-
-	-- Spin only on Y axis (X/Z causes floor clipping)
 	pcall(function()
 		root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
-		root.AssemblyAngularVelocity = Vector3.new(0, flingSpinSpeed, 0)
 	end)
+end))
 
-	for _, other in ipairs(Players:GetPlayers()) do
-		if other ~= player and other.Character then
-			local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
-			local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
-			if otherRoot and otherHum and otherHum.Health > 0 then
-				local dist = (otherRoot.Position - root.Position).Magnitude
-				if dist <= _G.Undercore.FlingRange then
-					if not flingDebounce[other] or tick() - flingDebounce[other] > 0.5 then
-						flingDebounce[other] = tick()
+-- Fling Aura logic in separate loop (safe to yield here)
+task.spawn(function()
+	while true do
+		task.wait(0.1)
+		if not _G.Undercore.Fling then continue end
+		local char = player.Character
+		if not char then continue end
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if not root then continue end
 
-						local myPos = root.CFrame
+		for _, other in ipairs(Players:GetPlayers()) do
+			if not _G.Undercore.Fling then break end
+			if other ~= player and other.Character then
+				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
+				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
+				if otherRoot and otherHum and otherHum.Health > 0 then
+					local dist = (otherRoot.Position - root.Position).Magnitude
+					if dist <= _G.Undercore.FlingRange then
+						if not flingDebounce[other] or tick() - flingDebounce[other] > 0.5 then
+							flingDebounce[other] = tick()
 
-						-- Teleport our spinning root part INTO the target
-						pcall(function()
-							root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
-						end)
-						task.wait(0.05)
+							local myPos = root.CFrame
 
-						-- Return to our position (+3 Y to avoid floor clip)
-						pcall(function()
-							root.CFrame = myPos + Vector3.new(0, 3, 0)
-							root.Velocity = Vector3.zero
-							root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
-						end)
+							-- Teleport our spinning root part INTO the target
+							pcall(function()
+								root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
+								root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
+							end)
+							task.wait(0.05)
+
+							-- Return to our position (+5 Y to avoid floor clip)
+							pcall(function()
+								root.CFrame = myPos + Vector3.new(0, 5, 0)
+								root.Velocity = Vector3.zero
+								root.AssemblyLinearVelocity = Vector3.zero
+								root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
+							end)
+						end
 					end
 				end
 			end
 		end
 	end
-end))
+end)
 
 -- AUTO FLING (teleport to each player while spinning on Y, physics flings them, return to original position)
 task.spawn(function()
@@ -1781,12 +1794,13 @@ task.spawn(function()
 			end
 		end
 
-		-- Return to original position (+3 Y to avoid floor clip) and stop spinning
+		-- Return to original position (+5 Y to avoid floor clip) and stop spinning
 		pcall(function()
-			root.CFrame = originalPos + Vector3.new(0, 3, 0)
+			root.CFrame = originalPos + Vector3.new(0, 5, 0)
 			root.RotVelocity = Vector3.zero
 			root.AssemblyAngularVelocity = Vector3.zero
 			root.Velocity = Vector3.zero
+			root.AssemblyLinearVelocity = Vector3.zero
 		end)
 	end
 end)
@@ -2016,7 +2030,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.6.0"
+local SCRIPT_VERSION = "1.6.1"
 local VERSION_URL_BASE = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
 local SCRIPT_URL_BASE = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua"
 local VERSION_URL_FALLBACK = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
