@@ -1,4 +1,4 @@
--- Undercore v1.6.6 - Custom Cheat Menu
+-- Undercore v1.6.7 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1707,91 +1707,62 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING AURA
+-- FLING (classic spin method, safe version: spin only during hit, not constant)
 local flingDebounce = {}
 local flingBusy = false
 
-local function resetFlingRoot(root, cf)
-	pcall(function()
-		root.CFrame = cf + Vector3.new(0, 6, 0)
-		root.Velocity = Vector3.zero
-		root.RotVelocity = Vector3.zero
-		root.AssemblyLinearVelocity = Vector3.zero
-		root.AssemblyAngularVelocity = Vector3.zero
-	end)
-end
-
-local function setFlingHumanoidSafe(hum, enabled)
-	pcall(function()
-		hum.Sit = false
-		hum.PlatformStand = false
-		hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, not enabled)
-		hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, not enabled)
-		hum:SetStateEnabled(Enum.HumanoidStateType.Physics, not enabled)
-		hum:SetStateEnabled(Enum.HumanoidStateType.Dead, not enabled)
-		if not enabled then
-			hum:ChangeState(Enum.HumanoidStateType.GettingUp)
-		end
-	end)
-end
-
-local function burstFlingTarget(root, hum, targetRoot)
-	if flingBusy then return false end
-	if not root or not hum or not targetRoot then return false end
-	if targetRoot.Position.Y < -100 then return false end
+local function doFlingHit(root, hum, targetRoot)
+	if flingBusy then return end
+	if not root or not hum or not targetRoot then return end
 
 	flingBusy = true
-	local originalPos = root.CFrame
-	local oldAutoRotate = hum.AutoRotate
-	local power = math.clamp(_G.Undercore.FlingPower or 1000, 500, 5000)
-	local speed = math.clamp(power * 3, 1500, 12000)
-	local spin = math.clamp(power * 10, 4000, 20000)
-	local offsets = {
-		Vector3.new(4, 1.5, 0),
-		Vector3.new(-4, 1.5, 0),
-		Vector3.new(0, 1.5, 4),
-		Vector3.new(0, 1.5, -4),
-	}
+	local savedCFrame = root.CFrame
+	local savedPlatformStand = hum.PlatformStand
 
-	setFlingHumanoidSafe(hum, true)
-	pcall(function() hum.AutoRotate = false end)
+	pcall(function()
+		-- Enable PlatformStand so humanoid doesn't fight physics
+		hum.PlatformStand = true
+		-- Set extreme spin on Y axis only
+		root.RotVelocity = Vector3.new(0, 99999, 0)
+		root.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
+		-- Zero out linear velocity so we don't fly ourselves
+		root.Velocity = Vector3.zero
+		root.AssemblyLinearVelocity = Vector3.zero
 
-	local ok = pcall(function()
-		for _, offset in ipairs(offsets) do
-			local targetPos = targetRoot.Position
-			local fromPos = targetPos + offset
-			local toPos = targetPos - offset + Vector3.new(0, 0.5, 0)
-			local dir = toPos - fromPos
-			if dir.Magnitude <= 0 then
-				dir = Vector3.new(1, 0, 0)
-			else
-				dir = dir.Unit
-			end
-
-			root.CFrame = CFrame.new(fromPos, toPos)
-			root.Velocity = dir * speed + Vector3.new(0, 120, 0)
-			root.RotVelocity = Vector3.new(0, spin, 0)
-			root.AssemblyLinearVelocity = dir * speed + Vector3.new(0, 120, 0)
-			root.AssemblyAngularVelocity = Vector3.new(0, spin, 0)
-			task.wait(0.025)
-
-			root.CFrame = CFrame.new(toPos, fromPos)
-			root.Velocity = dir * speed + Vector3.new(0, 120, 0)
-			root.AssemblyLinearVelocity = dir * speed + Vector3.new(0, 120, 0)
-			task.wait(0.015)
-		end
+		-- Teleport directly into the target
+		root.CFrame = CFrame.new(targetRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
 	end)
 
-	resetFlingRoot(root, originalPos)
-	pcall(function() hum.AutoRotate = oldAutoRotate end)
-	setFlingHumanoidSafe(hum, false)
+	-- Let physics process the collision (brief yield, safe in task.spawn)
+	task.wait(0.03)
+
+	-- Second hit: teleport slightly offset for extra collision
+	pcall(function()
+		root.CFrame = CFrame.new(targetRoot.Position + Vector3.new(0, 2, 0)) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
+		root.RotVelocity = Vector3.new(0, 99999, 0)
+		root.Velocity = Vector3.zero
+		root.AssemblyLinearVelocity = Vector3.zero
+	end)
+	task.wait(0.02)
+
+	-- Full reset and return
+	pcall(function()
+		root.RotVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
+		root.Velocity = Vector3.zero
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.CFrame = savedCFrame + Vector3.new(0, 3, 0)
+		hum.PlatformStand = savedPlatformStand
+		hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+	end)
+
 	flingBusy = false
-	return ok
 end
 
+-- FLING AURA (proximity-based)
 task.spawn(function()
 	while true do
-		task.wait(0.12)
+		task.wait(0.1)
 		if not _G.Undercore.Fling or flingBusy then continue end
 		local char = player.Character
 		if not char then continue end
@@ -1807,9 +1778,9 @@ task.spawn(function()
 				if otherRoot and otherHum and otherHum.Health > 0 then
 					local dist = (otherRoot.Position - root.Position).Magnitude
 					if dist <= _G.Undercore.FlingRange then
-						if not flingDebounce[other] or tick() - flingDebounce[other] > 0.7 then
+						if not flingDebounce[other] or tick() - flingDebounce[other] > 0.6 then
 							flingDebounce[other] = tick()
-							burstFlingTarget(root, hum, otherRoot)
+							doFlingHit(root, hum, otherRoot)
 						end
 					end
 				end
@@ -1818,10 +1789,10 @@ task.spawn(function()
 	end
 end)
 
--- AUTO FLING
+-- AUTO FLING (teleport to each player, fling them, return)
 task.spawn(function()
 	while true do
-		task.wait(0.1)
+		task.wait(0.15)
 		if not _G.Undercore.FlingAuto or flingBusy then continue end
 
 		local char = player.Character
@@ -1836,8 +1807,8 @@ task.spawn(function()
 				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
 				if otherRoot and otherHum and otherHum.Health > 0 then
-					burstFlingTarget(root, hum, otherRoot)
-					task.wait(0.08)
+					doFlingHit(root, hum, otherRoot)
+					task.wait(0.05)
 				end
 			end
 		end
@@ -1881,7 +1852,7 @@ trackConn(RunService.Stepped:Connect(function()
 	end
 end))
 
--- ANTI-FLING (detect abnormal velocity, anchor position, zero out rotation)
+-- ANTI-FLING (aggressive: zero velocity every frame + detect and restore position)
 local antiFlingLastPos = Vector3.zero
 local antiFlingLastTick = tick()
 trackConn(RunService.RenderStepped:Connect(function()
@@ -1894,10 +1865,19 @@ trackConn(RunService.RenderStepped:Connect(function()
 	local currentPos = root.Position
 	local currentTick = tick()
 	local dt = currentTick - antiFlingLastTick
+
+	-- Always zero out abnormal rotation
+	pcall(function()
+		if root.RotVelocity.Magnitude > 50 then
+			root.RotVelocity = Vector3.zero
+			root.AssemblyAngularVelocity = Vector3.zero
+		end
+	end)
+
 	if dt > 0 then
 		local velocity = (currentPos - antiFlingLastPos) / dt
-		-- If we're being flung (abnormal velocity), counter it hard
-		if velocity.Magnitude > 150 then
+		-- If we're being flung (lower threshold = more sensitive)
+		if velocity.Magnitude > 80 then
 			pcall(function()
 				root.Velocity = Vector3.zero
 				root.RotVelocity = Vector3.zero
@@ -2069,7 +2049,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.6.6"
+local SCRIPT_VERSION = "1.6.7"
 local VERSION_API_URL = "https://api.github.com/repos/MortexSchmidt/Pianos/contents/version.txt?ref=main"
 local SCRIPT_API_URL = "https://api.github.com/repos/MortexSchmidt/Pianos/contents/undercore.lua?ref=main"
 local VERSION_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
