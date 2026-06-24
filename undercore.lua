@@ -1,4 +1,4 @@
--- Undercore v1.6.9 - Custom Cheat Menu
+-- Undercore v1.7.0 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -2053,11 +2053,11 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.6.9"
-local SCRIPT_URL_PRIMARY = "https://gitlab.com/neruka783-group/Undercore/-/raw/main/undercore.lua"
-local VERSION_URL_PRIMARY = "https://gitlab.com/neruka783-group/Undercore/-/raw/main/version.txt"
-local SCRIPT_URL_FALLBACK = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
-local VERSION_URL_FALLBACK = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
+local SCRIPT_VERSION = "1.7.0"
+local SCRIPT_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
+local VERSION_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
+local SCRIPT_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua"
+local VERSION_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
 
 local function fetchRemoteVersion()
 	local version = nil
