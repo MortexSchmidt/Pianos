@@ -1,4 +1,4 @@
--- Undercore v1.5.4 - Custom Cheat Menu
+-- Undercore v1.5.5 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1657,7 +1657,7 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING AURA (classic spin-fling: spin YOUR root part, teleport into target, physics collision flings them)
+-- FLING AURA (classic spin-fling: spin YOUR root part on Y axis, teleport into target, physics collision flings them)
 local flingDebounce = {}
 local flingSpinSpeed = 99999
 
@@ -1668,10 +1668,10 @@ trackConn(RunService.RenderStepped:Connect(function()
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
-	-- Keep our root part spinning at extreme speed
+	-- Spin only on Y axis (X/Z causes floor clipping)
 	pcall(function()
-		root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
-		root.AssemblyAngularVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
+		root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
+		root.AssemblyAngularVelocity = Vector3.new(0, flingSpinSpeed, 0)
 	end)
 
 	for _, other in ipairs(Players:GetPlayers()) do
@@ -1681,25 +1681,22 @@ trackConn(RunService.RenderStepped:Connect(function()
 			if otherRoot and otherHum and otherHum.Health > 0 then
 				local dist = (otherRoot.Position - root.Position).Magnitude
 				if dist <= _G.Undercore.FlingRange then
-					-- Debounce per player (0.5s)
 					if not flingDebounce[other] or tick() - flingDebounce[other] > 0.5 then
 						flingDebounce[other] = tick()
 
-						-- Save our position
 						local myPos = root.CFrame
 
 						-- Teleport our spinning root part INTO the target
 						pcall(function()
 							root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
 						end)
-
-						-- Wait for physics to process the collision
 						task.wait(0.05)
 
-						-- Return to our position
+						-- Return to our position (+3 Y to avoid floor clip)
 						pcall(function()
-							root.CFrame = myPos
-							root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
+							root.CFrame = myPos + Vector3.new(0, 3, 0)
+							root.Velocity = Vector3.zero
+							root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
 						end)
 					end
 				end
@@ -1708,7 +1705,7 @@ trackConn(RunService.RenderStepped:Connect(function()
 	end
 end))
 
--- AUTO FLING (teleport to each player while spinning, physics flings them, return to original position)
+-- AUTO FLING (teleport to each player while spinning on Y, physics flings them, return to original position)
 task.spawn(function()
 	while true do
 		task.wait(0.1)
@@ -1721,10 +1718,10 @@ task.spawn(function()
 
 		local originalPos = root.CFrame
 
-		-- Start spinning at extreme speed
+		-- Spin only on Y axis
 		pcall(function()
-			root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
-			root.AssemblyAngularVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
+			root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
+			root.AssemblyAngularVelocity = Vector3.new(0, flingSpinSpeed, 0)
 		end)
 
 		for _, other in ipairs(Players:GetPlayers()) do
@@ -1736,23 +1733,23 @@ task.spawn(function()
 					-- Teleport our spinning body directly into them
 					pcall(function()
 						root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
-						root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
+						root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
 					end)
 					task.wait(0.05)
 
-					-- Extra hit: teleport slightly offset for second collision
+					-- Extra hit: teleport slightly above for second collision
 					pcall(function()
 						root.CFrame = CFrame.new(otherRoot.Position + Vector3.new(0, 3, 0)) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
-						root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
+						root.RotVelocity = Vector3.new(0, flingSpinSpeed, 0)
 					end)
 					task.wait(0.05)
 				end
 			end
 		end
 
-		-- Return to original position and stop spinning
+		-- Return to original position (+3 Y to avoid floor clip) and stop spinning
 		pcall(function()
-			root.CFrame = originalPos
+			root.CFrame = originalPos + Vector3.new(0, 3, 0)
 			root.RotVelocity = Vector3.zero
 			root.AssemblyAngularVelocity = Vector3.zero
 			root.Velocity = Vector3.zero
@@ -1985,7 +1982,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.5.4"
+local SCRIPT_VERSION = "1.5.5"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
