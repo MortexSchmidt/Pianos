@@ -1,7 +1,7 @@
--- Undercore v1.9.5 - Custom Cheat Menu
+-- Undercore v1.9.6 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.9.5"
+local SCRIPT_VERSION = "1.9.6"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -909,19 +909,10 @@ teleportBtnLabel.TextSize = 13
 teleportBtnLabel.TextColor3 = TEXT_WHITE
 teleportBtnLabel.TextXAlignment = Enum.TextXAlignment.Left
 teleportBtnLabel.BackgroundTransparency = 1
-teleportBtnLabel.Size = UDim2.new(1, -60, 1, 0)
+teleportBtnLabel.Size = UDim2.new(1, -20, 1, 0)
 teleportBtnLabel.Position = UDim2.new(0, 12, 0, 0)
 teleportBtnLabel.Text = "Teleport to Player"
 teleportBtnLabel.Parent = teleportBtnFrame
-
-local teleportBtnSwitch = Instance.new("TextButton")
-teleportBtnSwitch.Text = ""
-teleportBtnSwitch.BackgroundColor3 = ACCENT
-teleportBtnSwitch.BorderSizePixel = 0
-teleportBtnSwitch.Size = UDim2.new(0, 40, 0, 20)
-teleportBtnSwitch.Position = UDim2.new(1, -50, 0.5, -10)
-teleportBtnSwitch.AutoButtonColor = false
-teleportBtnSwitch.Parent = teleportBtnFrame
 
 -- Submenu panel (parented to gui, not mainFrame, because CanvasGroup clips children)
 local teleportPanel = Instance.new("Frame")
@@ -935,23 +926,15 @@ teleportPanel.ZIndex = 50
 teleportPanel.Parent = gui
 
 -- Sync teleport panel position with mainFrame (follows when dragged)
--- Uses AbsolutePosition to account for AnchorPoint (0.5, 0.5) on mainFrame
+-- Uses AbsolutePosition/AbsoluteSize for exact pixel-perfect alignment
 trackConn(RunService.RenderStepped:Connect(function()
 	if teleportPanel.Visible then
 		local absPos = mainFrame.AbsolutePosition
 		local absSize = mainFrame.AbsoluteSize
 		teleportPanel.Position = UDim2.new(0, absPos.X + absSize.X, 0, absPos.Y)
+		teleportPanel.Size = UDim2.new(0, 250, 0, absSize.Y)
 	end
 end))
-
--- Divider on left edge of submenu
-local teleportDivider = Instance.new("Frame")
-teleportDivider.Size = UDim2.new(0, 2, 1, 0)
-teleportDivider.Position = UDim2.new(0, 0, 0, 0)
-teleportDivider.BackgroundColor3 = GREEN
-teleportDivider.BorderSizePixel = 0
-teleportDivider.ZIndex = 51
-teleportDivider.Parent = teleportPanel
 
 -- Submenu title
 local teleportTitle = Instance.new("TextLabel")
@@ -1099,8 +1082,9 @@ local function showTeleportSubmenu()
 
 	refreshTeleportList()
 
+	local panelHeight = mainFrame.AbsoluteSize.Y
 	teleportPanel.Visible = true
-	teleportPanel.Size = UDim2.new(0, 0, 0, 400)
+	teleportPanel.Size = UDim2.new(0, 0, 0, panelHeight)
 
 	-- Green sweep overlay
 	local sweep = Instance.new("Frame")
@@ -1110,7 +1094,7 @@ local function showTeleportSubmenu()
 	sweep.ZIndex = 60
 	sweep.Parent = teleportPanel
 
-	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 0, 400) })
+	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 0, panelHeight) })
 	sizeTween:Play()
 
 	local sweepTween = TweenService:Create(sweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
@@ -1141,21 +1125,13 @@ local function hideTeleportSubmenu()
 	sweepIn:Play()
 	sweepIn.Completed:Wait()
 
-	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 400) })
+	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, mainFrame.AbsoluteSize.Y) })
 	sizeTween:Play()
 	sizeTween.Completed:Wait()
 
 	teleportPanel.Visible = false
 	sweep:Destroy()
 end
-
-teleportBtnSwitch.MouseButton1Click:Connect(function()
-	if teleportSubmenuVisible then
-		hideTeleportSubmenu()
-	else
-		showTeleportSubmenu()
-	end
-end)
 
 teleportBtnFrame.MouseButton1Click:Connect(function()
 	if teleportSubmenuVisible then
