@@ -1,4 +1,4 @@
--- Undercore v1.5.1 - Custom Cheat Menu
+-- Undercore v1.5.2 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1657,14 +1657,22 @@ trackConn(UserInputService.JumpRequest:Connect(function(_, processed)
 	end
 end))
 
--- FLING AURA (5 methods: ApplyImpulse + Velocity + RotVelocity + CFrame spin + Humanoid state, fast debounce)
+-- FLING AURA (classic spin-fling: spin YOUR root part, teleport into target, physics collision flings them)
 local flingDebounce = {}
+local flingSpinSpeed = 99999
+
 trackConn(RunService.RenderStepped:Connect(function()
 	if not _G.Undercore.Fling then return end
 	local char = player.Character
 	if not char then return end
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
+
+	-- Keep our root part spinning at extreme speed
+	pcall(function()
+		root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
+		root.AssemblyAngularVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
+	end)
 
 	for _, other in ipairs(Players:GetPlayers()) do
 		if other ~= player and other.Character then
@@ -1673,51 +1681,25 @@ trackConn(RunService.RenderStepped:Connect(function()
 			if otherRoot and otherHum and otherHum.Health > 0 then
 				local dist = (otherRoot.Position - root.Position).Magnitude
 				if dist <= _G.Undercore.FlingRange then
-					-- Fast debounce (0.3s) for continuous fling
-					if not flingDebounce[other] or tick() - flingDebounce[other] > 0.3 then
+					-- Debounce per player (0.5s)
+					if not flingDebounce[other] or tick() - flingDebounce[other] > 0.5 then
 						flingDebounce[other] = tick()
-						local flingDir = (otherRoot.Position - root.Position).Unit
-						local force = _G.Undercore.FlingPower
-						local spin = Vector3.new(math.random(-500, 500), math.random(-500, 500), math.random(-500, 500))
 
-						-- Method 1: ApplyImpulse + ApplyAngularImpulse (mass-scaled)
+						-- Save our position
+						local myPos = root.CFrame
+
+						-- Teleport our spinning root part INTO the target
 						pcall(function()
-							otherRoot:ApplyImpulse(flingDir * force * otherRoot.AssemblyMass)
-							otherRoot:ApplyAngularImpulse(spin * otherRoot.AssemblyMass * 100)
+							root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
 						end)
 
-						-- Method 2: Velocity + RotVelocity (direct)
-						pcall(function()
-							otherRoot.Velocity = flingDir * force + Vector3.new(0, force * 0.3, 0)
-							otherRoot.RotVelocity = spin
-						end)
+						-- Wait for physics to process the collision
+						task.wait(0.05)
 
-						-- Method 3: CFrame teleport with random rotation (bypasses anti-fling)
+						-- Return to our position
 						pcall(function()
-							otherRoot.CFrame = CFrame.new(otherRoot.Position + flingDir * (force * 0.005)) * CFrame.Angles(
-								math.rad(math.random(-180, 180)),
-								math.rad(math.random(-180, 180)),
-								math.rad(math.random(-180, 180))
-							)
-						end)
-
-						-- Method 4: Humanoid state disruption
-						pcall(function()
-							otherHum:ChangeState(Enum.HumanoidStateType.Physics)
-							otherHum:ChangeState(Enum.HumanoidStateType.FallingDown)
-						end)
-
-						-- Method 5: Set other player's velocity to extreme spin
-						pcall(function()
-							otherRoot.AssemblyLinearVelocity = flingDir * force * 2
-							otherRoot.AssemblyAngularVelocity = spin * 50
-						end)
-
-						-- Reset after 1.5s
-						task.delay(1.5, function()
-							if otherHum and otherHum.Health > 0 then
-								pcall(function() otherHum:ChangeState(Enum.HumanoidStateType.GettingUp) end)
-							end
+							root.CFrame = myPos
+							root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
 						end)
 					end
 				end
@@ -1726,10 +1708,10 @@ trackConn(RunService.RenderStepped:Connect(function()
 	end
 end))
 
--- AUTO FLING (teleport to each player at high speed, fling them, return to original position)
+-- AUTO FLING (teleport to each player while spinning, physics flings them, return to original position)
 task.spawn(function()
 	while true do
-		task.wait(0.05)
+		task.wait(0.1)
 		if not _G.Undercore.FlingAuto then continue end
 
 		local char = player.Character
@@ -1739,68 +1721,41 @@ task.spawn(function()
 
 		local originalPos = root.CFrame
 
+		-- Start spinning at extreme speed
+		pcall(function()
+			root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
+			root.AssemblyAngularVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
+		end)
+
 		for _, other in ipairs(Players:GetPlayers()) do
 			if not _G.Undercore.FlingAuto then break end
 			if other ~= player and other.Character then
 				local otherRoot = other.Character:FindFirstChild("HumanoidRootPart")
 				local otherHum = other.Character:FindFirstChildOfClass("Humanoid")
 				if otherRoot and otherHum and otherHum.Health > 0 then
-					-- Teleport directly to them (pierce through)
+					-- Teleport our spinning body directly into them
 					pcall(function()
-						root.CFrame = CFrame.new(otherRoot.Position + Vector3.new(0, 2, 0))
+						root.CFrame = CFrame.new(otherRoot.Position) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
+						root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
 					end)
-					task.wait(0.03)
+					task.wait(0.05)
 
-					-- Fling with all 5 methods
-					local flingDir = (otherRoot.Position - root.Position).Unit
-					if flingDir.Magnitude == 0 then flingDir = Vector3.new(0, 1, 0) end
-					local force = _G.Undercore.FlingPower
-					local spin = Vector3.new(math.random(-500, 500), math.random(-500, 500), math.random(-500, 500))
-
+					-- Extra hit: teleport slightly offset for second collision
 					pcall(function()
-						otherRoot:ApplyImpulse(flingDir * force * otherRoot.AssemblyMass)
-						otherRoot:ApplyAngularImpulse(spin * otherRoot.AssemblyMass * 100)
+						root.CFrame = CFrame.new(otherRoot.Position + Vector3.new(0, 3, 0)) * CFrame.Angles(0, math.rad(math.random(0, 360)), 0)
+						root.RotVelocity = Vector3.new(flingSpinSpeed, flingSpinSpeed, flingSpinSpeed)
 					end)
-
-					pcall(function()
-						otherRoot.Velocity = flingDir * force + Vector3.new(0, force * 0.3, 0)
-						otherRoot.RotVelocity = spin
-					end)
-
-					pcall(function()
-						otherRoot.CFrame = CFrame.new(otherRoot.Position + flingDir * (force * 0.005)) * CFrame.Angles(
-							math.rad(math.random(-180, 180)),
-							math.rad(math.random(-180, 180)),
-							math.rad(math.random(-180, 180))
-						)
-					end)
-
-					pcall(function()
-						otherHum:ChangeState(Enum.HumanoidStateType.Physics)
-						otherHum:ChangeState(Enum.HumanoidStateType.FallingDown)
-					end)
-
-					pcall(function()
-						otherRoot.AssemblyLinearVelocity = flingDir * force * 2
-						otherRoot.AssemblyAngularVelocity = spin * 50
-					end)
-
-					task.delay(1.5, function()
-						if otherHum and otherHum.Health > 0 then
-							pcall(function() otherHum:ChangeState(Enum.HumanoidStateType.GettingUp) end)
-						end
-					end)
-
-					task.wait(0.03)
+					task.wait(0.05)
 				end
 			end
 		end
 
-		-- Return to original position
+		-- Return to original position and stop spinning
 		pcall(function()
 			root.CFrame = originalPos
-			root.Velocity = Vector3.zero
 			root.RotVelocity = Vector3.zero
+			root.AssemblyAngularVelocity = Vector3.zero
+			root.Velocity = Vector3.zero
 		end)
 	end
 end)
@@ -2030,7 +1985,7 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.5.1"
+local SCRIPT_VERSION = "1.5.2"
 local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
 
 task.spawn(function()
