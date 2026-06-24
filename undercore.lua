@@ -1,4 +1,4 @@
--- Undercore v1.5.5 - Custom Cheat Menu
+-- Undercore v1.5.6 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -1982,8 +1982,9 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.5.5"
-local VERSION_URL = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick())
+local SCRIPT_VERSION = "1.5.6"
+local VERSION_URL = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt?v=" .. tostring(tick())
+local SCRIPT_URL = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua?v=" .. tostring(tick())
 
 task.spawn(function()
 	task.wait(0.5)
@@ -1991,30 +1992,61 @@ task.spawn(function()
 	-- Step 1: Checking for updates
 	notify("Undercore", "Checking for updates...", 3, ACCENT, "info")
 
-	-- Actually fetch version from GitHub
+	-- Fetch version from GitHub via jsDelivr (with cache-buster)
 	local remoteVersion = nil
-	local updateAvailable = false
+	local fetchSuccess = false
 
 	pcall(function()
 		remoteVersion = game:HttpGet(VERSION_URL, true)
 		remoteVersion = remoteVersion:gsub("%s+", "")
-		if remoteVersion ~= SCRIPT_VERSION then
-			updateAvailable = true
-		end
+		fetchSuccess = true
 	end)
+
+	-- Fallback to raw GitHub if jsDelivr fails
+	if not fetchSuccess then
+		pcall(function()
+			remoteVersion = game:HttpGet("https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick()), true)
+			remoteVersion = remoteVersion:gsub("%s+", "")
+			fetchSuccess = true
+		end)
+	end
 
 	task.wait(2)
 
-	if updateAvailable then
-		-- Step 2: Update found, installing
-		notify("Undercore", "Update found (v" .. remoteVersion .. "). Installing...", 3, ACCENT, "info")
-		task.wait(2.5)
+	if fetchSuccess and remoteVersion and remoteVersion ~= "" then
+		if remoteVersion ~= SCRIPT_VERSION then
+			-- Update found — auto-reinject new version
+			notify("Undercore", "Update found (v" .. remoteVersion .. "). Installing...", 3, ACCENT, "info")
+			task.wait(2)
 
-		-- Step 3: Installation complete
-		notify("Undercore", "Installation complete. v" .. remoteVersion .. " injected.", 4, GREEN, "success")
+			-- Try to load the new version
+			local reinjectSuccess = false
+			pcall(function()
+				loadstring(game:HttpGet(SCRIPT_URL, true))()
+				reinjectSuccess = true
+			end)
+
+			if reinjectSuccess then
+				-- This old version will be replaced by the new one
+				notify("Undercore", "Installation complete. v" .. remoteVersion .. " injected.", 4, GREEN, "success")
+				-- Destroy this old instance
+				if _G.UndercoreConnections then
+					for _, conn in ipairs(_G.UndercoreConnections) do
+						pcall(function() conn:Disconnect() end)
+					end
+				end
+				return
+			else
+				-- Reinject failed, continue with current version
+				notify("Undercore", "Update download failed. Running v" .. SCRIPT_VERSION .. ".", 4, GREEN, "success")
+			end
+		else
+			-- Already latest
+			notify("Undercore", "Latest version (v" .. SCRIPT_VERSION .. ") injected.", 4, GREEN, "success")
+		end
 	else
-		-- No update needed
-		notify("Undercore", "Latest version (v" .. SCRIPT_VERSION .. ") injected.", 4, GREEN, "success")
+		-- Couldn't fetch version, continue with current
+		notify("Undercore", "Version check failed. Running v" .. SCRIPT_VERSION .. ".", 4, GREEN, "success")
 	end
 
 	task.wait(1)
