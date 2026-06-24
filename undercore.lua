@@ -1,7 +1,7 @@
--- Undercore v1.9.4 - Custom Cheat Menu
+-- Undercore v1.9.5 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.9.4"
+local SCRIPT_VERSION = "1.9.5"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -417,24 +417,6 @@ updateText.Position = UDim2.new(0, 20, 0, 0)
 updateText.Text = "New update available - click to restart"
 updateText.Visible = false
 updateText.Parent = updateBanner
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 14
-closeBtn.TextColor3 = TEXT_GRAY
-closeBtn.Text = "X"
-closeBtn.BackgroundTransparency = 1
-closeBtn.Size = UDim2.new(0, 35, 0, 35)
-closeBtn.Position = UDim2.new(1, -35, 0, 2)
-closeBtn.Parent = titleBar
-
-closeBtn.MouseButton1Click:Connect(function()
-	closeMenu()
-end)
-
-closeBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.2)
-end)
 
 -- Left navigation
 local navFrame = Instance.new("Frame")
@@ -945,7 +927,7 @@ teleportBtnSwitch.Parent = teleportBtnFrame
 local teleportPanel = Instance.new("Frame")
 teleportPanel.Name = "TeleportPanel"
 teleportPanel.Size = UDim2.new(0, 250, 0, 400)
-teleportPanel.Position = UDim2.new(0.5, 300, 0.5, 0)
+teleportPanel.Position = UDim2.new(0, 0, 0, 0)
 teleportPanel.BackgroundColor3 = BG
 teleportPanel.BorderSizePixel = 0
 teleportPanel.Visible = false
@@ -953,12 +935,12 @@ teleportPanel.ZIndex = 50
 teleportPanel.Parent = gui
 
 -- Sync teleport panel position with mainFrame (follows when dragged)
+-- Uses AbsolutePosition to account for AnchorPoint (0.5, 0.5) on mainFrame
 trackConn(RunService.RenderStepped:Connect(function()
 	if teleportPanel.Visible then
-		teleportPanel.Position = UDim2.new(
-			mainFrame.Position.X.Scale, mainFrame.Position.X.Offset + 600,
-			mainFrame.Position.Y.Scale, mainFrame.Position.Y.Offset
-		)
+		local absPos = mainFrame.AbsolutePosition
+		local absSize = mainFrame.AbsoluteSize
+		teleportPanel.Position = UDim2.new(0, absPos.X + absSize.X, 0, absPos.Y)
 	end
 end))
 
@@ -982,18 +964,6 @@ teleportTitle.Size = UDim2.new(1, -20, 0, 30)
 teleportTitle.Position = UDim2.new(0, 12, 0, 8)
 teleportTitle.Text = "Teleport to Player"
 teleportTitle.Parent = teleportPanel
-
--- Close button for submenu
-local teleportCloseBtn = Instance.new("TextButton")
-teleportCloseBtn.Font = Enum.Font.GothamBold
-teleportCloseBtn.TextSize = 14
-teleportCloseBtn.TextColor3 = TEXT_GRAY
-teleportCloseBtn.Text = "X"
-teleportCloseBtn.BackgroundColor3 = BG_DARK
-teleportCloseBtn.BorderSizePixel = 0
-teleportCloseBtn.Size = UDim2.new(0, 24, 0, 24)
-teleportCloseBtn.Position = UDim2.new(1, -30, 0, 8)
-teleportCloseBtn.Parent = teleportPanel
 
 -- Scrollable player list
 local teleportListFrame = Instance.new("ScrollingFrame")
@@ -1102,7 +1072,7 @@ local function refreshTeleportList()
 								myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 5)
 								myHum:ChangeState(Enum.HumanoidStateType.GettingUp)
 							end)
-							notify("Undercore", "Teleported to " .. plr.DisplayName, 3, GREEN, "success")
+							notify("Undercore", "Teleported to " .. plr.DisplayName, 3, ACCENT, "info")
 						end
 					end
 				end
@@ -1193,10 +1163,6 @@ teleportBtnFrame.MouseButton1Click:Connect(function()
 	else
 		showTeleportSubmenu()
 	end
-end)
-
-teleportCloseBtn.MouseButton1Click:Connect(function()
-	hideTeleportSubmenu()
 end)
 
 teleportBtnFrame.MouseEnter:Connect(function()
