@@ -1,7 +1,7 @@
--- Undercore v1.7.8 - Custom Cheat Menu
+-- Undercore v1.7.9 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.7.8"
+local SCRIPT_VERSION = "1.7.9"
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
