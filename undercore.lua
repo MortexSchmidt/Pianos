@@ -2057,10 +2057,17 @@ trackConn(RunService.Stepped:Connect(function()
 end))
 
 -- ANTI-FLING (aggressive: zero velocity every frame + detect and restore position)
-local antiFlingLastPos = Vector3.zero
+-- Disabled while flingBusy to avoid conflict with own fling
+local antiFlingLastCFrame = nil
 local antiFlingLastTick = tick()
 trackConn(RunService.RenderStepped:Connect(function()
-	if not _G.Undercore.AntiFling then return end
+	if not _G.Undercore.AntiFling then
+		antiFlingLastCFrame = nil
+		return
+	end
+	-- Skip if we're actively flinging someone
+	if flingBusy then return end
+
 	local char = player.Character
 	if not char then return end
 	local root = char:FindFirstChild("HumanoidRootPart")
@@ -2068,6 +2075,14 @@ trackConn(RunService.RenderStepped:Connect(function()
 
 	local currentPos = root.Position
 	local currentTick = tick()
+
+	-- Initialize saved position
+	if not antiFlingLastCFrame then
+		antiFlingLastCFrame = root.CFrame
+		antiFlingLastTick = currentTick
+		return
+	end
+
 	local dt = currentTick - antiFlingLastTick
 
 	-- Always zero out abnormal rotation
@@ -2079,7 +2094,7 @@ trackConn(RunService.RenderStepped:Connect(function()
 	end)
 
 	if dt > 0 then
-		local velocity = (currentPos - antiFlingLastPos) / dt
+		local velocity = (currentPos - antiFlingLastCFrame.Position) / dt
 		-- If we're being flung (lower threshold = more sensitive)
 		if velocity.Magnitude > 80 then
 			pcall(function()
@@ -2087,11 +2102,14 @@ trackConn(RunService.RenderStepped:Connect(function()
 				root.RotVelocity = Vector3.zero
 				root.AssemblyLinearVelocity = Vector3.zero
 				root.AssemblyAngularVelocity = Vector3.zero
-				root.CFrame = CFrame.new(antiFlingLastPos)
+				-- Restore position but keep current camera rotation
+				root.CFrame = CFrame.new(antiFlingLastCFrame.Position) * (root.CFrame - root.CFrame.Position)
 			end)
+		else
+			-- Update saved CFrame only when not being flung
+			antiFlingLastCFrame = root.CFrame
 		end
 	end
-	antiFlingLastPos = currentPos
 	antiFlingLastTick = currentTick
 end))
 
