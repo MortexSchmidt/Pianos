@@ -1,7 +1,7 @@
--- Undercore v1.9.1 - Custom Cheat Menu
+-- Undercore v1.9.2 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.9.1"
+local SCRIPT_VERSION = "1.9.2"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -913,7 +913,9 @@ local antiFlingToggle = createToggle(playerPage, "Anti-Fling", function(v) _G.Un
 local teleportSubmenuVisible = false
 
 -- Teleport button (styled like a toggle but acts as a button)
-local teleportBtnFrame = Instance.new("Frame")
+local teleportBtnFrame = Instance.new("TextButton")
+teleportBtnFrame.Text = ""
+teleportBtnFrame.AutoButtonColor = false
 teleportBtnFrame.Size = UDim2.new(1, 0, 0, 35)
 teleportBtnFrame.BackgroundColor3 = BG_LIGHT
 teleportBtnFrame.BorderSizePixel = 0
