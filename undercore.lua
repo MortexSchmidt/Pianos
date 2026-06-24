@@ -1,4 +1,4 @@
--- Undercore v1.7.0 - Custom Cheat Menu
+-- Undercore v1.7.1 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -2053,21 +2053,22 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.7.0"
-local SCRIPT_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
-local VERSION_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
-local SCRIPT_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua"
-local VERSION_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
+local SCRIPT_VERSION = "1.7.1"
+local GITLAB_API = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/"
+local SCRIPT_URL_PRIMARY = GITLAB_API .. "undercore.lua/raw?ref=main"
+local VERSION_URL_PRIMARY = GITLAB_API .. "version.txt/raw?ref=main"
+local SCRIPT_URL_FALLBACK = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
+local VERSION_URL_FALLBACK = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
 
 local function fetchRemoteVersion()
 	local version = nil
 	pcall(function()
-		version = game:HttpGet(VERSION_URL_PRIMARY .. "?v=" .. tostring(tick()), true)
+		version = game:HttpGet(VERSION_URL_PRIMARY .. "&v=" .. tostring(tick()), true)
 		version = version:gsub("%s+", "")
 	end)
 	if not version or version == "" then
 		pcall(function()
-			local remoteScript = game:HttpGet(SCRIPT_URL_PRIMARY .. "?v=" .. tostring(tick()), true)
+			local remoteScript = game:HttpGet(SCRIPT_URL_PRIMARY .. "&v=" .. tostring(tick()), true)
 			version = remoteScript:match("%-%- Undercore v([%d%.]+)")
 		end)
 	end
@@ -2106,7 +2107,7 @@ updateBanner.MouseButton1Click:Connect(function()
 	local oldConnections = _G.UndercoreConnections
 
 	pcall(function()
-		loadstring(game:HttpGet(SCRIPT_URL_PRIMARY .. "?v=" .. tostring(tick()), true))()
+		loadstring(game:HttpGet(SCRIPT_URL_PRIMARY .. "&v=" .. tostring(tick()), true))()
 		success = true
 	end)
 	if not success then
