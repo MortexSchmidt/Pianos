@@ -1,7 +1,7 @@
--- Undercore v1.7.9 - Custom Cheat Menu
+-- Undercore v1.8.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.7.9"
+local SCRIPT_VERSION = "1.8.0"
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -1863,6 +1863,15 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	pcall(function() setsimulationradius(1e9) end)
 	pcall(function() if sethiddenproperty then sethiddenproperty(root, "SimulationRadius", 1e9) end end)
 
+	-- Try to take network ownership of target's parts
+	pcall(function()
+		for _, part in ipairs(tChar:GetDescendants()) do
+			if part:IsA("BasePart") then
+				pcall(function() part:SetNetworkOwner(player) end)
+			end
+		end
+	end)
+
 	-- Save and disable FallenPartsDestroyHeight
 	if not oldFallenHeight then
 		oldFallenHeight = Workspace.FallenPartsDestroyHeight
@@ -1874,6 +1883,17 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 	bv.Velocity = Vector3.zero
 	bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
 	bv.Parent = root
+
+	-- Create BodyMovers on TARGET to continuously apply force (bypasses server velocity reset)
+	local tBv = Instance.new("BodyVelocity")
+	tBv.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+	tBv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+	tBv.Parent = tRoot
+
+	local tBav = Instance.new("BodyAngularVelocity")
+	tBav.AngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+	tBav.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+	tBav.Parent = tRoot
 
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
 
@@ -1888,6 +1908,19 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 		pcall(function()
 			basePart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
 			basePart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+		end)
+		-- Directly teleport target's root part (most aggressive bypass)
+		pcall(function()
+			tRoot.CFrame = tRoot.CFrame * CFrame.new(math.random(-5, 5), math.random(-5, 5), math.random(-5, 5))
+			tRoot.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			tRoot.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+			tRoot.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+			tRoot.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+		end)
+		-- Update BodyMovers velocity with random direction for chaos
+		pcall(function()
+			tBv.Velocity = Vector3.new(math.random(-9e7, 9e7), 9e7 * 10, math.random(-9e7, 9e7))
+			tBav.AngularVelocity = Vector3.new(9e8, 9e8, 9e8)
 		end)
 		for _, part in ipairs(tChar:GetDescendants()) do
 			if part:IsA("BasePart") then
@@ -1947,6 +1980,8 @@ local function flingTarget(targetPlayer, duration, returnCFrame)
 
 	-- Cleanup
 	bv:Destroy()
+	pcall(function() tBv:Destroy() end)
+	pcall(function() tBav:Destroy() end)
 	hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 
 	-- Restore position (only if not in auto-fling continuous mode, or if returnCFrame provided)
