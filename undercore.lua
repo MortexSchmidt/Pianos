@@ -1,4 +1,4 @@
--- Undercore v1.6.4 - Custom Cheat Menu
+-- Undercore v1.6.5 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -2053,18 +2053,49 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.6.4"
+local SCRIPT_VERSION = "1.6.5"
+local VERSION_API_URL = "https://api.github.com/repos/MortexSchmidt/Pianos/contents/version.txt?ref=main"
 local VERSION_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
 local SCRIPT_URL_PRIMARY = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
 local VERSION_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
 local SCRIPT_URL_FALLBACK = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua"
 
+local function decodeBase64(data)
+	local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	data = tostring(data or ""):gsub("[^" .. alphabet .. "=]", "")
+	return (data:gsub(".", function(char)
+		if char == "=" then return "" end
+		local bits = ""
+		local value = alphabet:find(char, 1, true) - 1
+		for i = 6, 1, -1 do
+			bits = bits .. (value % 2 ^ i - value % 2 ^ (i - 1) > 0 and "1" or "0")
+		end
+		return bits
+	end):gsub("%d%d%d?%d?%d?%d?%d?%d?", function(bits)
+		if #bits ~= 8 then return "" end
+		local byte = 0
+		for i = 1, 8 do
+			byte = byte + (bits:sub(i, i) == "1" and 2 ^ (8 - i) or 0)
+		end
+		return string.char(byte)
+	end))
+end
+
 local function fetchRemoteVersion()
 	local version = nil
 	pcall(function()
-		local remoteScript = game:HttpGet(SCRIPT_URL_PRIMARY .. "?v=" .. tostring(tick()), true)
-		version = remoteScript:match("%-%- Undercore v([%d%.]+)")
+		local response = game:HttpGet(VERSION_API_URL .. "&v=" .. tostring(tick()), true)
+		local encoded = response:match('"content"%s*:%s*"([^"]+)"')
+		if encoded then
+			version = decodeBase64(encoded:gsub("\\n", "")):gsub("%s+", "")
+		end
 	end)
+	if not version or version == "" then
+		pcall(function()
+			local remoteScript = game:HttpGet(SCRIPT_URL_PRIMARY .. "?v=" .. tostring(tick()), true)
+			version = remoteScript:match("%-%- Undercore v([%d%.]+)")
+		end)
+	end
 	if not version or version == "" then
 		pcall(function()
 			local remoteScript = game:HttpGet(SCRIPT_URL_FALLBACK .. "?v=" .. tostring(tick()), true)
