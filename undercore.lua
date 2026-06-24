@@ -909,10 +909,55 @@ local godMode = createToggle(playerPage, "God Mode", function(v) _G.Undercore.Go
 local antiFlingToggle = createToggle(playerPage, "Anti-Fling", function(v) _G.Undercore.AntiFling = v end)
 local resetBtn = createToggle(playerPage, "Reset Character (click)", function(v)
 	if v then
+		-- Turn off all toggles visually and in _G.Undercore
+		flyToggle.set(false)
+		speedToggle.set(false)
+		jumpToggle.set(false)
+		noclipToggle.set(false)
+		noFallToggle.set(false)
+		flingToggle.set(false)
+		flingAutoToggle.set(false)
+		espToggle.set(false)
+		espName.set(false)
+		espDist.set(false)
+		espHealth.set(false)
+		espTracer.set(false)
+		infJump.set(false)
+		godMode.set(false)
+		antiFlingToggle.set(false)
+
+		_G.Undercore.Fly = false
+		_G.Undercore.Speed = false
+		_G.Undercore.Jump = false
+		_G.Undercore.Noclip = false
+		_G.Undercore.NoFall = false
+		_G.Undercore.Fling = false
+		_G.Undercore.FlingAuto = false
+		_G.Undercore.ESP = false
+		_G.Undercore.ESPName = false
+		_G.Undercore.ESPDist = false
+		_G.Undercore.ESPHealth = false
+		_G.Undercore.ESPTracer = false
+		_G.Undercore.InfJump = false
+		_G.Undercore.GodMode = false
+		_G.Undercore.AntiFling = false
+
+		-- Reset fling state
+		flingBusy = false
+		autoFlingSavedPos = nil
+
+		-- Reset fly state
+		flyEnabled = false
+		if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
+		if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
+
+		-- Reset noclip state
+		noclipWasOn = false
+
+		-- Now reset character
 		local char = player.Character
 		if char then char:BreakJoints() end
 		task.wait(0.5)
-		_G.Undercore.GodMode = false
 	end
 end)
 
