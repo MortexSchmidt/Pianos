@@ -1,7 +1,7 @@
--- Undercore v1.9.7 - Custom Cheat Menu
+-- Undercore v1.9.8 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "1.9.7"
+local SCRIPT_VERSION = "1.9.8"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -926,13 +926,17 @@ teleportPanel.ZIndex = 50
 teleportPanel.Parent = gui
 
 -- Sync teleport panel position with mainFrame (follows when dragged)
--- Uses AbsolutePosition/AbsoluteSize for exact pixel-perfect alignment
+-- mainFrame: AnchorPoint(0.5,0.5), Position(0.5,0, 0.5,0), Size(600,400)
+-- Top-left of mainFrame = (centerX - 300, centerY - 200)
+-- Right edge = centerX + 300
+-- Teleport panel (AnchorPoint 0,0) goes at (right edge, top-left Y)
 trackConn(RunService.RenderStepped:Connect(function()
 	if teleportPanel.Visible then
-		local absPos = mainFrame.AbsolutePosition
-		local absSize = mainFrame.AbsoluteSize
-		teleportPanel.Position = UDim2.new(0, absPos.X + absSize.X, 0, absPos.Y)
-		teleportPanel.Size = UDim2.new(0, 250, 0, absSize.Y)
+		teleportPanel.Position = UDim2.new(
+			0.5, mainFrame.Position.X.Offset + 300,
+			0.5, mainFrame.Position.Y.Offset - 200
+		)
+		teleportPanel.Size = UDim2.new(0, 250, 0, 400)
 	end
 end))
 
@@ -1082,7 +1086,7 @@ local function showTeleportSubmenu()
 
 	refreshTeleportList()
 
-	local panelHeight = mainFrame.AbsoluteSize.Y
+	local panelHeight = 400
 	teleportPanel.Visible = true
 	teleportPanel.Size = UDim2.new(0, 0, 0, panelHeight)
 
@@ -1125,7 +1129,7 @@ local function hideTeleportSubmenu()
 	sweepIn:Play()
 	sweepIn.Completed:Wait()
 
-	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, mainFrame.AbsoluteSize.Y) })
+	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 400) })
 	sizeTween:Play()
 	sizeTween.Completed:Wait()
 
