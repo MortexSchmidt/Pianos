@@ -1,4 +1,4 @@
--- Undercore v1.5.6 - Custom Cheat Menu
+-- Undercore v1.6.0 - Custom Cheat Menu
 -- Inject via executor
 
 local TweenService = game:GetService("TweenService")
@@ -364,6 +364,40 @@ titleText.Size = UDim2.new(1, -80, 1, 0)
 titleText.Position = UDim2.new(0, 12, 0, 0)
 titleText.Text = "Undercore"
 titleText.Parent = titleBar
+
+-- Update banner (hidden by default, shown when update is available)
+local updateBanner = Instance.new("TextButton")
+updateBanner.Name = "UpdateBanner"
+updateBanner.BackgroundTransparency = 1
+updateBanner.Size = UDim2.new(0, 220, 1, 0)
+updateBanner.Position = UDim2.new(0, 130, 0, 0)
+updateBanner.Text = ""
+updateBanner.Visible = false
+updateBanner.Parent = titleBar
+
+local updateIcon = Instance.new("ImageLabel")
+updateIcon.Name = "UpdateIcon"
+updateIcon.Size = UDim2.new(0, 16, 0, 16)
+updateIcon.Position = UDim2.new(0, 0, 0.5, -8)
+updateIcon.BackgroundTransparency = 1
+updateIcon.Image = "rbxassetid://139640004463981"
+updateIcon.ImageColor3 = GREEN
+updateIcon.Visible = false
+updateIcon.Parent = updateBanner
+
+local updateText = Instance.new("TextLabel")
+updateText.Name = "UpdateText"
+updateText.Font = Enum.Font.Gotham
+updateText.TextSize = 11
+updateText.TextColor3 = GREEN
+updateText.TextXAlignment = Enum.TextXAlignment.Left
+updateText.TextYAlignment = Enum.TextYAlignment.Center
+updateText.BackgroundTransparency = 1
+updateText.Size = UDim2.new(1, -20, 1, 0)
+updateText.Position = UDim2.new(0, 20, 0, 0)
+updateText.Text = "New update available - click to restart"
+updateText.Visible = false
+updateText.Parent = updateBanner
 
 local closeBtn = Instance.new("TextButton")
 closeBtn.Font = Enum.Font.GothamBold
@@ -1982,9 +2016,65 @@ end))
 -- ===================
 -- INJECTION SEQUENCE
 -- ===================
-local SCRIPT_VERSION = "1.5.6"
-local VERSION_URL = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt?v=" .. tostring(tick())
-local SCRIPT_URL = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua?v=" .. tostring(tick())
+local SCRIPT_VERSION = "1.6.0"
+local VERSION_URL_BASE = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/version.txt"
+local SCRIPT_URL_BASE = "https://cdn.jsdelivr.net/gh/MortexSchmidt/Pianos@main/undercore.lua"
+local VERSION_URL_FALLBACK = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt"
+local SCRIPT_URL_FALLBACK = "https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/undercore.lua"
+
+local function fetchRemoteVersion()
+	local version = nil
+	pcall(function()
+		version = game:HttpGet(VERSION_URL_BASE .. "?v=" .. tostring(tick()), true)
+		version = version:gsub("%s+", "")
+	end)
+	if not version or version == "" then
+		pcall(function()
+			version = game:HttpGet(VERSION_URL_FALLBACK .. "?v=" .. tostring(tick()), true)
+			version = version:gsub("%s+", "")
+		end)
+	end
+	return version
+end
+
+local function showUpdateBanner(remoteVer)
+	updateBanner.Visible = true
+	updateIcon.Visible = true
+	updateText.Visible = true
+end
+
+local function hideUpdateBanner()
+	updateBanner.Visible = false
+	updateIcon.Visible = false
+	updateText.Visible = false
+end
+
+-- Click banner to reinject
+updateBanner.MouseButton1Click:Connect(function()
+	notify("Undercore", "Restarting with update...", 3, ACCENT, "info")
+	task.wait(1)
+	local success = false
+	pcall(function()
+		loadstring(game:HttpGet(SCRIPT_URL_BASE .. "?v=" .. tostring(tick()), true))()
+		success = true
+	end)
+	if not success then
+		pcall(function()
+			loadstring(game:HttpGet(SCRIPT_URL_FALLBACK .. "?v=" .. tostring(tick()), true))()
+			success = true
+		end)
+	end
+	if success then
+		-- Destroy this old instance
+		if _G.UndercoreConnections then
+			for _, conn in ipairs(_G.UndercoreConnections) do
+				pcall(function() conn:Disconnect() end)
+			end
+		end
+	else
+		notify("Undercore", "Update failed. Try again later.", 3, RED, "error")
+	end
+end)
 
 task.spawn(function()
 	task.wait(0.5)
@@ -1992,68 +2082,38 @@ task.spawn(function()
 	-- Step 1: Checking for updates
 	notify("Undercore", "Checking for updates...", 3, ACCENT, "info")
 
-	-- Fetch version from GitHub via jsDelivr (with cache-buster)
-	local remoteVersion = nil
-	local fetchSuccess = false
-
-	pcall(function()
-		remoteVersion = game:HttpGet(VERSION_URL, true)
-		remoteVersion = remoteVersion:gsub("%s+", "")
-		fetchSuccess = true
-	end)
-
-	-- Fallback to raw GitHub if jsDelivr fails
-	if not fetchSuccess then
-		pcall(function()
-			remoteVersion = game:HttpGet("https://raw.githubusercontent.com/MortexSchmidt/Pianos/main/version.txt?v=" .. tostring(tick()), true)
-			remoteVersion = remoteVersion:gsub("%s+", "")
-			fetchSuccess = true
-		end)
-	end
+	local remoteVersion = fetchRemoteVersion()
 
 	task.wait(2)
 
-	if fetchSuccess and remoteVersion and remoteVersion ~= "" then
+	if remoteVersion and remoteVersion ~= "" then
 		if remoteVersion ~= SCRIPT_VERSION then
-			-- Update found — auto-reinject new version
-			notify("Undercore", "Update found (v" .. remoteVersion .. "). Installing...", 3, ACCENT, "info")
-			task.wait(2)
-
-			-- Try to load the new version
-			local reinjectSuccess = false
-			pcall(function()
-				loadstring(game:HttpGet(SCRIPT_URL, true))()
-				reinjectSuccess = true
-			end)
-
-			if reinjectSuccess then
-				-- This old version will be replaced by the new one
-				notify("Undercore", "Installation complete. v" .. remoteVersion .. " injected.", 4, GREEN, "success")
-				-- Destroy this old instance
-				if _G.UndercoreConnections then
-					for _, conn in ipairs(_G.UndercoreConnections) do
-						pcall(function() conn:Disconnect() end)
-					end
-				end
-				return
-			else
-				-- Reinject failed, continue with current version
-				notify("Undercore", "Update download failed. Running v" .. SCRIPT_VERSION .. ".", 4, GREEN, "success")
-			end
+			notify("Undercore", "Update found (v" .. remoteVersion .. "). Click banner to restart.", 4, ACCENT, "info")
+			showUpdateBanner(remoteVersion)
 		else
-			-- Already latest
 			notify("Undercore", "Latest version (v" .. SCRIPT_VERSION .. ") injected.", 4, GREEN, "success")
 		end
 	else
-		-- Couldn't fetch version, continue with current
 		notify("Undercore", "Version check failed. Running v" .. SCRIPT_VERSION .. ".", 4, GREEN, "success")
 	end
 
 	task.wait(1)
-
-	-- Reveal toggle button and enable script
 	scriptReady = true
 	toggleBtn.Visible = true
+
+	-- Background real-time update check (every 30 seconds)
+	task.spawn(function()
+		while true do
+			task.wait(30)
+			local latestVersion = fetchRemoteVersion()
+			if latestVersion and latestVersion ~= "" and latestVersion ~= SCRIPT_VERSION then
+				if not updateBanner.Visible then
+					showUpdateBanner(latestVersion)
+					notify("Undercore", "New update available (v" .. latestVersion .. "). Click banner to restart.", 5, ACCENT, "info")
+				end
+			end
+		end
+	end)
 end)
 
 -- Expose
