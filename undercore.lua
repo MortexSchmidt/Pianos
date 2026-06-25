@@ -1183,6 +1183,8 @@ end)
 -- VISUAL PREVIEW PANEL (auto-opens on Visuals page, like teleport submenu)
 local visualPreviewVisible = false
 
+do
+
 local visualPanel = Instance.new("Frame")
 visualPanel.Name = "VisualPreviewPanel"
 visualPanel.Size = UDim2.new(0, 250, 0, 400)
@@ -1589,6 +1591,8 @@ hideVisualPreview = function()
 	sweep:Destroy()
 end
 
+end -- do block for visual preview panel
+
 local resetBtn = createToggle(playerPage, "Reset Character (click)", function(v)
 	if v then
 		-- Turn off all toggles visually and in _G.Undercore
@@ -1938,6 +1942,7 @@ local function resetAllCheats()
 		if obj.dist then obj.dist:Remove() end
 		if obj.health then obj.health:Remove() end
 		if obj.tracer then obj.tracer:Remove() end
+		if obj.role then obj.role:Remove() end
 	end
 	espObjects = {}
 end
