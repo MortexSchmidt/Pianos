@@ -1,7 +1,7 @@
--- Undercore v2.1.0 - Custom Cheat Menu
+-- Undercore v2.2.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.1.0"
+local SCRIPT_VERSION = "2.2.0"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -562,11 +562,20 @@ navIndicator.ZIndex = 20
 navIndicator.Visible = false
 navIndicator.Parent = mainFrame
 
+-- Forward declarations for visual preview panel (defined later)
+local showVisualPreview
+local hideVisualPreview
+
 local function showPage(name)
 	if currentPage == name then return end
 	if pageSwitching then return end
 	pageSwitching = true
 	playRandomPageSound()
+
+	-- Auto-close visual preview when leaving Visuals page
+	if currentPage == "Visuals" and name ~= "Visuals" and hideVisualPreview then
+		task.spawn(function() hideVisualPreview() end)
+	end
 
 	-- Deactivate old button: sweep enters from RIGHT, eats indicator, exits LEFT
 	if currentPage and navButtons[currentPage] then
@@ -682,6 +691,11 @@ local function showPage(name)
 
 	currentPage = name
 	pageSwitching = false
+
+	-- Auto-open visual preview when entering Visuals page
+	if name == "Visuals" and showVisualPreview then
+		task.spawn(function() showVisualPreview() end)
+	end
 end
 
 -- UI helpers
@@ -879,6 +893,11 @@ local espName = createToggle(visualPage, "ESP Names", function(v) _G.Undercore.E
 local espDist = createToggle(visualPage, "ESP Distance", function(v) _G.Undercore.ESPDist = v end)
 local espHealth = createToggle(visualPage, "ESP Health", function(v) _G.Undercore.ESPHealth = v end)
 local espTracer = createToggle(visualPage, "ESP Tracers", function(v) _G.Undercore.ESPTracer = v end)
+
+createLabel(visualPage, "MM2 ESP")
+local espRole = createToggle(visualPage, "ESP Role Text", function(v) _G.Undercore.ESPRole = v end)
+local espRoleColor = createToggle(visualPage, "ESP Role Colors", function(v) _G.Undercore.ESPRoleColor = v end)
+local espMurdererHighlight = createToggle(visualPage, "Highlight Murderer", function(v) _G.Undercore.ESPMurdererHL = v end)
 
 -- PLAYER
 local playerPage = createPage("Player")
@@ -1161,6 +1180,415 @@ Players.PlayerRemoving:Connect(function()
 	end
 end)
 
+-- VISUAL PREVIEW PANEL (auto-opens on Visuals page, like teleport submenu)
+local visualPreviewVisible = false
+
+local visualPanel = Instance.new("Frame")
+visualPanel.Name = "VisualPreviewPanel"
+visualPanel.Size = UDim2.new(0, 250, 0, 400)
+visualPanel.Position = UDim2.new(0, 0, 0, 0)
+visualPanel.BackgroundColor3 = BG
+visualPanel.BorderSizePixel = 0
+visualPanel.Visible = false
+visualPanel.ZIndex = 50
+visualPanel.Parent = gui
+
+-- Sync visual panel position with mainFrame (right side, top aligned)
+trackConn(RunService.RenderStepped:Connect(function()
+	if visualPanel.Visible then
+		visualPanel.Position = UDim2.new(
+			0.5, mainFrame.Position.X.Offset + 300,
+			0.5, mainFrame.Position.Y.Offset - 200
+		)
+		visualPanel.Size = UDim2.new(0, 250, 0, 400)
+	end
+end))
+
+-- Title
+local visualPreviewTitle = Instance.new("TextLabel")
+visualPreviewTitle.Font = Enum.Font.GothamBold
+visualPreviewTitle.TextSize = 14
+visualPreviewTitle.TextColor3 = ACCENT
+visualPreviewTitle.TextXAlignment = Enum.TextXAlignment.Left
+visualPreviewTitle.BackgroundTransparency = 1
+visualPreviewTitle.Size = UDim2.new(1, -20, 0, 30)
+visualPreviewTitle.Position = UDim2.new(0, 12, 0, 8)
+visualPreviewTitle.Text = "ESP Preview"
+visualPreviewTitle.Parent = visualPanel
+
+-- ViewportFrame for 3D character preview
+local viewportFrame = Instance.new("ViewportFrame")
+viewportFrame.Size = UDim2.new(1, -12, 0, 200)
+viewportFrame.Position = UDim2.new(0, 6, 0, 38)
+viewportFrame.BackgroundColor3 = BG_DARK
+viewportFrame.BorderSizePixel = 0
+viewportFrame.Parent = visualPanel
+
+-- Build 2012 blocky grey R15 dummy character
+local dummyModel = Instance.new("Model")
+dummyModel.Name = "PreviewDummy"
+
+local GREY = Color3.fromRGB(160, 160, 160)
+
+local function makePart(name, size, pos, parent)
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Size = size
+	part.Position = pos
+	part.Color = GREY
+	part.Material = Enum.Material.SmoothPlastic
+	part.Anchored = true
+	part.CanCollide = false
+	part.Parent = parent
+	return part
+end
+
+-- R15 body parts (blocky 2012 style)
+local dRoot = makePart("HumanoidRootPart", Vector3.new(2, 2, 1), Vector3.new(0, 5, 0), dummyModel)
+local dHead = makePart("Head", Vector3.new(2, 1, 1), Vector3.new(0, 6.5, 0), dummyModel)
+local dTorso = makePart("UpperTorso", Vector3.new(2, 1, 1), Vector3.new(0, 5.5, 0), dummyModel)
+local dLowerTorso = makePart("LowerTorso", Vector3.new(2, 1, 1), Vector3.new(0, 4.5, 0), dummyModel)
+local dLUpperArm = makePart("LeftUpperArm", Vector3.new(1, 1, 1), Vector3.new(-1.5, 5.5, 0), dummyModel)
+local dLLowerArm = makePart("LeftLowerArm", Vector3.new(1, 1, 1), Vector3.new(-1.5, 4.5, 0), dummyModel)
+local dLHand = makePart("LeftHand", Vector3.new(1, 1, 1), Vector3.new(-1.5, 3.5, 0), dummyModel)
+local dRUpperArm = makePart("RightUpperArm", Vector3.new(1, 1, 1), Vector3.new(1.5, 5.5, 0), dummyModel)
+local dRLowerArm = makePart("RightLowerArm", Vector3.new(1, 1, 1), Vector3.new(1.5, 4.5, 0), dummyModel)
+local dRHand = makePart("RightHand", Vector3.new(1, 1, 1), Vector3.new(1.5, 3.5, 0), dummyModel)
+local dLUpperLeg = makePart("LeftUpperLeg", Vector3.new(1, 1, 1), Vector3.new(-0.5, 3.5, 0), dummyModel)
+local dLLowerLeg = makePart("LeftLowerLeg", Vector3.new(1, 1, 1), Vector3.new(-0.5, 2.5, 0), dummyModel)
+local dLFoot = makePart("LeftFoot", Vector3.new(1, 1, 1), Vector3.new(-0.5, 1.5, 0), dummyModel)
+local dRUpperLeg = makePart("RightUpperLeg", Vector3.new(1, 1, 1), Vector3.new(0.5, 3.5, 0), dummyModel)
+local dRLowerLeg = makePart("RightLowerLeg", Vector3.new(1, 1, 1), Vector3.new(0.5, 2.5, 0), dummyModel)
+local dRFoot = makePart("RightFoot", Vector3.new(1, 1, 1), Vector3.new(0.5, 1.5, 0), dummyModel)
+
+-- Add Humanoid so it looks like a character
+local dHum = Instance.new("Humanoid")
+dHum.Health = 100
+dHum.MaxHealth = 100
+dHum.Parent = dummyModel
+
+dummyModel.Parent = viewportFrame
+
+-- Camera for viewport
+local vpCamera = Instance.new("Camera")
+vpCamera.CFrame = CFrame.new(Vector3.new(0, 4, 12), Vector3.new(0, 4, 0))
+viewportFrame.CurrentCamera = vpCamera
+vpCamera.Parent = viewportFrame
+
+-- ESP preview overlay (2D frames drawn on top of viewport)
+local espPreviewContainer = Instance.new("Frame")
+espPreviewContainer.Size = UDim2.new(1, 0, 1, 0)
+espPreviewContainer.BackgroundTransparency = 1
+espPreviewContainer.Parent = viewportFrame
+
+-- ESP box preview (Frame border)
+local previewBox = Instance.new("Frame")
+previewBox.BorderSizePixel = 1
+previewBox.BorderColor3 = ACCENT
+previewBox.BackgroundTransparency = 1
+previewBox.Visible = false
+previewBox.Parent = espPreviewContainer
+
+-- ESP health bar preview (vertical line on left)
+local previewHealth = Instance.new("Frame")
+previewHealth.BorderSizePixel = 0
+previewHealth.BackgroundColor3 = GREEN
+previewHealth.Visible = false
+previewHealth.Parent = espPreviewContainer
+
+-- ESP name preview
+local previewName = Instance.new("TextLabel")
+previewName.Font = Enum.Font.Gotham
+previewName.TextSize = 13
+previewName.TextColor3 = TEXT_WHITE
+previewName.BackgroundTransparency = 1
+previewName.Size = UDim2.new(0, 100, 0, 16)
+previewName.Position = UDim2.new(0.5, -50, 0, 0)
+previewName.Visible = false
+previewName.Parent = espPreviewContainer
+
+-- ESP role preview
+local previewRole = Instance.new("TextLabel")
+previewRole.Font = Enum.Font.Gotham
+previewRole.TextSize = 12
+previewRole.TextColor3 = GREEN
+previewRole.BackgroundTransparency = 1
+previewRole.Size = UDim2.new(0, 100, 0, 14)
+previewRole.Position = UDim2.new(0.5, -50, 0, 0)
+previewRole.Visible = false
+previewRole.Parent = espPreviewContainer
+
+-- ESP distance preview
+local previewDist = Instance.new("TextLabel")
+previewDist.Font = Enum.Font.Gotham
+previewDist.TextSize = 12
+previewDist.TextColor3 = TEXT_GRAY
+previewDist.BackgroundTransparency = 1
+previewDist.Size = UDim2.new(0, 60, 0, 14)
+previewDist.Position = UDim2.new(0.5, -30, 1, -14)
+previewDist.Visible = false
+previewDist.Parent = espPreviewContainer
+
+-- ESP tracer preview (line from bottom center to box)
+local previewTracer = Instance.new("Frame")
+previewTracer.BorderSizePixel = 1
+previewTracer.BorderColor3 = ACCENT
+previewTracer.BackgroundColor3 = ACCENT
+previewTracer.Visible = false
+previewTracer.Parent = espPreviewContainer
+
+-- Update ESP preview positions based on dummy position in viewport
+local previewRoleCycle = 0
+local previewRoles = { "Innocent", "Sheriff", "Murderer" }
+local previewRoleColors = { GREEN, ACCENT, RED }
+
+trackConn(RunService.RenderStepped:Connect(function()
+	if not visualPanel.Visible then return end
+
+	-- Cycle role every 3 seconds for preview
+	previewRoleCycle = previewRoleCycle + 0.01
+	local roleIdx = math.floor(previewRoleCycle % 3) + 1
+	local currentRole = previewRoles[roleIdx]
+	local currentRoleColor = previewRoleColors[roleIdx]
+
+	-- Get dummy head and root screen position
+	local cam = viewportFrame.CurrentCamera
+	if not cam then return end
+
+	local headPos, headOnScreen = cam:WorldToViewportPoint(dHead.Position + Vector3.new(0, 1, 0))
+	local rootPos, rootOnScreen = cam:WorldToViewportPoint(dRoot.Position - Vector3.new(0, 3, 0))
+
+	if not headOnScreen and not rootOnScreen then
+		previewBox.Visible = false
+		previewHealth.Visible = false
+		previewName.Visible = false
+		previewRole.Visible = false
+		previewDist.Visible = false
+		previewTracer.Visible = false
+		return
+	end
+
+	local vpSize = viewportFrame.AbsoluteSize
+	local height = math.abs(headPos.Y - rootPos.Y)
+	local width = height * 0.5
+
+	-- Scale to viewport frame
+	local boxX = vpSize.X / 2 - width / 2
+	local boxY = headPos.Y
+	-- Clamp to viewport bounds
+	if boxY < 0 then boxY = 0 end
+
+	-- ESP Box
+	if _G.Undercore.ESP then
+		previewBox.Size = UDim2.new(0, width, 0, height)
+		previewBox.Position = UDim2.new(0, boxX, 0, boxY)
+		if _G.Undercore.ESPRoleColor then
+			previewBox.BorderColor3 = currentRoleColor
+		elseif _G.Undercore.ESPMurdererHL and currentRole == "Murderer" then
+			previewBox.BorderColor3 = RED
+		else
+			previewBox.BorderColor3 = ACCENT
+		end
+		previewBox.Visible = true
+	else
+		previewBox.Visible = false
+	end
+
+	-- ESP Name
+	if _G.Undercore.ESP and _G.Undercore.ESPName then
+		previewName.Position = UDim2.new(0, vpSize.X / 2 - 50, 0, boxY - 18)
+		previewName.Text = "Player1"
+		previewName.TextColor3 = _G.Undercore.ESPRoleColor and currentRoleColor or TEXT_WHITE
+		previewName.Visible = true
+	else
+		previewName.Visible = false
+	end
+
+	-- ESP Role
+	if _G.Undercore.ESP and _G.Undercore.ESPRole then
+		previewRole.Position = UDim2.new(0, vpSize.X / 2 - 50, 0, boxY - 32)
+		previewRole.Text = "[" .. currentRole .. "]"
+		previewRole.TextColor3 = currentRoleColor
+		previewRole.Visible = true
+	else
+		previewRole.Visible = false
+	end
+
+	-- ESP Distance
+	if _G.Undercore.ESP and _G.Undercore.ESPDist then
+		previewDist.Position = UDim2.new(0, vpSize.X / 2 - 30, 0, boxY + height + 2)
+		previewDist.Text = "15m"
+		previewDist.Visible = true
+	else
+		previewDist.Visible = false
+	end
+
+	-- ESP Health bar
+	if _G.Undercore.ESP and _G.Undercore.ESPHealth then
+		previewHealth.Size = UDim2.new(0, 3, 0, height * 0.8)
+		previewHealth.Position = UDim2.new(0, boxX - 5, 0, boxY)
+		previewHealth.BackgroundColor3 = GREEN
+		previewHealth.Visible = true
+	else
+		previewHealth.Visible = false
+	end
+
+	-- ESP Tracer
+	if _G.Undercore.ESP and _G.Undercore.ESPTracer then
+		local tracerStartX = vpSize.X / 2
+		local tracerStartY = vpSize.Y
+		local tracerEndX = vpSize.X / 2
+		local tracerEndY = boxY + height / 2
+		local dX = tracerEndX - tracerStartX
+		local dY = tracerEndY - tracerStartY
+		local len = math.sqrt(dX * dX + dY * dY)
+		local angle = math.atan2(dY, dX)
+		previewTracer.Size = UDim2.new(0, len, 0, 1)
+		previewTracer.Position = UDim2.new(0, tracerStartX, 0, tracerStartY)
+		previewTracer.Rotation = math.deg(angle)
+		if _G.Undercore.ESPRoleColor then
+			previewTracer.BorderColor3 = currentRoleColor
+			previewTracer.BackgroundColor3 = currentRoleColor
+		else
+			previewTracer.BorderColor3 = ACCENT
+			previewTracer.BackgroundColor3 = ACCENT
+		end
+		previewTracer.Visible = true
+	else
+		previewTracer.Visible = false
+	end
+end))
+
+-- ESP toggle buttons inside preview panel
+local previewBtnY = 248
+local previewButtons = {}
+
+local function createPreviewButton(text, getY, callback)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -12, 0, 28)
+	btn.Position = UDim2.new(0, 6, 0, getY)
+	btn.BackgroundColor3 = BG_DARK
+	btn.BorderSizePixel = 0
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 12
+	btn.TextColor3 = TEXT_GRAY
+	btn.Text = text
+	btn.AutoButtonColor = false
+	btn.Parent = visualPanel
+
+	btn.MouseButton1Click:Connect(function()
+		playRandomPageSound()
+		callback()
+	end)
+
+	btn.MouseEnter:Connect(function()
+		playSound(SOUND_HOVER, 0.15)
+	end)
+
+	return btn
+end
+
+local function updatePreviewButtonStyle(btn, active)
+	if active then
+		btn.BackgroundColor3 = GREEN
+		btn.TextColor3 = Color3.fromRGB(20, 20, 20)
+	else
+		btn.BackgroundColor3 = BG_DARK
+		btn.TextColor3 = TEXT_GRAY
+	end
+end
+
+local pBtnY = 248
+local function nextBtnY()
+	local y = pBtnY
+	pBtnY = pBtnY + 32
+	return y
+end
+
+local previewBtnBox = createPreviewButton("ESP Box", nextBtnY(), function()
+	_G.Undercore.ESP = not _G.Undercore.ESP
+	espToggle.set(_G.Undercore.ESP)
+	updatePreviewButtonStyle(previewBtnBox, _G.Undercore.ESP)
+end)
+
+local previewBtnName = createPreviewButton("ESP Names", nextBtnY(), function()
+	_G.Undercore.ESPName = not _G.Undercore.ESPName
+	espName.set(_G.Undercore.ESPName)
+	updatePreviewButtonStyle(previewBtnName, _G.Undercore.ESPName)
+end)
+
+local previewBtnDist = createPreviewButton("ESP Distance", nextBtnY(), function()
+	_G.Undercore.ESPDist = not _G.Undercore.ESPDist
+	espDist.set(_G.Undercore.ESPDist)
+	updatePreviewButtonStyle(previewBtnDist, _G.Undercore.ESPDist)
+end)
+
+local previewBtnHealth = createPreviewButton("ESP Health", nextBtnY(), function()
+	_G.Undercore.ESPHealth = not _G.Undercore.ESPHealth
+	espHealth.set(_G.Undercore.ESPHealth)
+	updatePreviewButtonStyle(previewBtnHealth, _G.Undercore.ESPHealth)
+end)
+
+local previewBtnTracer = createPreviewButton("ESP Tracers", nextBtnY(), function()
+	_G.Undercore.ESPTracer = not _G.Undercore.ESPTracer
+	espTracer.set(_G.Undercore.ESPTracer)
+	updatePreviewButtonStyle(previewBtnTracer, _G.Undercore.ESPTracer)
+end)
+
+-- Show/hide functions for visual preview panel
+showVisualPreview = function()
+	if visualPreviewVisible then return end
+	visualPreviewVisible = true
+	playRandomPageSound()
+
+	visualPanel.Visible = true
+	visualPanel.Size = UDim2.new(0, 0, 0, 400)
+
+	local sweep = Instance.new("Frame")
+	sweep.Size = UDim2.new(0, 0, 1, 0)
+	sweep.BackgroundColor3 = GREEN
+	sweep.BorderSizePixel = 0
+	sweep.ZIndex = 60
+	sweep.Parent = visualPanel
+
+	local sizeTween = TweenService:Create(visualPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 0, 400) })
+	sizeTween:Play()
+
+	local sweepTween = TweenService:Create(sweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+	sweepTween:Play()
+
+	task.wait(0.2)
+
+	local sweepOut = TweenService:Create(sweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
+	sweepOut:Play()
+	sweepOut.Completed:Wait()
+	sweep:Destroy()
+end
+
+hideVisualPreview = function()
+	if not visualPreviewVisible then return end
+	visualPreviewVisible = false
+	playRandomPageSound()
+
+	local sweep = Instance.new("Frame")
+	sweep.Size = UDim2.new(0, 0, 1, 0)
+	sweep.BackgroundColor3 = GREEN
+	sweep.BorderSizePixel = 0
+	sweep.ZIndex = 60
+	sweep.Parent = visualPanel
+
+	local sweepIn = TweenService:Create(sweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
+	sweepIn:Play()
+	sweepIn.Completed:Wait()
+
+	local sizeTween = TweenService:Create(visualPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 400) })
+	sizeTween:Play()
+	sizeTween.Completed:Wait()
+
+	visualPanel.Visible = false
+	sweep:Destroy()
+end
+
 local resetBtn = createToggle(playerPage, "Reset Character (click)", function(v)
 	if v then
 		-- Turn off all toggles visually and in _G.Undercore
@@ -1176,6 +1604,9 @@ local resetBtn = createToggle(playerPage, "Reset Character (click)", function(v)
 		espDist.set(false)
 		espHealth.set(false)
 		espTracer.set(false)
+		espRole.set(false)
+		espRoleColor.set(false)
+		espMurdererHighlight.set(false)
 		infJump.set(false)
 		godMode.set(false)
 		antiFlingToggle.set(false)
@@ -1192,6 +1623,9 @@ local resetBtn = createToggle(playerPage, "Reset Character (click)", function(v)
 		_G.Undercore.ESPDist = false
 		_G.Undercore.ESPHealth = false
 		_G.Undercore.ESPTracer = false
+		_G.Undercore.ESPRole = false
+		_G.Undercore.ESPRoleColor = false
+		_G.Undercore.ESPMurdererHL = false
 		_G.Undercore.InfJump = false
 		_G.Undercore.GodMode = false
 		_G.Undercore.AntiFling = false
@@ -1759,6 +2193,11 @@ closeMenu = function()
 		hideTeleportSubmenu()
 	end
 
+	-- Close visual preview panel if open (with animation)
+	if visualPreviewVisible then
+		hideVisualPreview()
+	end
+
 	-- Green sweep in
 	local menuSweep = Instance.new("Frame")
 	menuSweep.Size = UDim2.new(0, 0, 1, 0)
@@ -1876,6 +2315,7 @@ _G.Undercore = {
 	Noclip = false, NoFall = false,
 	Fling = false, FlingAuto = false,
 	ESP = false, ESPName = false, ESPDist = false, ESPHealth = false, ESPTracer = false,
+	ESPRole = false, ESPRoleColor = false, ESPMurdererHL = false,
 	InfJump = false, GodMode = false, AntiFling = false,
 }
 
@@ -2443,6 +2883,54 @@ trackConn(RunService.Stepped:Connect(function()
 	antiFlingLastTick = currentTick
 end))
 
+-- MM2 ROLE DETECTION
+local ROLE_MURDERER = "Murderer"
+local ROLE_SHERIFF = "Sheriff"
+local ROLE_INNOCENT = "Innocent"
+local ROLE_HERO = "Hero"
+local ROLE_UNKNOWN = "?"
+
+local ROLE_COLORS = {
+	[ROLE_MURDERER] = RED,
+	[ROLE_SHERIFF] = ACCENT,
+	[ROLE_INNOCENT] = GREEN,
+	[ROLE_HERO] = Color3.fromRGB(255, 170, 0),
+	[ROLE_UNKNOWN] = TEXT_GRAY,
+}
+
+local function getMM2Role(plr)
+	local char = plr.Character
+	if not char then return ROLE_UNKNOWN end
+	-- Check for knife (murderer weapon) in character
+	for _, item in ipairs(char:GetChildren()) do
+		if item:IsA("Tool") then
+			local name = item.Name:lower()
+			if name:match("knife") or name:match("blade") or name:match("dagger") or name:match("machete") then
+				return ROLE_MURDERER
+			end
+			if name:match("gun") or name:match("pistol") or name:match("revolver") or name:match("sheriff") then
+				return ROLE_SHERIFF
+			end
+		end
+	end
+	-- Check backpack for weapons
+	local backpack = plr:FindFirstChild("Backpack")
+	if backpack then
+		for _, item in ipairs(backpack:GetChildren()) do
+			if item:IsA("Tool") then
+				local name = item.Name:lower()
+				if name:match("knife") or name:match("blade") or name:match("dagger") or name:match("machete") then
+					return ROLE_MURDERER
+				end
+				if name:match("gun") or name:match("pistol") or name:match("revolver") or name:match("sheriff") then
+					return ROLE_SHERIFF
+				end
+			end
+		end
+	end
+	return ROLE_INNOCENT
+end
+
 -- ESP
 local function clearESP()
 	for _, obj in pairs(espObjects) do
@@ -2451,6 +2939,7 @@ local function clearESP()
 		if obj.dist then obj.dist:Remove() end
 		if obj.health then obj.health:Remove() end
 		if obj.tracer then obj.tracer:Remove() end
+		if obj.role then obj.role:Remove() end
 	end
 	espObjects = {}
 end
@@ -2485,7 +2974,13 @@ local function createESPForPlayer(p)
 	tracer.Color = ACCENT
 	tracer.Visible = false
 
-	espObjects[p] = { box = box, name = nameLbl, dist = distLbl, health = healthBar, tracer = tracer }
+	local roleLbl = Drawing.new("Text")
+	roleLbl.Size = 12
+	roleLbl.Center = true
+	roleLbl.Color = TEXT_GRAY
+	roleLbl.Visible = false
+
+	espObjects[p] = { box = box, name = nameLbl, dist = distLbl, health = healthBar, tracer = tracer, role = roleLbl }
 end
 
 local function removeESPForPlayer(p)
@@ -2496,6 +2991,7 @@ local function removeESPForPlayer(p)
 		if obj.dist then obj.dist:Remove() end
 		if obj.health then obj.health:Remove() end
 		if obj.tracer then obj.tracer:Remove() end
+		if obj.role then obj.role:Remove() end
 		espObjects[p] = nil
 	end
 end
@@ -2512,12 +3008,14 @@ trackConn(RunService.RenderStepped:Connect(function()
 	local root = char and char:FindFirstChild("HumanoidRootPart")
 
 	for p, obj in pairs(espObjects) do
+		-- Hide everything if ESP is off
 		if not _G.Undercore.ESP then
 			obj.box.Visible = false
 			obj.name.Visible = false
 			obj.dist.Visible = false
 			obj.health.Visible = false
 			obj.tracer.Visible = false
+			obj.role.Visible = false
 			continue
 		end
 
@@ -2532,6 +3030,7 @@ trackConn(RunService.RenderStepped:Connect(function()
 			obj.dist.Visible = false
 			obj.health.Visible = false
 			obj.tracer.Visible = false
+			obj.role.Visible = false
 			continue
 		end
 
@@ -2542,7 +3041,27 @@ trackConn(RunService.RenderStepped:Connect(function()
 			obj.dist.Visible = false
 			obj.health.Visible = false
 			obj.tracer.Visible = false
+			obj.role.Visible = false
 			continue
+		end
+
+		-- MM2 role detection
+		local role = getMM2Role(p)
+		local roleColor = ROLE_COLORS[role] or ACCENT
+
+		-- Determine box/tracer color: role-based if enabled, otherwise ACCENT
+		local espColor = ACCENT
+		if _G.Undercore.ESPRoleColor then
+			espColor = roleColor
+		end
+
+		-- Murderer highlight: thicker box + brighter color
+		if _G.Undercore.ESPMurdererHL and role == ROLE_MURDERER then
+			obj.box.Thickness = 3
+			obj.box.Color = RED
+		else
+			obj.box.Thickness = 1
+			obj.box.Color = espColor
 		end
 
 		local headPos = camera:WorldToViewportPoint(pHead.Position + Vector3.new(0, 1, 0))
@@ -2564,9 +3083,20 @@ trackConn(RunService.RenderStepped:Connect(function()
 		if _G.Undercore.ESPName then
 			obj.name.Position = Vector2.new(pos.X, headPos.Y - 16)
 			obj.name.Text = p.Name
+			obj.name.Color = _G.Undercore.ESPRoleColor and roleColor or TEXT_WHITE
 			obj.name.Visible = true
 		else
 			obj.name.Visible = false
+		end
+
+		-- MM2 Role text
+		if _G.Undercore.ESPRole then
+			obj.role.Position = Vector2.new(pos.X, headPos.Y - 30)
+			obj.role.Text = "[" .. role .. "]"
+			obj.role.Color = roleColor
+			obj.role.Visible = true
+		else
+			obj.role.Visible = false
 		end
 
 		if _G.Undercore.ESPDist and root then
@@ -2591,6 +3121,7 @@ trackConn(RunService.RenderStepped:Connect(function()
 		if _G.Undercore.ESPTracer then
 			obj.tracer.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y)
 			obj.tracer.To = Vector2.new(pos.X, pos.Y)
+			obj.tracer.Color = espColor
 			obj.tracer.Visible = true
 		else
 			obj.tracer.Visible = false
