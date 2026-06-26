@@ -1556,6 +1556,11 @@ end)
 -- ===================
 -- HARD EXIT DIALOG
 -- ===================
+local showExitDialog
+local hideExitDialog
+local exitDialogVisible = false
+
+do
 local exitDialogGui = Instance.new("ScreenGui")
 exitDialogGui.Name = "UndercoreExit"
 exitDialogGui.ResetOnSpawn = false
@@ -1750,9 +1755,7 @@ local function createTooltip(btn, text)
 	end)
 end
 
-local exitDialogVisible = false
-
-local function showExitDialog()
+local function showExitDialogImpl()
 	if exitDialogVisible then return end
 	exitDialogVisible = true
 	playSound(SOUND_NOTIF, 0.5)
@@ -1773,7 +1776,7 @@ local function showExitDialog()
 	dialogTween:Play()
 end
 
-local function hideExitDialog()
+local function hideExitDialogImpl()
 	if not exitDialogVisible then return end
 	exitDialogVisible = false
 
@@ -1952,6 +1955,10 @@ end)
 confirmBtn.MouseEnter:Connect(function()
 	playSound(SOUND_HOVER, 0.15)
 end)
+
+showExitDialog = showExitDialogImpl
+hideExitDialog = hideExitDialogImpl
+end -- do block for exit dialog
 
 -- SETTINGS
 local settingsPage = createPage("Settings")
