@@ -1,7 +1,7 @@
--- Undercore v2.2.0 - Custom Cheat Menu
+-- Undercore v2.3.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.2.0"
+local SCRIPT_VERSION = "2.3.0"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -53,15 +53,23 @@ local function protectGui(gui)
 	end
 end
 
--- Colors
-local BG = Color3.fromRGB(15, 15, 15)
-local BG_DARK = Color3.fromRGB(22, 22, 22)
-local BG_LIGHT = Color3.fromRGB(30, 30, 30)
-local ACCENT = Color3.fromRGB(100, 150, 255)
-local TEXT_WHITE = Color3.fromRGB(255, 255, 255)
-local TEXT_GRAY = Color3.fromRGB(150, 150, 150)
-local GREEN = Color3.fromRGB(76, 175, 80)
-local RED = Color3.fromRGB(220, 60, 60)
+-- Colors (OMSIMP VS Code dark theme)
+local BG = Color3.fromRGB(10, 10, 10)           -- #0a0a0a main bg
+local BG_DARK = Color3.fromRGB(13, 13, 13)       -- #0d0d0d activity bar / sidebar
+local BG_LIGHT = Color3.fromRGB(18, 18, 18)      -- #121212 panel
+local CARD_BG = Color3.fromRGB(22, 22, 22)       -- #161616 card
+local CARD_HOVER = Color3.fromRGB(30, 30, 30)    -- #1e1e1e card hover
+local LIST_HOVER = Color3.fromRGB(26, 26, 26)    -- #1a1a1a list hover
+local LIST_ACTIVE = Color3.fromRGB(34, 34, 34)   -- #222222 list active
+local BORDER_COLOR = Color3.fromRGB(26, 26, 26)  -- #1a1a1a border
+local ACCENT = Color3.fromRGB(37, 99, 235)       -- #2563eb blue accent
+local ACCENT_HOVER = Color3.fromRGB(59, 130, 246)-- #3b82f6 accent hover
+local TEXT_WHITE = Color3.fromRGB(255, 255, 255) -- #ffffff bright text
+local TEXT_GRAY = Color3.fromRGB(136, 136, 136)  -- #888888 muted text
+local TEXT_NORMAL = Color3.fromRGB(224, 224, 224)-- #e0e0e0 normal text
+local GREEN = Color3.fromRGB(34, 197, 94)        -- #22c55e success
+local RED = Color3.fromRGB(239, 68, 68)          -- #ef4444 error
+local WARNING = Color3.fromRGB(245, 158, 11)     -- #f59e0b warning
 
 -- Sound IDs
 local SOUND_INJECT = "124834506603771"
@@ -140,17 +148,8 @@ local function dismiss(data)
 	data.dismissed = true
 
 	local card = data.frame
-	local overlay = data.overlay
 
-	overlay.Visible = true
-	overlay.Size = UDim2.new(0, 0, 1, 0)
-	overlay.Position = UDim2.new(0, 0, 0, 0)
-
-	local sweepOut = TweenService:Create(overlay, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-	sweepOut:Play()
-	sweepOut.Completed:Wait()
-
-	local slideOut = TweenService:Create(card, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Position = UDim2.new(0, NOTIF_WIDTH + 10, 0, card.Position.Y.Offset), GroupTransparency = 1 })
+	local slideOut = TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Position = UDim2.new(0, NOTIF_WIDTH + 10, 0, card.Position.Y.Offset), GroupTransparency = 1 })
 	slideOut:Play()
 	slideOut.Completed:Wait()
 	card:Destroy()
@@ -189,34 +188,30 @@ local function notify(title, message, duration, color, notifType)
 	local card = Instance.new("CanvasGroup")
 	card.Size = UDim2.new(0, NOTIF_WIDTH, 0, 0)
 	card.AutomaticSize = Enum.AutomaticSize.Y
-	card.BackgroundColor3 = BG
+	card.BackgroundColor3 = CARD_BG
 	card.GroupColor3 = Color3.fromRGB(255, 255, 255)
 	card.GroupTransparency = 0
 	card.BorderSizePixel = 0
 	card.Position = UDim2.new(0, NOTIF_WIDTH + 10, 0, y)
 	card.Parent = container
 
-	-- Green/accent strip (leftmost)
-	local bar = Instance.new("Frame")
-	bar.Size = UDim2.new(0, 3, 1, 0)
-	bar.BackgroundColor3 = color
-	bar.BorderSizePixel = 0
-	bar.ZIndex = 5
-	bar.Parent = card
+	local cardCorner = Instance.new("UICorner")
+	cardCorner.CornerRadius = UDim.new(0, 8)
+	cardCorner.Parent = card
 
-	-- Icon (right of strip)
+	-- Icon area (left padding, no strip)
 	local iconArea = Instance.new("Frame")
 	iconArea.Name = "IconArea"
-	iconArea.Size = UDim2.new(0, 56, 0, 0)
-	iconArea.Position = UDim2.new(0, 3, 0, 0)
+	iconArea.Size = UDim2.new(0, 48, 0, 0)
+	iconArea.Position = UDim2.new(0, 12, 0, 0)
 	iconArea.AutomaticSize = Enum.AutomaticSize.Y
 	iconArea.BackgroundTransparency = 1
 	iconArea.Parent = card
 
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "NotifIcon"
-	icon.Size = UDim2.new(0, 36, 0, 36)
-	icon.Position = UDim2.new(0, 10, 0, 12)
+	icon.Size = UDim2.new(0, 28, 0, 28)
+	icon.Position = UDim2.new(0, 4, 0, 14)
 	icon.BackgroundTransparency = 1
 	icon.Image = iconId
 	icon.ImageColor3 = iconColor
@@ -226,8 +221,8 @@ local function notify(title, message, duration, color, notifType)
 
 	-- Content (right of icon)
 	local content = Instance.new("Frame")
-	content.Size = UDim2.new(1, -62, 0, 0)
-	content.Position = UDim2.new(0, 62, 0, 0)
+	content.Size = UDim2.new(1, -72, 0, 0)
+	content.Position = UDim2.new(0, 60, 0, 0)
 	content.AutomaticSize = Enum.AutomaticSize.Y
 	content.BackgroundTransparency = 1
 	content.Parent = card
@@ -283,32 +278,16 @@ local function notify(title, message, duration, color, notifType)
 	msg.Text = message
 	msg.Parent = content
 
-	-- NVIDIA sweep overlay
-	local overlay = Instance.new("Frame")
-	overlay.Name = "AccentOverlay"
-	overlay.Size = UDim2.new(1, 0, 1, 0)
-	overlay.Position = UDim2.new(0, 0, 0, 0)
-	overlay.BackgroundColor3 = color
-	overlay.BorderSizePixel = 0
-	overlay.Visible = true
-	overlay.ZIndex = 10
-	overlay.Parent = card
-
 	task.defer(function()
 		task.wait()
 		local height = card.AbsoluteSize.Y
 		if height <= 0 then task.wait() height = card.AbsoluteSize.Y end
-		local data = { frame = card, height = height, dismissed = false, overlay = overlay }
+		local data = { frame = card, height = height, dismissed = false }
 		table.insert(notifications, data)
 
-		local slideIn = TweenService:Create(card, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = UDim2.new(0, 0, 0, y) })
+		local slideIn = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = UDim2.new(0, 0, 0, y) })
 		slideIn:Play()
 		slideIn.Completed:Wait()
-
-		local collapse = TweenService:Create(overlay, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 3, 1, 0) })
-		collapse:Play()
-		collapse.Completed:Wait()
-		overlay.Visible = false
 
 		task.delay(duration, function() dismiss(data) end)
 	end)
@@ -333,7 +312,7 @@ local mainFrame = Instance.new("CanvasGroup")
 mainFrame.Name = "MainFrame"
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-mainFrame.Size = UDim2.new(0, 600, 0, 400)
+mainFrame.Size = UDim2.new(0, 640, 0, 420)
 mainFrame.BackgroundColor3 = BG
 mainFrame.BorderSizePixel = 0
 mainFrame.Visible = false
@@ -341,10 +320,10 @@ mainFrame.Active = false
 mainFrame.GroupColor3 = Color3.fromRGB(255, 255, 255)
 mainFrame.Parent = gui
 
--- Title bar
+-- Title bar (flat, minimal)
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundColor3 = BG_DARK
+titleBar.Size = UDim2.new(1, 0, 0, 36)
+titleBar.BackgroundColor3 = BG
 titleBar.BorderSizePixel = 0
 titleBar.Active = true
 -- Dragging
@@ -373,14 +352,14 @@ end)
 titleBar.Parent = mainFrame
 
 local titleText = Instance.new("TextLabel")
-titleText.Font = Enum.Font.Michroma
-titleText.TextSize = 16
-titleText.TextColor3 = TEXT_WHITE
+titleText.Font = Enum.Font.GothamMedium
+titleText.TextSize = 13
+titleText.TextColor3 = TEXT_GRAY
 titleText.TextXAlignment = Enum.TextXAlignment.Left
 titleText.TextYAlignment = Enum.TextYAlignment.Center
 titleText.BackgroundTransparency = 1
 titleText.Size = UDim2.new(1, -80, 1, 0)
-titleText.Position = UDim2.new(0, 12, 0, 0)
+titleText.Position = UDim2.new(0, 14, 0, 0)
 titleText.Text = "Undercore"
 titleText.Parent = titleBar
 
@@ -400,7 +379,7 @@ updateIcon.Size = UDim2.new(0, 16, 0, 16)
 updateIcon.Position = UDim2.new(0, 0, 0.5, -8)
 updateIcon.BackgroundTransparency = 1
 updateIcon.Image = "rbxassetid://139640004463981"
-updateIcon.ImageColor3 = GREEN
+updateIcon.ImageColor3 = ACCENT
 updateIcon.Visible = false
 updateIcon.Parent = updateBanner
 
@@ -408,7 +387,7 @@ local updateText = Instance.new("TextLabel")
 updateText.Name = "UpdateText"
 updateText.Font = Enum.Font.Gotham
 updateText.TextSize = 11
-updateText.TextColor3 = GREEN
+updateText.TextColor3 = ACCENT
 updateText.TextXAlignment = Enum.TextXAlignment.Left
 updateText.TextYAlignment = Enum.TextYAlignment.Center
 updateText.BackgroundTransparency = 1
@@ -418,10 +397,10 @@ updateText.Text = "New update available - click to restart"
 updateText.Visible = false
 updateText.Parent = updateBanner
 
--- Left navigation
+-- Left navigation (icon-only sidebar, VS Code style)
 local navFrame = Instance.new("Frame")
-navFrame.Size = UDim2.new(0, 140, 1, -40)
-navFrame.Position = UDim2.new(0, 0, 0, 40)
+navFrame.Size = UDim2.new(0, 48, 1, -36)
+navFrame.Position = UDim2.new(0, 0, 0, 36)
 navFrame.BackgroundColor3 = BG_DARK
 navFrame.BorderSizePixel = 0
 navFrame.Active = false
@@ -430,28 +409,28 @@ navFrame.Parent = mainFrame
 local navLayout = Instance.new("UIListLayout")
 navLayout.FillDirection = Enum.FillDirection.Vertical
 navLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-navLayout.Padding = UDim.new(0, 2)
+navLayout.Padding = UDim.new(0, 4)
 navLayout.Parent = navFrame
 
 local navPad = Instance.new("UIPadding")
-navPad.PaddingTop = UDim.new(0, 10)
-navPad.PaddingBottom = UDim.new(0, 10)
+navPad.PaddingTop = UDim.new(0, 8)
+navPad.PaddingBottom = UDim.new(0, 8)
 navPad.Parent = navFrame
 
 -- Right content
 local contentFrame = Instance.new("Frame")
-contentFrame.Size = UDim2.new(1, -140, 1, -40)
-contentFrame.Position = UDim2.new(0, 140, 0, 40)
-contentFrame.BackgroundColor3 = BG
+contentFrame.Size = UDim2.new(1, -48, 1, -36)
+contentFrame.Position = UDim2.new(0, 48, 0, 36)
+contentFrame.BackgroundColor3 = BG_LIGHT
 contentFrame.BorderSizePixel = 0
 contentFrame.Active = false
 contentFrame.Parent = mainFrame
 
 local contentPad = Instance.new("UIPadding")
-contentPad.PaddingTop = UDim.new(0, 15)
-contentPad.PaddingBottom = UDim.new(0, 15)
-contentPad.PaddingLeft = UDim.new(0, 15)
-contentPad.PaddingRight = UDim.new(0, 15)
+contentPad.PaddingTop = UDim.new(0, 16)
+contentPad.PaddingBottom = UDim.new(0, 16)
+contentPad.PaddingLeft = UDim.new(0, 16)
+contentPad.PaddingRight = UDim.new(0, 16)
 contentPad.Parent = contentFrame
 
 -- Pages
@@ -490,39 +469,52 @@ local function createNavButton(name)
 	btn.TextXAlignment = Enum.TextXAlignment.Left
 	btn.BackgroundColor3 = BG_DARK
 	btn.BorderSizePixel = 0
-	btn.Size = UDim2.new(1, 0, 0, 40)
+	btn.Size = UDim2.new(0, 40, 0, 40)
 	btn.Parent = navFrame
 
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "Icon"
-	icon.Size = UDim2.new(0, 24, 0, 24)
-	icon.Position = UDim2.new(0, 12, 0, 8)
+	icon.Size = UDim2.new(0, 22, 0, 22)
+	icon.Position = UDim2.new(0.5, -11, 0.5, -11)
 	icon.BackgroundTransparency = 1
 	icon.Image = NAV_ICONS[name] or ""
-	icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+	icon.ImageColor3 = TEXT_GRAY
 	icon.ScaleType = Enum.ScaleType.Fit
 	icon.ZIndex = 2
 	icon.Parent = btn
 
-	local label = Instance.new("TextLabel")
-	label.Name = "Label"
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = TEXT_GRAY
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.TextYAlignment = Enum.TextYAlignment.Center
-	label.BackgroundTransparency = 1
-	label.Size = UDim2.new(1, -48, 0, 40)
-	label.Position = UDim2.new(0, 44, 0, 0)
-	label.Text = name
-	label.ZIndex = 2
-	label.Parent = btn
+	-- Tooltip on hover
+	local tooltip = Instance.new("TextLabel")
+	tooltip.Font = Enum.Font.Gotham
+	tooltip.TextSize = 12
+	tooltip.TextColor3 = TEXT_WHITE
+	tooltip.TextXAlignment = Enum.TextXAlignment.Left
+	tooltip.TextYAlignment = Enum.TextYAlignment.Center
+	tooltip.BackgroundColor3 = CARD_BG
+	tooltip.BorderSizePixel = 0
+	tooltip.Size = UDim2.new(0, 80, 0, 24)
+	tooltip.Position = UDim2.new(1, 6, 0.5, -12)
+	tooltip.Visible = false
+	tooltip.ZIndex = 100
+	tooltip.Text = "  " .. name
+	tooltip.Parent = btn
 
 	btn.MouseEnter:Connect(function()
 		playSound(SOUND_HOVER, 0.15)
+		tooltip.Visible = true
+		if btn.BackgroundColor3 ~= CARD_HOVER then
+			icon.ImageColor3 = TEXT_NORMAL
+		end
 	end)
 
-	return btn, icon, label
+	btn.MouseLeave:Connect(function()
+		tooltip.Visible = false
+		if btn.BackgroundColor3 ~= CARD_HOVER then
+			icon.ImageColor3 = TEXT_GRAY
+		end
+	end)
+
+	return btn, icon, tooltip
 end
 
 local function createPage(name)
@@ -532,7 +524,7 @@ local function createPage(name)
 	page.BackgroundTransparency = 1
 	page.BorderSizePixel = 0
 	page.ScrollBarThickness = 3
-	page.ScrollBarImageColor3 = BG_LIGHT
+	page.ScrollBarImageColor3 = CARD_HOVER
 	page.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	page.CanvasSize = UDim2.new(0, 0, 0, 0)
 	page.Visible = false
@@ -551,12 +543,12 @@ end
 local currentPage = nil
 local pageSwitching = false
 
--- Global green indicator strip on mainFrame left edge (outside navFrame to avoid UIListLayout)
+-- Active nav indicator (blue accent bar on left edge)
 local navIndicator = Instance.new("Frame")
 navIndicator.Name = "NavIndicator"
 navIndicator.Size = UDim2.new(0, 3, 0, 40)
 navIndicator.Position = UDim2.new(0, 0, 0, 50)
-navIndicator.BackgroundColor3 = GREEN
+navIndicator.BackgroundColor3 = ACCENT
 navIndicator.BorderSizePixel = 0
 navIndicator.ZIndex = 20
 navIndicator.Visible = false
@@ -577,117 +569,49 @@ local function showPage(name)
 		task.spawn(function() hideVisualPreview() end)
 	end
 
-	-- Deactivate old button: sweep enters from RIGHT, eats indicator, exits LEFT
+	-- Deactivate old button
 	if currentPage and navButtons[currentPage] then
 		local oldData = navButtons[currentPage]
-		local oldBtn = oldData.btn
-
-		local oldSweep = Instance.new("Frame")
-		oldSweep.Size = UDim2.new(0, 0, 1, 0)
-		oldSweep.Position = UDim2.new(1, 0, 0, 0)
-		oldSweep.BackgroundColor3 = GREEN
-		oldSweep.BackgroundTransparency = 0
-		oldSweep.BorderSizePixel = 0
-		oldSweep.ZIndex = 1
-		oldSweep.Parent = oldBtn
-
-		-- Dark text on green for readability
-		oldData.icon.ImageColor3 = Color3.fromRGB(20, 20, 20)
-		oldData.label.TextColor3 = Color3.fromRGB(20, 20, 20)
-
-		-- Phase 1: sweep covers button right to left
-		local oldSweepIn = TweenService:Create(oldSweep, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 0, 0, 0) })
-		oldSweepIn:Play()
-		oldSweepIn.Completed:Wait()
-
-		-- Sweep reached left edge → ate the indicator
-		navIndicator.Visible = false
-
-		-- Phase 2: sweep exits left
-		local oldSweepOut = TweenService:Create(oldSweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(-1, 0, 0, 0) })
-		oldSweepOut:Play()
-		oldSweepOut.Completed:Wait()
-		oldSweep:Destroy()
-
-		oldData.btn.TextColor3 = TEXT_GRAY
 		oldData.btn.BackgroundColor3 = BG_DARK
-		oldData.icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-		oldData.label.TextColor3 = TEXT_GRAY
+		oldData.icon.ImageColor3 = TEXT_GRAY
 	end
 
-	-- Page content sweep
-	local sweepOverlay = Instance.new("Frame")
-	sweepOverlay.Size = UDim2.new(0, 0, 1, 0)
-	sweepOverlay.Position = UDim2.new(0, 0, 0, 0)
-	sweepOverlay.BackgroundColor3 = GREEN
-	sweepOverlay.BorderSizePixel = 0
-	sweepOverlay.ZIndex = 50
-	sweepOverlay.Parent = contentFrame
+	-- Fade content
+	local fadeOverlay = Instance.new("Frame")
+	fadeOverlay.Size = UDim2.new(1, 0, 1, 0)
+	fadeOverlay.BackgroundColor3 = BG_LIGHT
+	fadeOverlay.BorderSizePixel = 0
+	fadeOverlay.BackgroundTransparency = 1
+	fadeOverlay.ZIndex = 50
+	fadeOverlay.Parent = contentFrame
 
-	local sweepIn = TweenService:Create(sweepOverlay, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-	sweepIn:Play()
-	sweepIn.Completed:Wait()
+	local fadeIn = TweenService:Create(fadeOverlay, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundTransparency = 0 })
+	fadeIn:Play()
+	fadeIn.Completed:Wait()
 
 	for pageName, page in pairs(pages) do
 		page.Visible = (pageName == name)
 	end
 
-	-- Activate new button: sweep enters from LEFT, indicator appears behind it, sweep exits RIGHT
+	-- Activate new button
 	local newData = navButtons[name]
 	if newData then
-		local newBtn = newData.btn
+		newData.btn.BackgroundColor3 = CARD_HOVER
+		newData.icon.ImageColor3 = TEXT_WHITE
 
-		local newSweep = Instance.new("Frame")
-		newSweep.Size = UDim2.new(0, 0, 1, 0)
-		newSweep.Position = UDim2.new(0, 0, 0, 0)
-		newSweep.BackgroundColor3 = GREEN
-		newSweep.BackgroundTransparency = 0
-		newSweep.BorderSizePixel = 0
-		newSweep.ZIndex = 1
-		newSweep.Parent = newBtn
-
-		-- Dark text on green for readability
-		newData.icon.ImageColor3 = Color3.fromRGB(20, 20, 20)
-		newData.label.TextColor3 = Color3.fromRGB(20, 20, 20)
-
-		-- Position indicator at new button but keep hidden
+		-- Position indicator at new button
 		local btn = newData.btn
 		local targetY = btn.AbsolutePosition.Y - mainFrame.AbsolutePosition.Y
 		local targetH = btn.AbsoluteSize.Y
-
-		navIndicator.BackgroundColor3 = GREEN
 		navIndicator.Size = UDim2.new(0, 3, 0, targetH)
 		navIndicator.Position = UDim2.new(0, 0, 0, targetY)
-		navIndicator.Visible = false
-
-		-- Phase 1: sweep in left to right
-		local newSweepIn = TweenService:Create(newSweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-		newSweepIn:Play()
-
-		-- Indicator appears behind sweep as soon as sweep passes 3px (almost immediately)
-		task.delay(0.02, function()
-			navIndicator.Visible = true
-		end)
-
-		newSweepIn.Completed:Wait()
-
-		-- Set active colors
-		newData.btn.TextColor3 = TEXT_WHITE
-		newData.btn.BackgroundColor3 = BG_LIGHT
-		newData.icon.ImageColor3 = GREEN
-		newData.label.TextColor3 = TEXT_WHITE
-
-		-- Phase 2: sweep exits right, indicator stays
-		local newSweepOut = TweenService:Create(newSweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
-		newSweepOut:Play()
-		newSweepOut.Completed:Wait()
-		newSweep:Destroy()
+		navIndicator.Visible = true
 	end
 
-	local sweepOut = TweenService:Create(sweepOverlay, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
-	sweepOut:Play()
-	sweepOut.Completed:Wait()
-	sweepOverlay:Destroy()
+	local fadeOut = TweenService:Create(fadeOverlay, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundTransparency = 1 })
+	fadeOut:Play()
+	fadeOut.Completed:Wait()
+	fadeOverlay:Destroy()
 
 	currentPage = name
 	pageSwitching = false
@@ -704,59 +628,62 @@ local function createToggle(parent, text, callback)
 	local toggling = false
 
 	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(1, 0, 0, 35)
-	frame.BackgroundColor3 = BG_LIGHT
+	frame.Size = UDim2.new(1, 0, 0, 38)
+	frame.BackgroundColor3 = CARD_BG
 	frame.BorderSizePixel = 0
 	frame.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = frame
 
 	local label = Instance.new("TextLabel")
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
-	label.TextColor3 = TEXT_WHITE
+	label.TextColor3 = TEXT_NORMAL
 	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.TextYAlignment = Enum.TextYAlignment.Center
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.new(1, -60, 1, 0)
-	label.Position = UDim2.new(0, 12, 0, 0)
+	label.Position = UDim2.new(0, 14, 0, 0)
 	label.Text = text
 	label.Parent = frame
 
-	-- Toggle switch background
+	-- Toggle switch background (pill shape)
 	local switchBg = Instance.new("TextButton")
 	switchBg.Text = ""
-	switchBg.BackgroundColor3 = BG_DARK
+	switchBg.BackgroundColor3 = CARD_HOVER
 	switchBg.BorderSizePixel = 0
-	switchBg.Size = UDim2.new(0, 40, 0, 20)
-	switchBg.Position = UDim2.new(1, -50, 0.5, -10)
+	switchBg.Size = UDim2.new(0, 44, 0, 24)
+	switchBg.Position = UDim2.new(1, -54, 0.5, -12)
 	switchBg.AutoButtonColor = false
 	switchBg.Parent = frame
 
-	-- Green fill (grows when ON)
-	local switchFill = Instance.new("Frame")
-	switchFill.Size = UDim2.new(0, 0, 1, 0)
-	switchFill.BackgroundColor3 = GREEN
-	switchFill.BorderSizePixel = 0
-	switchFill.ZIndex = 2
-	switchFill.Parent = switchBg
+	local switchCorner = Instance.new("UICorner")
+	switchCorner.CornerRadius = UDim.new(1, 0)
+	switchCorner.Parent = switchBg
 
 	-- White circle knob
 	local knob = Instance.new("Frame")
-	knob.Size = UDim2.new(0, 16, 0, 16)
-	knob.Position = UDim2.new(0, 2, 0.5, -8)
+	knob.Size = UDim2.new(0, 18, 0, 18)
+	knob.Position = UDim2.new(0, 3, 0.5, -9)
 	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	knob.BorderSizePixel = 0
 	knob.ZIndex = 3
 	knob.Parent = switchBg
 
+	local knobCorner = Instance.new("UICorner")
+	knobCorner.CornerRadius = UDim.new(1, 0)
+	knobCorner.Parent = knob
+
 	local function updateVisual()
 		if enabled then
-			local fillTween = TweenService:Create(switchFill, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-			fillTween:Play()
-			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(1, -18, 0.5, -8) })
+			switchBg.BackgroundColor3 = ACCENT
+			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(1, -21, 0.5, -9) })
 			knobTween:Play()
 		else
-			local fillTween = TweenService:Create(switchFill, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0) })
-			fillTween:Play()
-			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0, 2, 0.5, -8) })
+			switchBg.BackgroundColor3 = CARD_HOVER
+			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0, 3, 0.5, -9) })
 			knobTween:Play()
 		end
 	end
@@ -785,34 +712,47 @@ local function createSlider(parent, text, min, max, default, callback)
 	local value = default
 
 	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(1, 0, 0, 50)
-	frame.BackgroundColor3 = BG_LIGHT
+	frame.Size = UDim2.new(1, 0, 0, 54)
+	frame.BackgroundColor3 = CARD_BG
 	frame.BorderSizePixel = 0
 	frame.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = frame
 
 	local label = Instance.new("TextLabel")
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
-	label.TextColor3 = TEXT_WHITE
+	label.TextColor3 = TEXT_NORMAL
 	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.TextYAlignment = Enum.TextYAlignment.Center
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.new(1, -20, 0, 20)
-	label.Position = UDim2.new(0, 12, 0, 5)
+	label.Position = UDim2.new(0, 14, 0, 8)
 	label.Text = text .. ": " .. tostring(default)
 	label.Parent = frame
 
 	local sliderBg = Instance.new("Frame")
-	sliderBg.Size = UDim2.new(1, -24, 0, 6)
-	sliderBg.Position = UDim2.new(0, 12, 0, 32)
-	sliderBg.BackgroundColor3 = BG_DARK
+	sliderBg.Size = UDim2.new(1, -28, 0, 4)
+	sliderBg.Position = UDim2.new(0, 14, 0, 36)
+	sliderBg.BackgroundColor3 = CARD_HOVER
 	sliderBg.BorderSizePixel = 0
 	sliderBg.Parent = frame
+
+	local sliderCorner = Instance.new("UICorner")
+	sliderCorner.CornerRadius = UDim.new(1, 0)
+	sliderCorner.Parent = sliderBg
 
 	local sliderFill = Instance.new("Frame")
 	sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
 	sliderFill.BackgroundColor3 = ACCENT
 	sliderFill.BorderSizePixel = 0
 	sliderFill.Parent = sliderBg
+
+	local fillCorner = Instance.new("UICorner")
+	fillCorner.CornerRadius = UDim.new(1, 0)
+	fillCorner.Parent = sliderFill
 
 	local dragging = false
 	sliderBg.InputBegan:Connect(function(input)
@@ -842,10 +782,11 @@ local function createLabel(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Font = Enum.Font.GothamBold
 	label.TextSize = 14
-	label.TextColor3 = ACCENT
+	label.TextColor3 = TEXT_WHITE
 	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.TextYAlignment = Enum.TextYAlignment.Center
 	label.BackgroundTransparency = 1
-	label.Size = UDim2.new(1, 0, 0, 25)
+	label.Size = UDim2.new(1, 0, 0, 28)
 	label.Text = text
 	label.Parent = parent
 	return label
@@ -917,19 +858,24 @@ local teleportSubmenuVisible = false
 local teleportBtnFrame = Instance.new("TextButton")
 teleportBtnFrame.Text = ""
 teleportBtnFrame.AutoButtonColor = false
-teleportBtnFrame.Size = UDim2.new(1, 0, 0, 35)
-teleportBtnFrame.BackgroundColor3 = BG_LIGHT
+teleportBtnFrame.Size = UDim2.new(1, 0, 0, 38)
+teleportBtnFrame.BackgroundColor3 = CARD_BG
 teleportBtnFrame.BorderSizePixel = 0
 teleportBtnFrame.Parent = playerPage
+
+local teleportCorner = Instance.new("UICorner")
+teleportCorner.CornerRadius = UDim.new(0, 6)
+teleportCorner.Parent = teleportBtnFrame
 
 local teleportBtnLabel = Instance.new("TextLabel")
 teleportBtnLabel.Font = Enum.Font.Gotham
 teleportBtnLabel.TextSize = 13
-teleportBtnLabel.TextColor3 = TEXT_WHITE
+teleportBtnLabel.TextColor3 = TEXT_NORMAL
 teleportBtnLabel.TextXAlignment = Enum.TextXAlignment.Left
+teleportBtnLabel.TextYAlignment = Enum.TextYAlignment.Center
 teleportBtnLabel.BackgroundTransparency = 1
 teleportBtnLabel.Size = UDim2.new(1, -20, 1, 0)
-teleportBtnLabel.Position = UDim2.new(0, 12, 0, 0)
+teleportBtnLabel.Position = UDim2.new(0, 14, 0, 0)
 teleportBtnLabel.Text = "Teleport to Player"
 teleportBtnLabel.Parent = teleportBtnFrame
 
@@ -944,18 +890,22 @@ teleportPanel.Visible = false
 teleportPanel.ZIndex = 50
 teleportPanel.Parent = gui
 
+local teleportPanelCorner = Instance.new("UICorner")
+teleportPanelCorner.CornerRadius = UDim.new(0, 8)
+teleportPanelCorner.Parent = teleportPanel
+
 -- Sync teleport panel position with mainFrame (follows when dragged)
--- mainFrame: AnchorPoint(0.5,0.5), Position(0.5,0, 0.5,0), Size(600,400)
--- Top-left of mainFrame = (centerX - 300, centerY - 200)
--- Right edge = centerX + 300
+-- mainFrame: AnchorPoint(0.5,0.5), Position(0.5,0, 0.5,0), Size(640,420)
+-- Top-left of mainFrame = (centerX - 320, centerY - 210)
+-- Right edge = centerX + 320
 -- Teleport panel (AnchorPoint 0,0) goes at (right edge, top-left Y)
 trackConn(RunService.RenderStepped:Connect(function()
 	if teleportPanel.Visible then
 		teleportPanel.Position = UDim2.new(
-			0.5, mainFrame.Position.X.Offset + 300,
-			0.5, mainFrame.Position.Y.Offset - 200
+			0.5, mainFrame.Position.X.Offset + 320,
+			0.5, mainFrame.Position.Y.Offset - 210
 		)
-		teleportPanel.Size = UDim2.new(0, 250, 0, 400)
+		teleportPanel.Size = UDim2.new(0, 250, 0, 420)
 	end
 end))
 
@@ -978,7 +928,7 @@ teleportListFrame.Position = UDim2.new(0, 6, 0, 42)
 teleportListFrame.BackgroundColor3 = BG_DARK
 teleportListFrame.BorderSizePixel = 0
 teleportListFrame.ScrollBarThickness = 3
-teleportListFrame.ScrollBarImageColor3 = GREEN
+teleportListFrame.ScrollBarImageColor3 = CARD_HOVER
 teleportListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 teleportListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 teleportListFrame.Parent = teleportPanel
@@ -1012,12 +962,16 @@ local function refreshTeleportList()
 		if plr ~= player then
 			local entryFrame = Instance.new("TextButton")
 			entryFrame.Size = UDim2.new(1, 0, 0, 40)
-			entryFrame.BackgroundColor3 = BG_LIGHT
+			entryFrame.BackgroundColor3 = CARD_BG
 			entryFrame.BorderSizePixel = 0
 			entryFrame.Text = ""
 			entryFrame.AutoButtonColor = false
 			entryFrame.LayoutOrder = #teleportEntries
 			entryFrame.Parent = teleportListFrame
+
+			local entryCorner = Instance.new("UICorner")
+			entryCorner.CornerRadius = UDim.new(0, 6)
+			entryCorner.Parent = entryFrame
 
 			-- Avatar image
 			local avatar = Instance.new("ImageLabel")
@@ -1043,7 +997,7 @@ local function refreshTeleportList()
 			local nameLabel = Instance.new("TextLabel")
 			nameLabel.Font = Enum.Font.Gotham
 			nameLabel.TextSize = 12
-			nameLabel.TextColor3 = TEXT_WHITE
+			nameLabel.TextColor3 = TEXT_NORMAL
 			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 			nameLabel.BackgroundTransparency = 1
 			nameLabel.Size = UDim2.new(1, -44, 0, 20)
@@ -1086,11 +1040,11 @@ local function refreshTeleportList()
 
 			entryFrame.MouseEnter:Connect(function()
 				playSound(SOUND_HOVER, 0.15)
-				entryFrame.BackgroundColor3 = BG_DARK
+				entryFrame.BackgroundColor3 = CARD_HOVER
 			end)
 
 			entryFrame.MouseLeave:Connect(function()
-				entryFrame.BackgroundColor3 = BG_LIGHT
+				entryFrame.BackgroundColor3 = CARD_BG
 			end)
 
 			table.insert(teleportEntries, { frame = entryFrame, player = plr })
@@ -1105,30 +1059,13 @@ local function showTeleportSubmenu()
 
 	refreshTeleportList()
 
-	local panelHeight = 400
+	local panelHeight = 420
 	teleportPanel.Visible = true
 	teleportPanel.Size = UDim2.new(0, 0, 0, panelHeight)
 
-	-- Green sweep overlay
-	local sweep = Instance.new("Frame")
-	sweep.Size = UDim2.new(0, 0, 1, 0)
-	sweep.BackgroundColor3 = GREEN
-	sweep.BorderSizePixel = 0
-	sweep.ZIndex = 60
-	sweep.Parent = teleportPanel
-
 	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 0, panelHeight) })
 	sizeTween:Play()
-
-	local sweepTween = TweenService:Create(sweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-	sweepTween:Play()
-
-	task.wait(0.2)
-
-	local sweepOut = TweenService:Create(sweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
-	sweepOut:Play()
-	sweepOut.Completed:Wait()
-	sweep:Destroy()
+	sizeTween.Completed:Wait()
 end
 
 local function hideTeleportSubmenu()
@@ -1136,24 +1073,11 @@ local function hideTeleportSubmenu()
 	teleportSubmenuVisible = false
 	playRandomPageSound()
 
-	-- Green sweep in
-	local sweep = Instance.new("Frame")
-	sweep.Size = UDim2.new(0, 0, 1, 0)
-	sweep.BackgroundColor3 = GREEN
-	sweep.BorderSizePixel = 0
-	sweep.ZIndex = 60
-	sweep.Parent = teleportPanel
-
-	local sweepIn = TweenService:Create(sweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-	sweepIn:Play()
-	sweepIn.Completed:Wait()
-
-	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 400) })
+	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 420) })
 	sizeTween:Play()
 	sizeTween.Completed:Wait()
 
 	teleportPanel.Visible = false
-	sweep:Destroy()
 end
 
 teleportBtnFrame.MouseButton1Click:Connect(function()
@@ -1195,14 +1119,18 @@ visualPanel.Visible = false
 visualPanel.ZIndex = 50
 visualPanel.Parent = gui
 
+local visualPanelCorner = Instance.new("UICorner")
+visualPanelCorner.CornerRadius = UDim.new(0, 8)
+visualPanelCorner.Parent = visualPanel
+
 -- Sync visual panel position with mainFrame (right side, top aligned)
 trackConn(RunService.RenderStepped:Connect(function()
 	if visualPanel.Visible then
 		visualPanel.Position = UDim2.new(
-			0.5, mainFrame.Position.X.Offset + 300,
-			0.5, mainFrame.Position.Y.Offset - 200
+			0.5, mainFrame.Position.X.Offset + 320,
+			0.5, mainFrame.Position.Y.Offset - 210
 		)
-		visualPanel.Size = UDim2.new(0, 250, 0, 400)
+		visualPanel.Size = UDim2.new(0, 250, 0, 420)
 	end
 end))
 
@@ -1313,7 +1241,7 @@ previewName.Parent = espPreviewContainer
 local previewRole = Instance.new("TextLabel")
 previewRole.Font = Enum.Font.Gotham
 previewRole.TextSize = 12
-previewRole.TextColor3 = GREEN
+previewRole.TextColor3 = ACCENT
 previewRole.BackgroundTransparency = 1
 previewRole.Size = UDim2.new(0, 100, 0, 14)
 previewRole.Position = UDim2.new(0.5, -50, 0, 0)
@@ -1492,8 +1420,8 @@ end
 
 local function updatePreviewButtonStyle(btn, active)
 	if active then
-		btn.BackgroundColor3 = GREEN
-		btn.TextColor3 = Color3.fromRGB(20, 20, 20)
+		btn.BackgroundColor3 = ACCENT
+		btn.TextColor3 = TEXT_WHITE
 	else
 		btn.BackgroundColor3 = BG_DARK
 		btn.TextColor3 = TEXT_GRAY
@@ -1544,27 +1472,11 @@ showVisualPreview = function()
 	playRandomPageSound()
 
 	visualPanel.Visible = true
-	visualPanel.Size = UDim2.new(0, 0, 0, 400)
+	visualPanel.Size = UDim2.new(0, 0, 0, 420)
 
-	local sweep = Instance.new("Frame")
-	sweep.Size = UDim2.new(0, 0, 1, 0)
-	sweep.BackgroundColor3 = GREEN
-	sweep.BorderSizePixel = 0
-	sweep.ZIndex = 60
-	sweep.Parent = visualPanel
-
-	local sizeTween = TweenService:Create(visualPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 0, 400) })
+	local sizeTween = TweenService:Create(visualPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 0, 420) })
 	sizeTween:Play()
-
-	local sweepTween = TweenService:Create(sweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-	sweepTween:Play()
-
-	task.wait(0.2)
-
-	local sweepOut = TweenService:Create(sweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
-	sweepOut:Play()
-	sweepOut.Completed:Wait()
-	sweep:Destroy()
+	sizeTween.Completed:Wait()
 end
 
 hideVisualPreview = function()
@@ -1572,23 +1484,11 @@ hideVisualPreview = function()
 	visualPreviewVisible = false
 	playRandomPageSound()
 
-	local sweep = Instance.new("Frame")
-	sweep.Size = UDim2.new(0, 0, 1, 0)
-	sweep.BackgroundColor3 = GREEN
-	sweep.BorderSizePixel = 0
-	sweep.ZIndex = 60
-	sweep.Parent = visualPanel
-
-	local sweepIn = TweenService:Create(sweep, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-	sweepIn:Play()
-	sweepIn.Completed:Wait()
-
-	local sizeTween = TweenService:Create(visualPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 400) })
+	local sizeTween = TweenService:Create(visualPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 420) })
 	sizeTween:Play()
 	sizeTween.Completed:Wait()
 
 	visualPanel.Visible = false
-	sweep:Destroy()
 end
 
 end -- do block for visual preview panel
@@ -1686,13 +1586,17 @@ local dialogFrame = Instance.new("CanvasGroup")
 dialogFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 dialogFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 dialogFrame.Size = UDim2.new(0, 380, 0, 220)
-dialogFrame.BackgroundColor3 = BG
+dialogFrame.BackgroundColor3 = CARD_BG
 dialogFrame.BorderSizePixel = 0
 dialogFrame.Visible = false
 dialogFrame.GroupColor3 = Color3.fromRGB(255, 255, 255)
 dialogFrame.GroupTransparency = 1
 dialogFrame.ZIndex = 10
 dialogFrame.Parent = blurFrame
+
+local dialogCorner = Instance.new("UICorner")
+dialogCorner.CornerRadius = UDim.new(0, 8)
+dialogCorner.Parent = dialogFrame
 
 local dialogTitle = Instance.new("TextLabel")
 dialogTitle.Font = Enum.Font.GothamBold
@@ -1722,13 +1626,17 @@ dialogMsg.Parent = dialogFrame
 local cancelBtn = Instance.new("TextButton")
 cancelBtn.Font = Enum.Font.GothamBold
 cancelBtn.TextSize = 13
-cancelBtn.TextColor3 = TEXT_WHITE
+cancelBtn.TextColor3 = TEXT_NORMAL
 cancelBtn.Text = "Cancel"
-cancelBtn.BackgroundColor3 = BG_LIGHT
+cancelBtn.BackgroundColor3 = CARD_HOVER
 cancelBtn.BorderSizePixel = 0
 cancelBtn.Size = UDim2.new(0, 100, 0, 36)
 cancelBtn.Position = UDim2.new(0, 20, 0, 145)
 cancelBtn.Parent = dialogFrame
+
+local cancelCorner = Instance.new("UICorner")
+cancelCorner.CornerRadius = UDim.new(0, 6)
+cancelCorner.Parent = cancelBtn
 
 local reloadBtn = Instance.new("TextButton")
 reloadBtn.Font = Enum.Font.GothamBold
@@ -1741,6 +1649,10 @@ reloadBtn.Size = UDim2.new(0, 100, 0, 36)
 reloadBtn.Position = UDim2.new(0.5, -50, 0, 145)
 reloadBtn.Parent = dialogFrame
 
+local reloadCorner = Instance.new("UICorner")
+reloadCorner.CornerRadius = UDim.new(0, 6)
+reloadCorner.Parent = reloadBtn
+
 local confirmBtn = Instance.new("TextButton")
 confirmBtn.Font = Enum.Font.GothamBold
 confirmBtn.TextSize = 13
@@ -1751,6 +1663,10 @@ confirmBtn.BorderSizePixel = 0
 confirmBtn.Size = UDim2.new(0, 100, 0, 36)
 confirmBtn.Position = UDim2.new(1, -120, 0, 145)
 confirmBtn.Parent = dialogFrame
+
+local confirmCorner = Instance.new("UICorner")
+confirmCorner.CornerRadius = UDim.new(0, 6)
+confirmCorner.Parent = confirmBtn
 
 -- Info text below buttons
 local infoIcon = Instance.new("ImageLabel")
@@ -1847,47 +1763,19 @@ local function showExitDialog()
 	dialogFrame.Size = UDim2.new(0, 0, 0, 0)
 	dialogFrame.GroupTransparency = 1
 
-	-- Green sweep overlay on dialog
-	local dialogSweep = Instance.new("Frame")
-	dialogSweep.Size = UDim2.new(1, 0, 1, 0)
-	dialogSweep.BackgroundColor3 = GREEN
-	dialogSweep.BorderSizePixel = 0
-	dialogSweep.ZIndex = 20
-	dialogSweep.Parent = dialogFrame
-
 	local blurTween = TweenService:Create(blurEffect, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = 24 })
 	blurTween:Play()
 
 	local bgTween = TweenService:Create(blurFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundTransparency = 0.5 })
 	bgTween:Play()
 
-	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 380, 0, 220), GroupTransparency = 0 })
+	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 380, 0, 220), GroupTransparency = 0 })
 	dialogTween:Play()
-
-	task.wait(0.15)
-
-	local sweepOut = TweenService:Create(dialogSweep, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
-	sweepOut:Play()
-	sweepOut.Completed:Wait()
-	dialogSweep:Destroy()
 end
 
 local function hideExitDialog()
 	if not exitDialogVisible then return end
 	exitDialogVisible = false
-
-	-- Green sweep in on dialog
-	local dialogSweep = Instance.new("Frame")
-	dialogSweep.Size = UDim2.new(0, 0, 1, 0)
-	dialogSweep.Position = UDim2.new(0, 0, 0, 0)
-	dialogSweep.BackgroundColor3 = GREEN
-	dialogSweep.BorderSizePixel = 0
-	dialogSweep.ZIndex = 20
-	dialogSweep.Parent = dialogFrame
-
-	local sweepIn = TweenService:Create(dialogSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-	sweepIn:Play()
-	sweepIn.Completed:Wait()
 
 	local blurTween = TweenService:Create(blurEffect, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = 0 })
 	blurTween:Play()
@@ -1895,13 +1783,12 @@ local function hideExitDialog()
 	local bgTween = TweenService:Create(blurFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundTransparency = 1 })
 	bgTween:Play()
 
-	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 0), GroupTransparency = 1 })
+	local dialogTween = TweenService:Create(dialogFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 0), GroupTransparency = 1 })
 	dialogTween:Play()
 
 	dialogTween.Completed:Wait()
 	blurFrame.Visible = false
 	dialogFrame.Visible = false
-	dialogSweep:Destroy()
 end
 
 local espObjects = {}
@@ -2088,8 +1975,12 @@ exitBtn.TextColor3 = TEXT_WHITE
 exitBtn.Text = "TERMINATE SCRIPT"
 exitBtn.BackgroundColor3 = RED
 exitBtn.BorderSizePixel = 0
-exitBtn.Size = UDim2.new(1, 0, 0, 36)
+exitBtn.Size = UDim2.new(1, 0, 0, 38)
 exitBtn.Parent = settingsPage
+
+local exitBtnCorner = Instance.new("UICorner")
+exitBtnCorner.CornerRadius = UDim.new(0, 6)
+exitBtnCorner.Parent = exitBtn
 
 exitBtn.MouseButton1Click:Connect(function()
 	if exitDialogVisible then return end
@@ -2122,7 +2013,7 @@ aboutTitle.Parent = aboutPage
 local aboutVersion = Instance.new("TextLabel")
 aboutVersion.Font = Enum.Font.GothamBold
 aboutVersion.TextSize = 14
-aboutVersion.TextColor3 = GREEN
+aboutVersion.TextColor3 = ACCENT
 aboutVersion.TextXAlignment = Enum.TextXAlignment.Left
 aboutVersion.BackgroundTransparency = 1
 aboutVersion.Size = UDim2.new(1, -20, 0, 25)
@@ -2155,7 +2046,7 @@ toggleBtn.Name = "ToggleBtn"
 toggleBtn.Text = "U"
 toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.TextSize = 14
-toggleBtn.TextColor3 = TEXT_WHITE
+toggleBtn.TextColor3 = TEXT_GRAY
 toggleBtn.BackgroundColor3 = BG_DARK
 toggleBtn.BorderSizePixel = 0
 toggleBtn.Size = UDim2.new(0, 32, 0, 32)
@@ -2164,30 +2055,20 @@ toggleBtn.ZIndex = 50
 toggleBtn.Visible = false
 toggleBtn.Parent = gui
 
+local toggleBtnCorner = Instance.new("UICorner")
+toggleBtnCorner.CornerRadius = UDim.new(0, 6)
+toggleBtnCorner.Parent = toggleBtn
+
 openMenu = function()
 	playRandomPageSound()
 	menuVisible = true
 	mainFrame.Visible = true
-	mainFrame.Size = UDim2.new(0, 0, 0, 0)
+	mainFrame.Size = UDim2.new(0, 640, 0, 0)
 	mainFrame.GroupTransparency = 1
 
-	-- Green sweep overlay on menu
-	local menuSweep = Instance.new("Frame")
-	menuSweep.Size = UDim2.new(1, 0, 1, 0)
-	menuSweep.BackgroundColor3 = GREEN
-	menuSweep.BorderSizePixel = 0
-	menuSweep.ZIndex = 100
-	menuSweep.Parent = mainFrame
-
-	local sizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 600, 0, 400), GroupTransparency = 0 })
+	local sizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 640, 0, 420), GroupTransparency = 0 })
 	sizeTween:Play()
-
-	task.wait(0.15)
-
-	local sweepOut = TweenService:Create(menuSweep, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 0, 1, 0), Position = UDim2.new(1, 0, 0, 0) })
-	sweepOut:Play()
-	sweepOut.Completed:Wait()
-	menuSweep:Destroy()
+	sizeTween.Completed:Wait()
 end
 
 closeMenu = function()
@@ -2203,29 +2084,14 @@ closeMenu = function()
 		hideVisualPreview()
 	end
 
-	-- Green sweep in
-	local menuSweep = Instance.new("Frame")
-	menuSweep.Size = UDim2.new(0, 0, 1, 0)
-	menuSweep.Position = UDim2.new(0, 0, 0, 0)
-	menuSweep.BackgroundColor3 = GREEN
-	menuSweep.BorderSizePixel = 0
-	menuSweep.ZIndex = 100
-	menuSweep.Parent = mainFrame
-
-	local sweepIn = TweenService:Create(menuSweep, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 1, 0) })
-	sweepIn:Play()
-	sweepIn.Completed:Wait()
-
-	-- Shrink + fade out
-	local sizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 0), GroupTransparency = 1 })
+	local sizeTween = TweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 640, 0, 0), GroupTransparency = 1 })
 	sizeTween:Play()
 	sizeTween.Completed:Wait()
 
 	menuVisible = false
 	mainFrame.Visible = false
-	mainFrame.Size = UDim2.new(0, 600, 0, 400)
+	mainFrame.Size = UDim2.new(0, 640, 0, 420)
 	mainFrame.GroupTransparency = 0
-	menuSweep:Destroy()
 end
 
 local holdTimer = nil
