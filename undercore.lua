@@ -1,7 +1,7 @@
--- Undercore v2.3.0 - Custom Cheat Menu
+-- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.3.0"
+local SCRIPT_VERSION = "2.4.0"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -854,6 +854,13 @@ local antiFlingToggle = createToggle(playerPage, "Anti-Fling", function(v) _G.Un
 -- TELEPORT SUBMENU
 local teleportSubmenuVisible = false
 
+-- SPECTATE/FOLLOW SUBMENU
+local spectateSubmenuVisible = false
+local showSpectateSubmenu
+local hideSpectateSubmenu
+local spectateTarget = nil
+local spectateEnabled = false
+
 -- Teleport button (styled like a toggle but acts as a button)
 local teleportBtnFrame = Instance.new("TextButton")
 teleportBtnFrame.Text = ""
@@ -1103,6 +1110,368 @@ Players.PlayerRemoving:Connect(function()
 		refreshTeleportList()
 	end
 end)
+
+-- ===================
+-- SPECTATE / FOLLOW SUBMENU
+-- ===================
+
+-- Spectate button (styled like teleport button)
+local spectateBtnFrame = Instance.new("TextButton")
+spectateBtnFrame.Text = ""
+spectateBtnFrame.AutoButtonColor = false
+spectateBtnFrame.Size = UDim2.new(1, 0, 0, 38)
+spectateBtnFrame.BackgroundColor3 = CARD_BG
+spectateBtnFrame.BorderSizePixel = 0
+spectateBtnFrame.Parent = playerPage
+
+local spectateCorner = Instance.new("UICorner")
+spectateCorner.CornerRadius = UDim.new(0, 6)
+spectateCorner.Parent = spectateBtnFrame
+
+local spectateBtnLabel = Instance.new("TextLabel")
+spectateBtnLabel.Font = Enum.Font.Gotham
+spectateBtnLabel.TextSize = 13
+spectateBtnLabel.TextColor3 = TEXT_NORMAL
+spectateBtnLabel.TextXAlignment = Enum.TextXAlignment.Left
+spectateBtnLabel.TextYAlignment = Enum.TextYAlignment.Center
+spectateBtnLabel.BackgroundTransparency = 1
+spectateBtnLabel.Size = UDim2.new(1, -20, 1, 0)
+spectateBtnLabel.Position = UDim2.new(0, 14, 0, 0)
+spectateBtnLabel.Text = "Spectate / Follow Player"
+spectateBtnLabel.Parent = spectateBtnFrame
+
+-- Spectate panel (parented to gui, like teleport panel)
+local spectatePanel = Instance.new("Frame")
+spectatePanel.Name = "SpectatePanel"
+spectatePanel.Size = UDim2.new(0, 250, 0, 420)
+spectatePanel.Position = UDim2.new(0, 0, 0, 0)
+spectatePanel.BackgroundColor3 = BG
+spectatePanel.BorderSizePixel = 0
+spectatePanel.Visible = false
+spectatePanel.ZIndex = 50
+spectatePanel.Parent = gui
+
+local spectatePanelCorner = Instance.new("UICorner")
+spectatePanelCorner.CornerRadius = UDim.new(0, 8)
+spectatePanelCorner.Parent = spectatePanel
+
+-- Sync spectate panel position with mainFrame (left side, top aligned)
+trackConn(RunService.RenderStepped:Connect(function()
+	if spectatePanel.Visible then
+		spectatePanel.Position = UDim2.new(
+			0.5, mainFrame.Position.X.Offset - 320 - 260,
+			0.5, mainFrame.Position.Y.Offset - 210
+		)
+		spectatePanel.Size = UDim2.new(0, 250, 0, 420)
+	end
+end))
+
+-- Spectate panel title
+local spectateTitle = Instance.new("TextLabel")
+spectateTitle.Font = Enum.Font.GothamBold
+spectateTitle.TextSize = 14
+spectateTitle.TextColor3 = ACCENT
+spectateTitle.TextXAlignment = Enum.TextXAlignment.Left
+spectateTitle.BackgroundTransparency = 1
+spectateTitle.Size = UDim2.new(1, -20, 0, 30)
+spectateTitle.Position = UDim2.new(0, 12, 0, 8)
+spectateTitle.Text = "Follow Player"
+spectateTitle.Parent = spectatePanel
+
+-- Status label showing current target
+local spectateStatus = Instance.new("TextLabel")
+spectateStatus.Font = Enum.Font.Gotham
+spectateStatus.TextSize = 11
+spectateStatus.TextColor3 = TEXT_GRAY
+spectateStatus.TextXAlignment = Enum.TextXAlignment.Left
+spectateStatus.BackgroundTransparency = 1
+spectateStatus.Size = UDim2.new(1, -20, 0, 16)
+spectateStatus.Position = UDim2.new(0, 12, 0, 30)
+spectateStatus.Text = "No target selected"
+spectateStatus.Parent = spectatePanel
+
+-- Scrollable player list
+local spectateListFrame = Instance.new("ScrollingFrame")
+spectateListFrame.Size = UDim2.new(1, -12, 1, -100)
+spectateListFrame.Position = UDim2.new(0, 6, 0, 52)
+spectateListFrame.BackgroundColor3 = BG_DARK
+spectateListFrame.BorderSizePixel = 0
+spectateListFrame.ScrollBarThickness = 3
+spectateListFrame.ScrollBarImageColor3 = CARD_HOVER
+spectateListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+spectateListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+spectateListFrame.Parent = spectatePanel
+
+local spectateListLayout = Instance.new("UIListLayout")
+spectateListLayout.FillDirection = Enum.FillDirection.Vertical
+spectateListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+spectateListLayout.Padding = UDim.new(0, 2)
+spectateListLayout.Parent = spectateListFrame
+
+local spectateListPad = Instance.new("UIPadding")
+spectateListPad.PaddingTop = UDim.new(0, 4)
+spectateListPad.PaddingBottom = UDim.new(0, 4)
+spectateListPad.PaddingLeft = UDim.new(0, 4)
+spectateListPad.PaddingRight = UDim.new(0, 4)
+spectateListPad.Parent = spectateListFrame
+
+-- Stop following button
+local stopFollowBtn = Instance.new("TextButton")
+stopFollowBtn.Font = Enum.Font.GothamBold
+stopFollowBtn.TextSize = 12
+stopFollowBtn.TextColor3 = TEXT_WHITE
+stopFollowBtn.Text = "Stop Following"
+stopFollowBtn.BackgroundColor3 = RED
+stopFollowBtn.BorderSizePixel = 0
+stopFollowBtn.Size = UDim2.new(1, -12, 0, 32)
+stopFollowBtn.Position = UDim2.new(0, 6, 1, -38)
+stopFollowBtn.Visible = false
+stopFollowBtn.Parent = spectatePanel
+
+local stopFollowCorner = Instance.new("UICorner")
+stopFollowCorner.CornerRadius = UDim.new(0, 6)
+stopFollowCorner.Parent = stopFollowBtn
+
+-- Store spectate entries
+local spectateEntries = {}
+
+local function clearSpectateList()
+	for _, entry in ipairs(spectateEntries) do
+		if entry.frame then entry.frame:Destroy() end
+	end
+	spectateEntries = {}
+end
+
+local function refreshSpectateList()
+	clearSpectateList()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local entryFrame = Instance.new("TextButton")
+			entryFrame.Size = UDim2.new(1, 0, 0, 40)
+			entryFrame.BackgroundColor3 = CARD_BG
+			entryFrame.BorderSizePixel = 0
+			entryFrame.Text = ""
+			entryFrame.AutoButtonColor = false
+			entryFrame.LayoutOrder = #spectateEntries
+			entryFrame.Parent = spectateListFrame
+
+			local entryCorner = Instance.new("UICorner")
+			entryCorner.CornerRadius = UDim.new(0, 6)
+			entryCorner.Parent = entryFrame
+
+			local avatar = Instance.new("ImageLabel")
+			avatar.Size = UDim2.new(0, 32, 0, 32)
+			avatar.Position = UDim2.new(0, 4, 0.5, -16)
+			avatar.BackgroundTransparency = 1
+			avatar.ScaleType = Enum.ScaleType.Crop
+			avatar.Parent = entryFrame
+
+			task.spawn(function()
+				pcall(function()
+					local content, isReady = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+					if isReady then avatar.Image = content end
+				end)
+			end)
+
+			local nameLabel = Instance.new("TextLabel")
+			nameLabel.Font = Enum.Font.Gotham
+			nameLabel.TextSize = 12
+			nameLabel.TextColor3 = TEXT_NORMAL
+			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+			nameLabel.BackgroundTransparency = 1
+			nameLabel.Size = UDim2.new(1, -44, 0, 20)
+			nameLabel.Position = UDim2.new(0, 42, 0, 4)
+			nameLabel.Text = plr.DisplayName
+			nameLabel.Parent = entryFrame
+
+			local userLabel = Instance.new("TextLabel")
+			userLabel.Font = Enum.Font.Gotham
+			userLabel.TextSize = 10
+			userLabel.TextColor3 = TEXT_GRAY
+			userLabel.TextXAlignment = Enum.TextXAlignment.Left
+			userLabel.BackgroundTransparency = 1
+			userLabel.Size = UDim2.new(1, -44, 0, 14)
+			userLabel.Position = UDim2.new(0, 42, 0, 22)
+			userLabel.Text = "@" .. plr.Name
+			userLabel.Parent = entryFrame
+
+			-- Follow indicator (checkmark when actively following this player)
+			local followIcon = Instance.new("ImageLabel")
+			followIcon.Size = UDim2.new(0, 16, 0, 16)
+			followIcon.Position = UDim2.new(1, -22, 0.5, -8)
+			followIcon.BackgroundTransparency = 1
+			followIcon.Image = "rbxassetid://92239767679742"
+			followIcon.ImageColor3 = ACCENT
+			followIcon.ScaleType = Enum.ScaleType.Fit
+			followIcon.Visible = false
+			followIcon.Parent = entryFrame
+
+			entryFrame.MouseButton1Click:Connect(function()
+				playRandomPageSound()
+				spectateTarget = plr
+				spectateEnabled = true
+				spectateStatus.Text = "Following: " .. plr.DisplayName
+				stopFollowBtn.Visible = true
+				notify("Undercore", "Now following " .. plr.DisplayName, 3, ACCENT, "info")
+				-- Update all follow icons
+				for _, e in ipairs(spectateEntries) do
+					if e.icon then
+						e.icon.Visible = (e.player == plr)
+					end
+					if e.frame then
+						e.frame.BackgroundColor3 = (e.player == plr) and CARD_HOVER or CARD_BG
+					end
+				end
+			end)
+
+			entryFrame.MouseEnter:Connect(function()
+				playSound(SOUND_HOVER, 0.15)
+				if spectateTarget ~= plr then
+					entryFrame.BackgroundColor3 = CARD_HOVER
+				end
+			end)
+
+			entryFrame.MouseLeave:Connect(function()
+				if spectateTarget ~= plr then
+					entryFrame.BackgroundColor3 = CARD_BG
+				end
+			end)
+
+			table.insert(spectateEntries, { frame = entryFrame, player = plr, icon = followIcon })
+		end
+	end
+end
+
+-- Stop following button handler
+stopFollowBtn.MouseButton1Click:Connect(function()
+	playRandomPageSound()
+	spectateEnabled = false
+	spectateTarget = nil
+	spectateStatus.Text = "No target selected"
+	stopFollowBtn.Visible = false
+	for _, e in ipairs(spectateEntries) do
+		if e.icon then e.icon.Visible = false end
+		if e.frame then e.frame.BackgroundColor3 = CARD_BG end
+	end
+	notify("Undercore", "Stopped following", 3, ACCENT, "info")
+end)
+
+stopFollowBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
+end)
+
+-- Show/hide functions
+showSpectateSubmenu = function()
+	if spectateSubmenuVisible then return end
+	spectateSubmenuVisible = true
+	playRandomPageSound()
+	refreshSpectateList()
+	spectatePanel.Visible = true
+	spectatePanel.Size = UDim2.new(0, 0, 0, 420)
+	local sizeTween = TweenService:Create(spectatePanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 0, 420) })
+	sizeTween:Play()
+	sizeTween.Completed:Wait()
+end
+
+hideSpectateSubmenu = function()
+	if not spectateSubmenuVisible then return end
+	spectateSubmenuVisible = false
+	playRandomPageSound()
+	local sizeTween = TweenService:Create(spectatePanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 420) })
+	sizeTween:Play()
+	sizeTween.Completed:Wait()
+	spectatePanel.Visible = false
+end
+
+spectateBtnFrame.MouseButton1Click:Connect(function()
+	if spectateSubmenuVisible then
+		hideSpectateSubmenu()
+	else
+		showSpectateSubmenu()
+	end
+end)
+
+spectateBtnFrame.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.15)
+end)
+
+-- Refresh spectate list when players join/leave
+Players.PlayerAdded:Connect(function()
+	if spectateSubmenuVisible then
+		refreshSpectateList()
+	end
+end)
+Players.PlayerRemoving:Connect(function(p)
+	if p == spectateTarget then
+		spectateEnabled = false
+		spectateTarget = nil
+		spectateStatus.Text = "No target selected"
+		stopFollowBtn.Visible = false
+		notify("Undercore", "Target left, stopped following", 3, WARNING, "info")
+	end
+	if spectateSubmenuVisible then
+		refreshSpectateList()
+	end
+end)
+
+-- FOLLOW LOGIC: copy target's movements with zero delay
+trackConn(RunService.RenderStepped:Connect(function()
+	if not spectateEnabled or not spectateTarget then return end
+
+	local targetChar = spectateTarget.Character
+	if not targetChar then return end
+	local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+	if not targetRoot then return end
+
+	local myChar = player.Character
+	if not myChar then return end
+	local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+	if not myRoot then return end
+
+	-- Copy exact CFrame (position + rotation) with slight offset behind
+	myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 6)
+
+	-- Copy Humanoid state (walk speed, jump, etc)
+	local targetHum = targetChar:FindFirstChildOfClass("Humanoid")
+	local myHum = myChar:FindFirstChildOfClass("Humanoid")
+	if targetHum and myHum then
+		myHum.WalkSpeed = targetHum.WalkSpeed
+		-- Copy jump state
+		if targetHum:GetState() == Enum.HumanoidStateType.Jumping then
+			myHum:ChangeState(Enum.HumanoidStateType.Jumping)
+		end
+		-- Copy sit state
+		myHum.Sit = targetHum.Sit
+	end
+
+	-- Copy shift lock (camera offset) by matching target's facing direction
+	-- The CFrame copy already handles rotation, so facing direction is matched
+
+	-- Copy animations if possible
+	local targetHumanoid = targetChar:FindFirstChildOfClass("Humanoid")
+	local myHumanoid = myChar:FindFirstChildOfClass("Humanoid")
+	if targetHumanoid and myHumanoid then
+		local targetAnimator = targetHumanoid:FindFirstChildOfClass("Animator")
+		local myAnimator = myHumanoid:FindFirstChildOfClass("Animator")
+		if targetAnimator and myAnimator then
+			-- Track and play same animations
+			for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+				local found = false
+				for _, myTrack in ipairs(myAnimator:GetPlayingAnimationTracks()) do
+					if myTrack.Animation and track.Animation and myTrack.Animation == track.Animation then
+						found = true
+						break
+					end
+				end
+				if not found and track.Animation then
+					pcall(function()
+						myAnimator:LoadAnimation(track.Animation):Play()
+					end)
+				end
+			end
+		end
+	end
+end))
 
 -- VISUAL PREVIEW PANEL (auto-opens on Visuals page, like teleport submenu)
 local visualPreviewVisible = false
@@ -1559,6 +1928,7 @@ end)
 local showExitDialog
 local hideExitDialog
 local exitDialogVisible = false
+local espObjects = {}
 
 do
 local exitDialogGui = Instance.new("ScreenGui")
@@ -1794,9 +2164,9 @@ local function hideExitDialogImpl()
 	dialogFrame.Visible = false
 end
 
-local espObjects = {}
-
 local function resetAllCheats()
+	spectateEnabled = false
+	spectateTarget = nil
 	local char = player.Character
 	if char then
 		local hum = char:FindFirstChildOfClass("Humanoid")
@@ -2084,6 +2454,11 @@ closeMenu = function()
 	-- Close teleport submenu if open (with animation)
 	if teleportSubmenuVisible then
 		hideTeleportSubmenu()
+	end
+
+	-- Close spectate submenu if open (with animation)
+	if spectateSubmenuVisible then
+		hideSpectateSubmenu()
 	end
 
 	-- Close visual preview panel if open (with animation)
