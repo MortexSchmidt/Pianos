@@ -1434,8 +1434,8 @@ trackConn(RunService.RenderStepped:Connect(function()
 	local myRoot = myChar:FindFirstChild("HumanoidRootPart")
 	if not myRoot then return end
 
-	-- Copy exact CFrame (position + rotation) with slight offset behind
-	myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 6)
+	-- Copy exact CFrame (position + rotation) with offset in front so target sees you
+	myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, -6)
 
 	-- Copy Humanoid state (walk speed, jump, etc)
 	local targetHum = targetChar:FindFirstChildOfClass("Humanoid")
