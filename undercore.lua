@@ -207,21 +207,7 @@ local function notify(title, message, duration, color, notifType)
 	cardCorner.CornerRadius = UDim.new(0, 10)
 	cardCorner.Parent = card
 
-	-- Colored left strip
-	local strip = Instance.new("Frame")
-	strip.Name = "Strip"
-	strip.Size = UDim2.new(0, 3, 1, 0)
-	strip.Position = UDim2.new(0, 0, 0, 0)
-	strip.BackgroundColor3 = color
-	strip.BorderSizePixel = 0
-	strip.ZIndex = 6
-	strip.Parent = card
-
-	local stripCorner = Instance.new("UICorner")
-	stripCorner.CornerRadius = UDim.new(0, 10)
-	stripCorner.Parent = strip
-
-	-- Icon
+	-- Icon on left
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "NotifIcon"
 	icon.Size = UDim2.new(0, 22, 0, 22)
@@ -232,6 +218,20 @@ local function notify(title, message, duration, color, notifType)
 	icon.ScaleType = Enum.ScaleType.Fit
 	icon.ZIndex = 6
 	icon.Parent = card
+
+	-- Colored right strip
+	local strip = Instance.new("Frame")
+	strip.Name = "Strip"
+	strip.Size = UDim2.new(0, 3, 1, 0)
+	strip.Position = UDim2.new(1, -3, 0, 0)
+	strip.BackgroundColor3 = color
+	strip.BorderSizePixel = 0
+	strip.ZIndex = 6
+	strip.Parent = card
+
+	local stripCorner = Instance.new("UICorner")
+	stripCorner.CornerRadius = UDim.new(0, 10)
+	stripCorner.Parent = strip
 
 	-- Content
 	local content = Instance.new("Frame")
