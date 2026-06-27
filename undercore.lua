@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.0"
+local SCRIPT_VERSION = "2.4.1"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
