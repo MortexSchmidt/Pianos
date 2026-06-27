@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.1"
+local SCRIPT_VERSION = "2.4.2"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -922,7 +922,6 @@ keybindFrame.BorderSizePixel = 0
 keybindFrame.AutomaticSize = Enum.AutomaticSize.Y
 keybindFrame.Visible = false
 keybindFrame.Parent = keybindGui
-makeDraggable(keybindFrame)
 
 local keybindFrameCorner = Instance.new("UICorner")
 keybindFrameCorner.CornerRadius = UDim.new(0, 12)
@@ -1045,6 +1044,7 @@ end
 -- Apply draggable behavior to UI elements created before makeDraggable was defined
 makeDraggable(container)
 makeDraggable(mainFrame)
+makeDraggable(keybindFrame)
 
 local function setEditMode(enabled)
 	editMode = enabled
