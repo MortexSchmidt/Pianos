@@ -133,6 +133,7 @@ container.Position = UDim2.new(1, 0, 0, 50)
 container.Size = UDim2.new(0, NOTIF_WIDTH, 1, -70)
 container.BackgroundTransparency = 1
 container.Parent = notifGui
+makeDraggable(container)
 
 local function recalcPositions()
 	local y = 0
@@ -320,6 +321,7 @@ mainFrame.Visible = false
 mainFrame.Active = false
 mainFrame.GroupColor3 = Color3.fromRGB(255, 255, 255)
 mainFrame.Parent = gui
+makeDraggable(mainFrame)
 
 -- Title bar (flat, minimal)
 local titleBar = Instance.new("Frame")
@@ -832,6 +834,234 @@ local function createLabel(parent, text)
 end
 
 -- ===================
+-- KEYBIND SYSTEM + EDIT MODE
+-- ===================
+local keybinds = {}
+local keybindEntries = {}
+local keybindItems = {}
+local editMode = false
+local editModeOverlay, editModeHint
+local draggableElements = {}
+
+-- Edit mode overlay ScreenGui
+local editModeGui = Instance.new("ScreenGui")
+editModeGui.Name = "UndercoreEditMode"
+editModeGui.IgnoreGuiInset = true
+editModeGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+editModeGui.ResetOnSpawn = false
+protectGui(editModeGui)
+editModeGui.Parent = uiParent
+
+editModeOverlay = Instance.new("Frame")
+editModeOverlay.Name = "EditModeOverlay"
+editModeOverlay.Size = UDim2.new(1, 0, 1, 0)
+editModeOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+editModeOverlay.BackgroundTransparency = 0.5
+editModeOverlay.BorderSizePixel = 0
+editModeOverlay.Visible = false
+editModeOverlay.ZIndex = 5
+editModeOverlay.Parent = editModeGui
+
+editModeHint = Instance.new("Frame")
+editModeHint.Name = "EditModeHint"
+editModeHint.Size = UDim2.new(0, 460, 0, 40)
+editModeHint.Position = UDim2.new(0.5, -230, 1, -60)
+editModeHint.BackgroundColor3 = CARD_BG
+editModeHint.BackgroundTransparency = 0.1
+editModeHint.BorderSizePixel = 0
+editModeHint.Visible = false
+editModeHint.ZIndex = 10
+editModeHint.Parent = editModeGui
+
+local editModeHintCorner = Instance.new("UICorner")
+editModeHintCorner.CornerRadius = UDim.new(0, 12)
+editModeHintCorner.Parent = editModeHint
+
+local editModeHintText = Instance.new("TextLabel")
+editModeHintText.Font = Enum.Font.Gotham
+editModeHintText.TextSize = 12
+editModeHintText.TextColor3 = TEXT_NORMAL
+editModeHintText.TextXAlignment = Enum.TextXAlignment.Center
+editModeHintText.TextYAlignment = Enum.TextYAlignment.Center
+editModeHintText.BackgroundTransparency = 1
+editModeHintText.Size = UDim2.new(1, 0, 1, 0)
+editModeHintText.Text = "Вы находитесь в режиме редактирования интерфейса. Нажмите  чтобы выйти"
+editModeHintText.Parent = editModeHint
+
+local backspaceBadge = Instance.new("TextLabel")
+backspaceBadge.Font = Enum.Font.GothamBold
+backspaceBadge.TextSize = 11
+backspaceBadge.TextColor3 = Color3.fromRGB(30, 30, 30)
+backspaceBadge.TextXAlignment = Enum.TextXAlignment.Center
+backspaceBadge.TextYAlignment = Enum.TextYAlignment.Center
+backspaceBadge.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+backspaceBadge.BorderSizePixel = 0
+backspaceBadge.Size = UDim2.new(0, 0, 0, 20)
+backspaceBadge.AutomaticSize = Enum.AutomaticSize.X
+backspaceBadge.Position = UDim2.new(0, 315, 0.5, -10)
+backspaceBadge.Text = "  Backspace  "
+backspaceBadge.Parent = editModeHint
+
+local backspaceBadgeCorner = Instance.new("UICorner")
+backspaceBadgeCorner.CornerRadius = UDim.new(0, 4)
+backspaceBadgeCorner.Parent = backspaceBadge
+
+-- On-screen keybind display
+local keybindGui = Instance.new("ScreenGui")
+keybindGui.Name = "UndercoreKeybinds"
+keybindGui.IgnoreGuiInset = true
+keybindGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+keybindGui.ResetOnSpawn = false
+protectGui(keybindGui)
+keybindGui.Parent = uiParent
+
+local keybindFrame = Instance.new("Frame")
+keybindFrame.Name = "KeybindFrame"
+keybindFrame.Size = UDim2.new(0, 180, 0, 0)
+keybindFrame.Position = UDim2.new(1, -190, 0, 10)
+keybindFrame.BackgroundColor3 = CARD_BG
+keybindFrame.BackgroundTransparency = 0.15
+keybindFrame.BorderSizePixel = 0
+keybindFrame.AutomaticSize = Enum.AutomaticSize.Y
+keybindFrame.Visible = false
+keybindFrame.Parent = keybindGui
+makeDraggable(keybindFrame)
+
+local keybindFrameCorner = Instance.new("UICorner")
+keybindFrameCorner.CornerRadius = UDim.new(0, 12)
+keybindFrameCorner.Parent = keybindFrame
+
+local keybindTitle = Instance.new("TextLabel")
+keybindTitle.Font = Enum.Font.GothamBold
+keybindTitle.TextSize = 12
+keybindTitle.TextColor3 = TEXT_WHITE
+keybindTitle.TextXAlignment = Enum.TextXAlignment.Center
+keybindTitle.BackgroundTransparency = 1
+keybindTitle.Size = UDim2.new(1, 0, 0, 24)
+keybindTitle.Text = "KEYBINDS"
+keybindTitle.Parent = keybindFrame
+
+local keybindListLayout = Instance.new("UIListLayout")
+keybindListLayout.FillDirection = Enum.FillDirection.Vertical
+keybindListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+keybindListLayout.Padding = UDim.new(0, 4)
+keybindListLayout.Parent = keybindFrame
+
+local keybindPadding = Instance.new("UIPadding")
+keybindPadding.PaddingTop = UDim.new(0, 6)
+keybindPadding.PaddingBottom = UDim.new(0, 6)
+keybindPadding.PaddingLeft = UDim.new(0, 8)
+keybindPadding.PaddingRight = UDim.new(0, 8)
+keybindPadding.Parent = keybindFrame
+
+local function keyCodeName(keyCode)
+	local name = tostring(keyCode)
+	return name:gsub("Enum.KeyCode.", ""):gsub("Left", "L"):gsub("Right", "R")
+end
+
+local function registerKeybind(keyCode, name, toggleRef, action)
+	if keybinds[keyCode] then return end
+	local entry = { keyCode = keyCode, name = name, toggle = toggleRef, action = action }
+	table.insert(keybindEntries, entry)
+	keybinds[keyCode] = entry
+
+	local item = Instance.new("Frame")
+	item.Size = UDim2.new(1, 0, 0, 22)
+	item.BackgroundColor3 = BG_DARK
+	item.BorderSizePixel = 0
+	item.Parent = keybindFrame
+
+	local itemCorner = Instance.new("UICorner")
+	itemCorner.CornerRadius = UDim.new(0, 6)
+	itemCorner.Parent = item
+
+	local keyBadge = Instance.new("TextLabel")
+	keyBadge.Font = Enum.Font.GothamBold
+	keyBadge.TextSize = 11
+	keyBadge.TextColor3 = TEXT_WHITE
+	keyBadge.TextXAlignment = Enum.TextXAlignment.Center
+	keyBadge.TextYAlignment = Enum.TextYAlignment.Center
+	keyBadge.BackgroundColor3 = ACCENT
+	keyBadge.BorderSizePixel = 0
+	keyBadge.Size = UDim2.new(0, 0, 0, 18)
+	keyBadge.AutomaticSize = Enum.AutomaticSize.X
+	keyBadge.Position = UDim2.new(0, 4, 0.5, -9)
+	keyBadge.Text = "  " .. keyCodeName(keyCode) .. "  "
+	keyBadge.Parent = item
+
+	local keyBadgeCorner = Instance.new("UICorner")
+	keyBadgeCorner.CornerRadius = UDim.new(0, 4)
+	keyBadgeCorner.Parent = keyBadge
+
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Font = Enum.Font.Gotham
+	nameLabel.TextSize = 11
+	nameLabel.TextColor3 = TEXT_NORMAL
+	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+	nameLabel.TextYAlignment = Enum.TextYAlignment.Center
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Size = UDim2.new(1, -50, 1, 0)
+	nameLabel.Position = UDim2.new(0, 48, 0, 0)
+	nameLabel.Text = name
+	nameLabel.Parent = item
+
+	table.insert(keybindItems, item)
+	keybindFrame.Visible = true
+end
+
+local function makeDraggable(element)
+	local dragStartPos, startPos, dragInput
+	local isDragging = false
+
+	element.InputBegan:Connect(function(input)
+		if not editMode then return end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			isDragging = true
+			dragStartPos = input.Position
+			startPos = element.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					isDragging = false
+				end
+			end)
+		end
+	end)
+
+	element.InputChanged:Connect(function(input)
+		if not editMode then return end
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	trackConn(UserInputService.InputChanged:Connect(function(input)
+		if not editMode then return end
+		if input == dragInput and isDragging then
+			local delta = input.Position - dragStartPos
+			element.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end))
+
+	table.insert(draggableElements, element)
+end
+
+local function setEditMode(enabled)
+	editMode = enabled
+	if editModeOverlay then
+		editModeOverlay.Visible = enabled
+	end
+	if editModeHint then
+		editModeHint.Visible = enabled
+	end
+	if enabled then
+		if not menuVisible then openMenu() end
+		notify("Undercore", "Edit mode enabled. Drag UI elements. Press Backspace to exit.", 4, ACCENT, "info")
+	else
+		notify("Undercore", "Edit mode disabled.", 3, GREEN, "success")
+	end
+end
+
+-- ===================
 -- PAGES
 -- ===================
 
@@ -890,6 +1120,25 @@ local infJump = createToggle(playerPage, "Infinite Jump", function(v) _G.Underco
 local godMode = createToggle(playerPage, "God Mode", function(v) _G.Undercore.GodMode = v end)
 local antiFlingToggle = createToggle(playerPage, "Anti-Fling", function(v) _G.Undercore.AntiFling = v end)
 
+-- Keybind registrations for all toggles
+registerKeybind(Enum.KeyCode.F, "Fly", flyToggle)
+registerKeybind(Enum.KeyCode.J, "Jump Power", jumpToggle)
+registerKeybind(Enum.KeyCode.N, "Noclip", noclipToggle)
+registerKeybind(Enum.KeyCode.O, "No Fall Damage", noFallToggle)
+registerKeybind(Enum.KeyCode.P, "Fling Aura", flingToggle)
+registerKeybind(Enum.KeyCode.L, "Auto Fling", flingAutoToggle)
+registerKeybind(Enum.KeyCode.E, "ESP Box", espToggle)
+registerKeybind(Enum.KeyCode.R, "ESP Names", espName)
+registerKeybind(Enum.KeyCode.T, "ESP Distance", espDist)
+registerKeybind(Enum.KeyCode.H, "ESP Health", espHealth)
+registerKeybind(Enum.KeyCode.Y, "ESP Tracers", espTracer)
+registerKeybind(Enum.KeyCode.U, "ESP Role Text", espRole)
+registerKeybind(Enum.KeyCode.I, "ESP Role Colors", espRoleColor)
+registerKeybind(Enum.KeyCode.M, "Highlight Murderer", espMurdererHighlight)
+registerKeybind(Enum.KeyCode.V, "Infinite Jump", infJump)
+registerKeybind(Enum.KeyCode.G, "God Mode", godMode)
+registerKeybind(Enum.KeyCode.B, "Anti-Fling", antiFlingToggle)
+
 -- TELEPORT SUBMENU
 local teleportSubmenuVisible = false
 local showTeleportSubmenu
@@ -938,6 +1187,7 @@ teleportPanel.BorderSizePixel = 0
 teleportPanel.Visible = false
 teleportPanel.ZIndex = 50
 teleportPanel.Parent = gui
+makeDraggable(teleportPanel)
 
 local teleportPanelCorner = Instance.new("UICorner")
 teleportPanelCorner.CornerRadius = UDim.new(0, 12)
@@ -1195,6 +1445,7 @@ spectatePanel.BorderSizePixel = 0
 spectatePanel.Visible = false
 spectatePanel.ZIndex = 50
 spectatePanel.Parent = gui
+makeDraggable(spectatePanel)
 
 local spectatePanelCorner = Instance.new("UICorner")
 spectatePanelCorner.CornerRadius = UDim.new(0, 12)
@@ -1535,6 +1786,7 @@ visualPanel.BorderSizePixel = 0
 visualPanel.Visible = false
 visualPanel.ZIndex = 50
 visualPanel.Parent = gui
+makeDraggable(visualPanel)
 
 local visualPanelCorner = Instance.new("UICorner")
 visualPanelCorner.CornerRadius = UDim.new(0, 12)
@@ -2395,6 +2647,29 @@ local testNotif = createToggle(settingsPage, "Test Notification", function(v)
 	end
 end)
 
+local editModeBtn = Instance.new("TextButton")
+editModeBtn.Font = Enum.Font.GothamBold
+editModeBtn.TextSize = 13
+editModeBtn.TextColor3 = TEXT_WHITE
+editModeBtn.Text = "EDIT INTERFACE (RightShift + E)"
+editModeBtn.BackgroundColor3 = ACCENT
+editModeBtn.BorderSizePixel = 0
+editModeBtn.Size = UDim2.new(1, 0, 0, 38)
+editModeBtn.Parent = settingsPage
+
+local editModeBtnCorner = Instance.new("UICorner")
+editModeBtnCorner.CornerRadius = UDim.new(0, 12)
+editModeBtnCorner.Parent = editModeBtn
+
+editModeBtn.MouseButton1Click:Connect(function()
+	playRandomPageSound()
+	setEditMode(not editMode)
+end)
+
+editModeBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 1.0)
+end)
+
 local exitBtn = Instance.new("TextButton")
 exitBtn.Font = Enum.Font.GothamBold
 exitBtn.TextSize = 13
@@ -2481,6 +2756,7 @@ toggleBtn.Position = UDim2.new(0, 10, 0, 10)
 toggleBtn.ZIndex = 50
 toggleBtn.Visible = false
 toggleBtn.Parent = gui
+makeDraggable(toggleBtn)
 
 local toggleBtnCorner = Instance.new("UICorner")
 toggleBtnCorner.CornerRadius = UDim.new(0, 12)
@@ -2580,10 +2856,30 @@ end)
 -- Keys
 trackConn(UserInputService.InputBegan:Connect(function(input, processed)
 	if not scriptReady then return end
+
+	-- Edit mode exit via Backspace
+	if editMode and input.KeyCode == Enum.KeyCode.Backspace then
+		setEditMode(false)
+		return
+	end
+
+	-- Edit mode toggle: RightShift + E
+	if input.KeyCode == Enum.KeyCode.E and UserInputService:IsKeyDown(Enum.KeyCode.RightShift) then
+		setEditMode(not editMode)
+		return
+	end
+
 	if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.K then
 		if menuVisible then closeMenu() else openMenu() end
 	elseif input.KeyCode == Enum.KeyCode.F8 then
 		startHold()
+	elseif keybinds[input.KeyCode] then
+		local bind = keybinds[input.KeyCode]
+		if bind.toggle then
+			bind.toggle.set(not bind.toggle.get())
+		elseif bind.action then
+			bind.action()
+		end
 	end
 end))
 
