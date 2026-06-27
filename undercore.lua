@@ -483,7 +483,7 @@ local function createNavButton(name)
 	icon.ZIndex = 2
 	icon.Parent = btn
 
-	-- Tooltip on hover
+	-- Tooltip on hover (launcher-style, parented to mainFrame to avoid clipping)
 	local tooltip = Instance.new("TextLabel")
 	tooltip.Font = Enum.Font.Gotham
 	tooltip.TextSize = 12
@@ -492,23 +492,59 @@ local function createNavButton(name)
 	tooltip.TextYAlignment = Enum.TextYAlignment.Center
 	tooltip.BackgroundColor3 = CARD_BG
 	tooltip.BorderSizePixel = 0
-	tooltip.Size = UDim2.new(0, 80, 0, 24)
-	tooltip.Position = UDim2.new(1, 6, 0.5, -12)
+	tooltip.Size = UDim2.new(0, 0, 0, 28)
+	tooltip.Position = UDim2.new(0, 48, 0, 0)
 	tooltip.Visible = false
 	tooltip.ZIndex = 100
 	tooltip.Text = "  " .. name
-	tooltip.Parent = btn
+	tooltip.Parent = mainFrame
+	tooltip.ClipsDescendants = true
+
+	local tooltipCorner = Instance.new("UICorner")
+	tooltipCorner.CornerRadius = UDim.new(0, 6)
+	tooltipCorner.Parent = tooltip
+
+	local tooltipShowing = false
+	local tooltipTween
 
 	btn.MouseEnter:Connect(function()
 		playSound(SOUND_HOVER, 1.0)
+		tooltipShowing = true
+		-- Position tooltip at the button's Y inside mainFrame
+		local btnY = btn.Position.Y.Offset
+		tooltip.Position = UDim2.new(0, 48, 0, btnY + 6)
+		tooltip.Size = UDim2.new(0, 0, 0, 28)
 		tooltip.Visible = true
+		tooltip.BackgroundTransparency = 1
+		tooltip.TextTransparency = 1
+		-- Animate in: slide right + fade in
+		if tooltipTween then tooltipTween:Cancel() end
+		tooltipTween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+			Size = UDim2.new(0, 90, 0, 28),
+			BackgroundTransparency = 0,
+			TextTransparency = 0,
+		})
+		tooltipTween:Play()
 		if btn.BackgroundColor3 ~= CARD_HOVER then
 			icon.ImageColor3 = TEXT_NORMAL
 		end
 	end)
 
 	btn.MouseLeave:Connect(function()
-		tooltip.Visible = false
+		tooltipShowing = false
+		-- Animate out: slide left + fade out
+		if tooltipTween then tooltipTween:Cancel() end
+		tooltipTween = TweenService:Create(tooltip, TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+			Size = UDim2.new(0, 0, 0, 28),
+			BackgroundTransparency = 1,
+			TextTransparency = 1,
+		})
+		tooltipTween:Play()
+		tooltipTween.Completed:Connect(function()
+			if not tooltipShowing then
+				tooltip.Visible = false
+			end
+		end)
 		if btn.BackgroundColor3 ~= CARD_HOVER then
 			icon.ImageColor3 = TEXT_GRAY
 		end
