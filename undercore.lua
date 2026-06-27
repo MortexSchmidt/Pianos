@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.2"
+local SCRIPT_VERSION = "2.4.3"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -242,8 +242,8 @@ local function notify(title, message, duration, color, notifType)
 	content.Parent = card
 
 	local pad = Instance.new("UIPadding")
-	pad.PaddingTop = UDim2.new(0, 10)
-	pad.PaddingBottom = UDim2.new(0, 10)
+	pad.PaddingTop = UDim.new(0, 10)
+	pad.PaddingBottom = UDim.new(0, 10)
 	pad.PaddingRight = UDim.new(0, 12)
 	pad.Parent = content
 
@@ -442,6 +442,7 @@ local NAV_ICONS = {
 	["Combat"] = "rbxassetid://111071395331628",
 	["Visuals"] = "rbxassetid://109825947197428",
 	["Player"] = "rbxassetid://114284249768955",
+	["Keybinds"] = "rbxassetid://93982901670694",
 	["Settings"] = "rbxassetid://93982901670694",
 	["About"] = "rbxassetid://72432575303550",
 }
@@ -743,7 +744,19 @@ local function createToggle(parent, text, callback)
 		playSound(SOUND_HOVER, 1.0)
 	end)
 
-	return { frame = frame, get = function() return enabled end, set = function(v) enabled = v updateVisual() end }
+	local listeners = {}
+	return {
+		frame = frame,
+		get = function() return enabled end,
+		set = function(v)
+			enabled = v
+			updateVisual()
+			for _, cb in ipairs(listeners) do
+				cb(enabled)
+			end
+		end,
+		onChange = function(cb) table.insert(listeners, cb) end,
+	}
 end
 
 local function createSlider(parent, text, min, max, default, callback)
@@ -839,6 +852,8 @@ local keybindItems = {}
 local editMode = false
 local editModeOverlay, editModeHint
 local draggableElements = {}
+local listeningForKey = false
+local keyCaptureCallback = nil
 
 -- Edit mode overlay ScreenGui
 local editModeGui = Instance.new("ScreenGui")
@@ -862,7 +877,8 @@ editModeOverlay.Parent = editModeGui
 editModeHint = Instance.new("Frame")
 editModeHint.Name = "EditModeHint"
 editModeHint.Size = UDim2.new(0, 460, 0, 40)
-editModeHint.Position = UDim2.new(0.5, -230, 1, -60)
+editModeHint.Position = UDim2.new(1, -470, 1, -60)
+editModeHint.AnchorPoint = Vector2.new(0, 0)
 editModeHint.BackgroundColor3 = CARD_BG
 editModeHint.BackgroundTransparency = 0.1
 editModeHint.BorderSizePixel = 0
@@ -915,7 +931,8 @@ keybindGui.Parent = uiParent
 local keybindFrame = Instance.new("Frame")
 keybindFrame.Name = "KeybindFrame"
 keybindFrame.Size = UDim2.new(0, 180, 0, 0)
-keybindFrame.Position = UDim2.new(1, -190, 0, 10)
+keybindFrame.Position = UDim2.new(1, -190, 1, -60)
+keybindFrame.AnchorPoint = Vector2.new(0, 1)
 keybindFrame.BackgroundColor3 = CARD_BG
 keybindFrame.BackgroundTransparency = 0.15
 keybindFrame.BorderSizePixel = 0
@@ -955,6 +972,47 @@ local function keyCodeName(keyCode)
 	return name:gsub("Enum.KeyCode.", ""):gsub("Left", "L"):gsub("Right", "R")
 end
 
+local function updateKeybindDisplay()
+	local anyVisible = false
+	for _, item in ipairs(keybindItems) do
+		if item.Visible then
+			anyVisible = true
+			break
+		end
+	end
+	keybindFrame.Visible = anyVisible
+end
+
+local function unbindToggle(toggleRef)
+	for i = #keybindEntries, 1, -1 do
+		local entry = keybindEntries[i]
+		if entry.toggle == toggleRef then
+			keybinds[entry.keyCode] = nil
+			if entry.item then entry.item:Destroy() end
+			table.remove(keybindEntries, i)
+			for j, item in ipairs(keybindItems) do
+				if item == entry.item then
+					table.remove(keybindItems, j)
+					break
+				end
+			end
+		end
+	end
+	updateKeybindDisplay()
+end
+
+local function bindKeyToToggle(keyCode, name, toggleRef)
+	if keyCode == Enum.KeyCode.Unknown or keyCode == Enum.KeyCode.Backspace then
+		unbindToggle(toggleRef)
+		return
+	end
+	unbindToggle(toggleRef)
+	if keybinds[keyCode] then
+		unbindToggle(keybinds[keyCode].toggle)
+	end
+	registerKeybind(keyCode, name, toggleRef)
+end
+
 local function registerKeybind(keyCode, name, toggleRef, action)
 	if keybinds[keyCode] then return end
 	local entry = { keyCode = keyCode, name = name, toggle = toggleRef, action = action }
@@ -965,6 +1023,7 @@ local function registerKeybind(keyCode, name, toggleRef, action)
 	item.Size = UDim2.new(1, 0, 0, 22)
 	item.BackgroundColor3 = BG_DARK
 	item.BorderSizePixel = 0
+	item.Visible = false
 	item.Parent = keybindFrame
 
 	local itemCorner = Instance.new("UICorner")
@@ -1002,7 +1061,14 @@ local function registerKeybind(keyCode, name, toggleRef, action)
 	nameLabel.Parent = item
 
 	table.insert(keybindItems, item)
-	keybindFrame.Visible = true
+	entry.item = item
+
+	if toggleRef and toggleRef.onChange then
+		toggleRef.onChange(function(v)
+			item.Visible = v
+			updateKeybindDisplay()
+		end)
+	end
 end
 
 local function makeDraggable(element)
@@ -1120,25 +1186,6 @@ createLabel(playerPage, "Player")
 local infJump = createToggle(playerPage, "Infinite Jump", function(v) _G.Undercore.InfJump = v end)
 local godMode = createToggle(playerPage, "God Mode", function(v) _G.Undercore.GodMode = v end)
 local antiFlingToggle = createToggle(playerPage, "Anti-Fling", function(v) _G.Undercore.AntiFling = v end)
-
--- Keybind registrations for all toggles
-registerKeybind(Enum.KeyCode.F, "Fly", flyToggle)
-registerKeybind(Enum.KeyCode.J, "Jump Power", jumpToggle)
-registerKeybind(Enum.KeyCode.N, "Noclip", noclipToggle)
-registerKeybind(Enum.KeyCode.O, "No Fall Damage", noFallToggle)
-registerKeybind(Enum.KeyCode.P, "Fling Aura", flingToggle)
-registerKeybind(Enum.KeyCode.L, "Auto Fling", flingAutoToggle)
-registerKeybind(Enum.KeyCode.E, "ESP Box", espToggle)
-registerKeybind(Enum.KeyCode.R, "ESP Names", espName)
-registerKeybind(Enum.KeyCode.T, "ESP Distance", espDist)
-registerKeybind(Enum.KeyCode.H, "ESP Health", espHealth)
-registerKeybind(Enum.KeyCode.Y, "ESP Tracers", espTracer)
-registerKeybind(Enum.KeyCode.U, "ESP Role Text", espRole)
-registerKeybind(Enum.KeyCode.I, "ESP Role Colors", espRoleColor)
-registerKeybind(Enum.KeyCode.M, "Highlight Murderer", espMurdererHighlight)
-registerKeybind(Enum.KeyCode.V, "Infinite Jump", infJump)
-registerKeybind(Enum.KeyCode.G, "God Mode", godMode)
-registerKeybind(Enum.KeyCode.B, "Anti-Fling", antiFlingToggle)
 
 -- TELEPORT SUBMENU
 local teleportSubmenuVisible = false
@@ -2694,6 +2741,110 @@ exitBtn.MouseEnter:Connect(function()
 	playSound(SOUND_HOVER, 1.0)
 end)
 
+--- KEYBINDS
+local function initKeybindsPage()
+	local keybindsPage = createPage("Keybinds")
+	local navKeybinds, navKeybindsIcon, navKeybindsLabel = createNavButton("Keybinds")
+	navButtons["Keybinds"] = { btn = navKeybinds, icon = navKeybindsIcon, label = navKeybindsLabel }
+	navKeybinds.MouseButton1Click:Connect(function() showPage("Keybinds") end)
+
+	createLabel(keybindsPage, "Keybinds")
+	createLabel(keybindsPage, "Click a button and press a key to bind. Backspace to unbind.")
+
+	local bindableFeatures = {
+		{ name = "Fly", toggle = flyToggle },
+		{ name = "Speed", toggle = speedToggle },
+		{ name = "Jump Power", toggle = jumpToggle },
+		{ name = "Noclip", toggle = noclipToggle },
+		{ name = "No Fall Damage", toggle = noFallToggle },
+		{ name = "Fling Aura", toggle = flingToggle },
+		{ name = "Auto Fling", toggle = flingAutoToggle },
+		{ name = "ESP Box", toggle = espToggle },
+		{ name = "ESP Names", toggle = espName },
+		{ name = "ESP Distance", toggle = espDist },
+		{ name = "ESP Health", toggle = espHealth },
+		{ name = "ESP Tracers", toggle = espTracer },
+		{ name = "ESP Role Text", toggle = espRole },
+		{ name = "ESP Role Colors", toggle = espRoleColor },
+		{ name = "Highlight Murderer", toggle = espMurdererHighlight },
+		{ name = "Infinite Jump", toggle = infJump },
+		{ name = "God Mode", toggle = godMode },
+		{ name = "Anti-Fling", toggle = antiFlingToggle },
+	}
+
+	for _, feature in ipairs(bindableFeatures) do
+		local row = Instance.new("Frame")
+		row.Size = UDim2.new(1, 0, 0, 36)
+		row.BackgroundColor3 = CARD_BG
+		row.BorderSizePixel = 0
+		row.Parent = keybindsPage
+
+		local rowCorner = Instance.new("UICorner")
+		rowCorner.CornerRadius = UDim.new(0, 10)
+		rowCorner.Parent = row
+
+		local nameLabel = Instance.new("TextLabel")
+		nameLabel.Font = Enum.Font.Gotham
+		nameLabel.TextSize = 12
+		nameLabel.TextColor3 = TEXT_NORMAL
+		nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+		nameLabel.TextYAlignment = Enum.TextYAlignment.Center
+		nameLabel.BackgroundTransparency = 1
+		nameLabel.Size = UDim2.new(1, -110, 1, 0)
+		nameLabel.Position = UDim2.new(0, 12, 0, 0)
+		nameLabel.Text = feature.name
+		nameLabel.Parent = row
+
+		local bindBtn = Instance.new("TextButton")
+		bindBtn.Font = Enum.Font.GothamBold
+		bindBtn.TextSize = 11
+		bindBtn.TextColor3 = TEXT_WHITE
+		bindBtn.BackgroundColor3 = BG_DARK
+		bindBtn.BorderSizePixel = 0
+		bindBtn.Size = UDim2.new(0, 90, 0, 26)
+		bindBtn.Position = UDim2.new(1, -102, 0.5, -13)
+		bindBtn.AutoButtonColor = false
+		bindBtn.Text = "UNBOUND"
+		bindBtn.Parent = row
+
+		local bindBtnCorner = Instance.new("UICorner")
+		bindBtnCorner.CornerRadius = UDim.new(0, 6)
+		bindBtnCorner.Parent = bindBtn
+
+		local function updateText()
+			for _, entry in ipairs(keybindEntries) do
+				if entry.toggle == feature.toggle then
+					bindBtn.Text = keyCodeName(entry.keyCode)
+					bindBtn.BackgroundColor3 = ACCENT
+					return
+				end
+			end
+			bindBtn.Text = "UNBOUND"
+			bindBtn.BackgroundColor3 = BG_DARK
+		end
+
+		bindBtn.MouseButton1Click:Connect(function()
+			playRandomPageSound()
+			bindBtn.Text = "..."
+			bindBtn.BackgroundColor3 = WARNING
+			listeningForKey = true
+			keyCaptureCallback = function(keyCode)
+				bindKeyToToggle(keyCode, feature.name, feature.toggle)
+				updateText()
+			end
+		end)
+
+		bindBtn.MouseEnter:Connect(function()
+			playSound(SOUND_HOVER, 1.0)
+		end)
+
+		if feature.toggle and feature.toggle.onChange then
+			feature.toggle.onChange(updateText)
+		end
+	end
+end
+initKeybindsPage()
+
 -- ABOUT
 local aboutPage = createPage("About")
 local navAbout, navAboutIcon, navAboutLabel = createNavButton("About")
@@ -2867,6 +3018,15 @@ trackConn(UserInputService.InputBegan:Connect(function(input, processed)
 	-- Edit mode toggle: RightShift + E
 	if input.KeyCode == Enum.KeyCode.E and UserInputService:IsKeyDown(Enum.KeyCode.RightShift) then
 		setEditMode(not editMode)
+		return
+	end
+
+	-- Key capture for keybind settings
+	if listeningForKey then
+		listeningForKey = false
+		if keyCaptureCallback then
+			keyCaptureCallback(input.KeyCode)
+		end
 		return
 	end
 
