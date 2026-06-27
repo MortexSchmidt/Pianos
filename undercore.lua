@@ -108,7 +108,7 @@ end
 
 local function playRandomPageSound()
 	local idx = math.random(1, #SOUND_PAGE)
-	playSound(SOUND_PAGE[idx], 0.3)
+	playSound(SOUND_PAGE[idx], 1.5)
 end
 
 -- ===================
@@ -500,7 +500,7 @@ local function createNavButton(name)
 	tooltip.Parent = btn
 
 	btn.MouseEnter:Connect(function()
-		playSound(SOUND_HOVER, 0.15)
+		playSound(SOUND_HOVER, 1.0)
 		tooltip.Visible = true
 		if btn.BackgroundColor3 ~= CARD_HOVER then
 			icon.ImageColor3 = TEXT_NORMAL
@@ -702,7 +702,7 @@ local function createToggle(parent, text, callback)
 	switchBg.MouseButton1Click:Connect(doToggle)
 
 	frame.MouseEnter:Connect(function()
-		playSound(SOUND_HOVER, 0.15)
+		playSound(SOUND_HOVER, 1.0)
 	end)
 
 	return { frame = frame, get = function() return enabled end, set = function(v) enabled = v updateVisual() end }
@@ -1049,7 +1049,7 @@ local function refreshTeleportList()
 			end)
 
 			entryFrame.MouseEnter:Connect(function()
-				playSound(SOUND_HOVER, 0.15)
+				playSound(SOUND_HOVER, 1.0)
 				entryFrame.BackgroundColor3 = CARD_HOVER
 			end)
 
@@ -1099,7 +1099,7 @@ teleportBtnFrame.MouseButton1Click:Connect(function()
 end)
 
 teleportBtnFrame.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
+	playSound(SOUND_HOVER, 1.0)
 end)
 
 -- Refresh list when players join/leave
@@ -1331,7 +1331,7 @@ local function refreshSpectateList()
 			end)
 
 			entryFrame.MouseEnter:Connect(function()
-				playSound(SOUND_HOVER, 0.15)
+				playSound(SOUND_HOVER, 1.0)
 				if spectateTarget ~= plr then
 					entryFrame.BackgroundColor3 = CARD_HOVER
 				end
@@ -1363,7 +1363,7 @@ stopFollowBtn.MouseButton1Click:Connect(function()
 end)
 
 stopFollowBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
+	playSound(SOUND_HOVER, 1.0)
 end)
 
 -- Show/hide functions
@@ -1398,7 +1398,7 @@ spectateBtnFrame.MouseButton1Click:Connect(function()
 end)
 
 spectateBtnFrame.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
+	playSound(SOUND_HOVER, 1.0)
 end)
 
 -- Refresh spectate list when players join/leave
@@ -1790,7 +1790,7 @@ local function createPreviewButton(text, getY, callback)
 	end)
 
 	btn.MouseEnter:Connect(function()
-		playSound(SOUND_HOVER, 0.15)
+		playSound(SOUND_HOVER, 1.0)
 	end)
 
 	return btn
@@ -2116,7 +2116,7 @@ local function createTooltip(btn, text)
 	end
 
 	btn.MouseEnter:Connect(function()
-		playSound(SOUND_HOVER, 0.15)
+		playSound(SOUND_HOVER, 1.0)
 		local btnPos = btn.AbsolutePosition
 		local btnSize = btn.AbsoluteSize
 		local tipX = btnPos.X + btnSize.X / 2 - 110
@@ -2223,7 +2223,7 @@ cancelBtn.MouseButton1Click:Connect(function()
 end)
 
 cancelBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
+	playSound(SOUND_HOVER, 1.0)
 end)
 
 -- Block all clicks on background while dialog is open
@@ -2329,11 +2329,11 @@ confirmBtn.MouseButton1Click:Connect(function()
 end)
 
 reloadBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
+	playSound(SOUND_HOVER, 1.0)
 end)
 
 confirmBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
+	playSound(SOUND_HOVER, 1.0)
 end)
 
 showExitDialog = showExitDialogImpl
@@ -2376,7 +2376,7 @@ exitBtn.MouseButton1Click:Connect(function()
 end)
 
 exitBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
+	playSound(SOUND_HOVER, 1.0)
 end)
 
 -- ABOUT
@@ -2535,7 +2535,7 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 toggleBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 0.15)
+	playSound(SOUND_HOVER, 1.0)
 end)
 
 -- Keys
