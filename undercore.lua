@@ -75,9 +75,9 @@ local WARNING = Color3.fromRGB(245, 158, 11)     -- #f59e0b warning
 local SOUND_INJECT = "124834506603771"
 local SOUND_NOTIF = "131268007007000"
 local SOUND_ERROR = "18999173729"
-local SOUND_HOVER = "72243701593463"
+local SOUND_HOVER = "81092680156069"
 local SOUND_MODAL = "18999173729"
-local SOUND_PAGE = { "105197111717033", "85298254384092", "114157584505971" }
+local SOUND_PAGE = { "98884317334085" }
 
 local function playSound(soundId, loudness)
 	local sound = Instance.new("Sound")
