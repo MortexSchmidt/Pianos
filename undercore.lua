@@ -53,23 +53,24 @@ local function protectGui(gui)
 	end
 end
 
--- Colors (OMSIMP VS Code dark theme)
-local BG = Color3.fromRGB(10, 10, 10)           -- #0a0a0a main bg
-local BG_DARK = Color3.fromRGB(13, 13, 13)       -- #0d0d0d activity bar / sidebar
-local BG_LIGHT = Color3.fromRGB(18, 18, 18)      -- #121212 panel
-local CARD_BG = Color3.fromRGB(22, 22, 22)       -- #161616 card
-local CARD_HOVER = Color3.fromRGB(30, 30, 30)    -- #1e1e1e card hover
-local LIST_HOVER = Color3.fromRGB(26, 26, 26)    -- #1a1a1a list hover
-local LIST_ACTIVE = Color3.fromRGB(34, 34, 34)   -- #222222 list active
-local BORDER_COLOR = Color3.fromRGB(26, 26, 26)  -- #1a1a1a border
-local ACCENT = Color3.fromRGB(37, 99, 235)       -- #2563eb blue accent
-local ACCENT_HOVER = Color3.fromRGB(59, 130, 246)-- #3b82f6 accent hover
-local TEXT_WHITE = Color3.fromRGB(255, 255, 255) -- #ffffff bright text
-local TEXT_GRAY = Color3.fromRGB(136, 136, 136)  -- #888888 muted text
-local TEXT_NORMAL = Color3.fromRGB(224, 224, 224)-- #e0e0e0 normal text
-local GREEN = Color3.fromRGB(34, 197, 94)        -- #22c55e success
-local RED = Color3.fromRGB(239, 68, 68)          -- #ef4444 error
+-- Colors (Majestic RP dark theme)
+local BG = Color3.fromRGB(29, 29, 29)           -- #1d1d1d main bg
+local BG_DARK = Color3.fromRGB(36, 36, 36)       -- #242424 sidebar / cards
+local BG_LIGHT = Color3.fromRGB(42, 42, 42)      -- #2a2a2a active panels
+local CARD_BG = Color3.fromRGB(36, 36, 36)       -- #242424 card bg
+local CARD_HOVER = Color3.fromRGB(50, 50, 50)    -- #323232 card hover
+local LIST_HOVER = Color3.fromRGB(55, 55, 55)    -- #373737 list hover
+local LIST_ACTIVE = Color3.fromRGB(66, 66, 66)   -- #424242 list active
+local BORDER_COLOR = Color3.fromRGB(60, 60, 60)  -- #3c3c3c border
+local ACCENT = Color3.fromRGB(224, 1, 91)        -- #e0015b magenta accent
+local ACCENT_HOVER = Color3.fromRGB(255, 30, 120) -- #ff1e78 accent hover
+local TEXT_WHITE = Color3.fromRGB(247, 247, 247) -- #f7f7f7 bright text
+local TEXT_GRAY = Color3.fromRGB(122, 122, 122)  -- #7a7a7a muted text
+local TEXT_NORMAL = Color3.fromRGB(200, 200, 200)-- #c8c8c8 normal text
+local GREEN = Color3.fromRGB(37, 185, 37)        -- #25b925 success
+local RED = Color3.fromRGB(224, 1, 19)          -- #e00113 error
 local WARNING = Color3.fromRGB(245, 158, 11)     -- #f59e0b warning
+local BLUE = Color3.fromRGB(52, 129, 220)      -- #3481dc secondary blue
 
 -- Sound IDs
 local SOUND_INJECT = "124834506603771"
@@ -196,7 +197,7 @@ local function notify(title, message, duration, color, notifType)
 	card.Parent = container
 
 	local cardCorner = Instance.new("UICorner")
-	cardCorner.CornerRadius = UDim.new(0, 8)
+	cardCorner.CornerRadius = UDim.new(0, 12)
 	cardCorner.Parent = card
 
 	-- Icon area (left padding, no strip)
@@ -501,7 +502,7 @@ local function createNavButton(name)
 	tooltip.ClipsDescendants = true
 
 	local tooltipCorner = Instance.new("UICorner")
-	tooltipCorner.CornerRadius = UDim.new(0, 6)
+	tooltipCorner.CornerRadius = UDim.new(0, 12)
 	tooltipCorner.Parent = tooltip
 
 	local tooltipShowing = false
@@ -672,7 +673,7 @@ local function createToggle(parent, text, callback)
 	frame.Parent = parent
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
+	corner.CornerRadius = UDim.new(0, 12)
 	corner.Parent = frame
 
 	local label = Instance.new("TextLabel")
@@ -756,7 +757,7 @@ local function createSlider(parent, text, min, max, default, callback)
 	frame.Parent = parent
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
+	corner.CornerRadius = UDim.new(0, 12)
 	corner.Parent = frame
 
 	local label = Instance.new("TextLabel")
@@ -912,7 +913,7 @@ teleportBtnFrame.BorderSizePixel = 0
 teleportBtnFrame.Parent = playerPage
 
 local teleportCorner = Instance.new("UICorner")
-teleportCorner.CornerRadius = UDim.new(0, 6)
+teleportCorner.CornerRadius = UDim.new(0, 12)
 teleportCorner.Parent = teleportBtnFrame
 
 local teleportBtnLabel = Instance.new("TextLabel")
@@ -939,7 +940,7 @@ teleportPanel.ZIndex = 50
 teleportPanel.Parent = gui
 
 local teleportPanelCorner = Instance.new("UICorner")
-teleportPanelCorner.CornerRadius = UDim.new(0, 8)
+teleportPanelCorner.CornerRadius = UDim.new(0, 12)
 teleportPanelCorner.Parent = teleportPanel
 
 -- Sync teleport panel position with mainFrame (follows when dragged)
@@ -1018,7 +1019,7 @@ local function refreshTeleportList()
 			entryFrame.Parent = teleportListFrame
 
 			local entryCorner = Instance.new("UICorner")
-			entryCorner.CornerRadius = UDim.new(0, 6)
+			entryCorner.CornerRadius = UDim.new(0, 12)
 			entryCorner.Parent = entryFrame
 
 			-- Avatar image
@@ -1169,7 +1170,7 @@ spectateBtnFrame.BorderSizePixel = 0
 spectateBtnFrame.Parent = playerPage
 
 local spectateCorner = Instance.new("UICorner")
-spectateCorner.CornerRadius = UDim.new(0, 6)
+spectateCorner.CornerRadius = UDim.new(0, 12)
 spectateCorner.Parent = spectateBtnFrame
 
 local spectateBtnLabel = Instance.new("TextLabel")
@@ -1196,7 +1197,7 @@ spectatePanel.ZIndex = 50
 spectatePanel.Parent = gui
 
 local spectatePanelCorner = Instance.new("UICorner")
-spectatePanelCorner.CornerRadius = UDim.new(0, 8)
+spectatePanelCorner.CornerRadius = UDim.new(0, 12)
 spectatePanelCorner.Parent = spectatePanel
 
 -- Sync spectate panel position with mainFrame (left side, top aligned)
@@ -1273,7 +1274,7 @@ stopFollowBtn.Visible = false
 stopFollowBtn.Parent = spectatePanel
 
 local stopFollowCorner = Instance.new("UICorner")
-stopFollowCorner.CornerRadius = UDim.new(0, 6)
+stopFollowCorner.CornerRadius = UDim.new(0, 12)
 stopFollowCorner.Parent = stopFollowBtn
 
 -- Store spectate entries
@@ -1300,7 +1301,7 @@ local function refreshSpectateList()
 			entryFrame.Parent = spectateListFrame
 
 			local entryCorner = Instance.new("UICorner")
-			entryCorner.CornerRadius = UDim.new(0, 6)
+			entryCorner.CornerRadius = UDim.new(0, 12)
 			entryCorner.Parent = entryFrame
 
 			local avatar = Instance.new("ImageLabel")
@@ -1536,7 +1537,7 @@ visualPanel.ZIndex = 50
 visualPanel.Parent = gui
 
 local visualPanelCorner = Instance.new("UICorner")
-visualPanelCorner.CornerRadius = UDim.new(0, 8)
+visualPanelCorner.CornerRadius = UDim.new(0, 12)
 visualPanelCorner.Parent = visualPanel
 
 -- Sync visual panel position with mainFrame (right side, top aligned)
@@ -2018,7 +2019,7 @@ dialogFrame.ZIndex = 10
 dialogFrame.Parent = blurFrame
 
 local dialogCorner = Instance.new("UICorner")
-dialogCorner.CornerRadius = UDim.new(0, 8)
+dialogCorner.CornerRadius = UDim.new(0, 12)
 dialogCorner.Parent = dialogFrame
 
 local dialogTitle = Instance.new("TextLabel")
@@ -2058,7 +2059,7 @@ cancelBtn.Position = UDim2.new(0, 20, 0, 145)
 cancelBtn.Parent = dialogFrame
 
 local cancelCorner = Instance.new("UICorner")
-cancelCorner.CornerRadius = UDim.new(0, 6)
+cancelCorner.CornerRadius = UDim.new(0, 12)
 cancelCorner.Parent = cancelBtn
 
 local reloadBtn = Instance.new("TextButton")
@@ -2073,7 +2074,7 @@ reloadBtn.Position = UDim2.new(0.5, -50, 0, 145)
 reloadBtn.Parent = dialogFrame
 
 local reloadCorner = Instance.new("UICorner")
-reloadCorner.CornerRadius = UDim.new(0, 6)
+reloadCorner.CornerRadius = UDim.new(0, 12)
 reloadCorner.Parent = reloadBtn
 
 local confirmBtn = Instance.new("TextButton")
@@ -2088,7 +2089,7 @@ confirmBtn.Position = UDim2.new(1, -120, 0, 145)
 confirmBtn.Parent = dialogFrame
 
 local confirmCorner = Instance.new("UICorner")
-confirmCorner.CornerRadius = UDim.new(0, 6)
+confirmCorner.CornerRadius = UDim.new(0, 12)
 confirmCorner.Parent = confirmBtn
 
 -- Info text below buttons
@@ -2405,7 +2406,7 @@ exitBtn.Size = UDim2.new(1, 0, 0, 38)
 exitBtn.Parent = settingsPage
 
 local exitBtnCorner = Instance.new("UICorner")
-exitBtnCorner.CornerRadius = UDim.new(0, 6)
+exitBtnCorner.CornerRadius = UDim.new(0, 12)
 exitBtnCorner.Parent = exitBtn
 
 exitBtn.MouseButton1Click:Connect(function()
@@ -2482,7 +2483,7 @@ toggleBtn.Visible = false
 toggleBtn.Parent = gui
 
 local toggleBtnCorner = Instance.new("UICorner")
-toggleBtnCorner.CornerRadius = UDim.new(0, 6)
+toggleBtnCorner.CornerRadius = UDim.new(0, 12)
 toggleBtnCorner.Parent = toggleBtn
 
 openMenu = function()
