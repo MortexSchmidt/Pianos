@@ -134,7 +134,6 @@ container.Size = UDim2.new(0, NOTIF_WIDTH, 0, 0)
 container.AutomaticSize = Enum.AutomaticSize.Y
 container.BackgroundTransparency = 1
 container.Parent = notifGui
-makeDraggable(container)
 
 local function recalcPositions()
 	local y = 0
@@ -320,7 +319,6 @@ mainFrame.Visible = false
 mainFrame.Active = false
 mainFrame.GroupColor3 = Color3.fromRGB(255, 255, 255)
 mainFrame.Parent = gui
-makeDraggable(mainFrame)
 
 -- Title bar (flat, minimal)
 local titleBar = Instance.new("Frame")
@@ -1043,6 +1041,10 @@ local function makeDraggable(element)
 
 	table.insert(draggableElements, element)
 end
+
+-- Apply draggable behavior to UI elements created before makeDraggable was defined
+makeDraggable(container)
+makeDraggable(mainFrame)
 
 local function setEditMode(enabled)
 	editMode = enabled
