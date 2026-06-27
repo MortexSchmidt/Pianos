@@ -510,9 +510,11 @@ local function createNavButton(name)
 	btn.MouseEnter:Connect(function()
 		playSound(SOUND_HOVER, 1.0)
 		tooltipShowing = true
-		-- Position tooltip at the button's Y inside mainFrame
-		local btnY = btn.Position.Y.Offset
-		tooltip.Position = UDim2.new(0, 48, 0, btnY + 6)
+		-- Position tooltip at the button's actual Y inside mainFrame
+		local mainPos = mainFrame.AbsolutePosition
+		local btnPos = btn.AbsolutePosition
+		local btnSize = btn.AbsoluteSize
+		tooltip.Position = UDim2.new(0, 48, 0, btnPos.Y - mainPos.Y + btnSize.Y / 2 - 14)
 		tooltip.Size = UDim2.new(0, 0, 0, 28)
 		tooltip.Visible = true
 		tooltip.BackgroundTransparency = 1
