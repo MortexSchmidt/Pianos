@@ -115,7 +115,7 @@ end
 -- ===================
 -- NOTIFICATION SYSTEM
 -- ===================
-local NOTIF_WIDTH = 300
+local NOTIF_WIDTH = 340
 local notifications = {}
 
 local notifGui = Instance.new("ScreenGui")
@@ -128,19 +128,21 @@ protectGui(notifGui)
 notifGui.Parent = uiParent
 
 local container = Instance.new("Frame")
-container.AnchorPoint = Vector2.new(1, 0)
-container.Position = UDim2.new(1, 0, 0, 50)
-container.Size = UDim2.new(0, NOTIF_WIDTH, 1, -70)
+container.AnchorPoint = Vector2.new(0.5, 1)
+container.Position = UDim2.new(0.5, 0, 1, -20)
+container.Size = UDim2.new(0, NOTIF_WIDTH, 0, 0)
+container.AutomaticSize = Enum.AutomaticSize.Y
 container.BackgroundTransparency = 1
 container.Parent = notifGui
 makeDraggable(container)
 
 local function recalcPositions()
 	local y = 0
-	for _, data in ipairs(notifications) do
+	for i = #notifications, 1, -1 do
+		local data = notifications[i]
 		if not data.dismissed then
-			TweenService:Create(data.frame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), { Position = UDim2.new(0, 0, 0, y) }):Play()
-			y = y + data.height + 6
+			TweenService:Create(data.frame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -y - data.height - 20) }):Play()
+			y = y + data.height + 8
 		end
 	end
 end
@@ -151,7 +153,7 @@ local function dismiss(data)
 
 	local card = data.frame
 
-	local slideOut = TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Position = UDim2.new(0, NOTIF_WIDTH + 10, 0, card.Position.Y.Offset), GroupTransparency = 1 })
+	local slideOut = TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, 50), GroupTransparency = 1 })
 	slideOut:Play()
 	slideOut.Completed:Wait()
 	card:Destroy()
@@ -168,10 +170,16 @@ local NOTIF_ICONS = {
 	success = "rbxassetid://92239767679742",
 }
 
+local NOTIF_COLORS = {
+	info = WARNING,
+	error = RED,
+	success = GREEN,
+}
+
 local function notify(title, message, duration, color, notifType)
 	duration = duration or 4
-	color = color or ACCENT
 	notifType = notifType or "info"
+	color = NOTIF_COLORS[notifType] or color or WARNING
 	if notifType == "error" then
 		playSound(SOUND_ERROR, 0.5)
 	elseif notifType == "success" then
@@ -180,11 +188,10 @@ local function notify(title, message, duration, color, notifType)
 		playSound(SOUND_NOTIF, 0.5)
 	end
 	local iconId = NOTIF_ICONS[notifType] or NOTIF_ICONS.info
-	local iconColor = notifType == "error" and RED or color
 
 	local y = 0
 	for _, n in ipairs(notifications) do
-		if not n.dismissed then y = y + n.height + 6 end
+		if not n.dismissed then y = y + n.height + 8 end
 	end
 
 	local card = Instance.new("CanvasGroup")
@@ -194,69 +201,56 @@ local function notify(title, message, duration, color, notifType)
 	card.GroupColor3 = Color3.fromRGB(255, 255, 255)
 	card.GroupTransparency = 0
 	card.BorderSizePixel = 0
-	card.Position = UDim2.new(0, NOTIF_WIDTH + 10, 0, y)
+	card.Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, 50)
 	card.Parent = container
 
 	local cardCorner = Instance.new("UICorner")
-	cardCorner.CornerRadius = UDim.new(0, 12)
+	cardCorner.CornerRadius = UDim.new(0, 10)
 	cardCorner.Parent = card
 
-	-- Icon area (left padding, no strip)
-	local iconArea = Instance.new("Frame")
-	iconArea.Name = "IconArea"
-	iconArea.Size = UDim2.new(0, 48, 0, 0)
-	iconArea.Position = UDim2.new(0, 12, 0, 0)
-	iconArea.AutomaticSize = Enum.AutomaticSize.Y
-	iconArea.BackgroundTransparency = 1
-	iconArea.Parent = card
+	-- Colored left strip
+	local strip = Instance.new("Frame")
+	strip.Name = "Strip"
+	strip.Size = UDim2.new(0, 3, 1, 0)
+	strip.Position = UDim2.new(0, 0, 0, 0)
+	strip.BackgroundColor3 = color
+	strip.BorderSizePixel = 0
+	strip.ZIndex = 6
+	strip.Parent = card
 
+	local stripCorner = Instance.new("UICorner")
+	stripCorner.CornerRadius = UDim.new(0, 10)
+	stripCorner.Parent = strip
+
+	-- Icon
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "NotifIcon"
-	icon.Size = UDim2.new(0, 28, 0, 28)
-	icon.Position = UDim2.new(0, 4, 0, 14)
+	icon.Size = UDim2.new(0, 22, 0, 22)
+	icon.Position = UDim2.new(0, 14, 0, 12)
 	icon.BackgroundTransparency = 1
 	icon.Image = iconId
-	icon.ImageColor3 = iconColor
+	icon.ImageColor3 = color
 	icon.ScaleType = Enum.ScaleType.Fit
 	icon.ZIndex = 6
-	icon.Parent = iconArea
+	icon.Parent = card
 
-	-- Content (right of icon)
+	-- Content
 	local content = Instance.new("Frame")
-	content.Size = UDim2.new(1, -72, 0, 0)
-	content.Position = UDim2.new(0, 60, 0, 0)
+	content.Size = UDim2.new(1, -50, 0, 0)
+	content.Position = UDim2.new(0, 44, 0, 0)
 	content.AutomaticSize = Enum.AutomaticSize.Y
 	content.BackgroundTransparency = 1
 	content.Parent = card
 
 	local pad = Instance.new("UIPadding")
-	pad.PaddingTop = UDim.new(0, 12)
-	pad.PaddingBottom = UDim.new(0, 12)
-	pad.PaddingLeft = UDim.new(0, 10)
-	pad.PaddingRight = UDim.new(0, 14)
+	pad.PaddingTop = UDim2.new(0, 10)
+	pad.PaddingBottom = UDim2.new(0, 10)
+	pad.PaddingRight = UDim.new(0, 12)
 	pad.Parent = content
-
-	local lay = Instance.new("UIListLayout")
-	lay.FillDirection = Enum.FillDirection.Vertical
-	lay.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	lay.Padding = UDim.new(0, 4)
-	lay.Parent = content
-
-	local status = Instance.new("TextLabel")
-	status.Font = Enum.Font.GothamBold
-	status.TextSize = 10
-	status.TextColor3 = color
-	status.TextXAlignment = Enum.TextXAlignment.Left
-	status.TextYAlignment = Enum.TextYAlignment.Top
-	status.BackgroundTransparency = 1
-	status.Size = UDim2.new(1, 0, 0, 0)
-	status.AutomaticSize = Enum.AutomaticSize.Y
-	status.Text = title:upper()
-	status.Parent = content
 
 	local titleLabel = Instance.new("TextLabel")
 	titleLabel.Font = Enum.Font.GothamBold
-	titleLabel.TextSize = 14
+	titleLabel.TextSize = 12
 	titleLabel.TextColor3 = TEXT_WHITE
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.TextYAlignment = Enum.TextYAlignment.Top
@@ -269,7 +263,7 @@ local function notify(title, message, duration, color, notifType)
 
 	local msg = Instance.new("TextLabel")
 	msg.Font = Enum.Font.Gotham
-	msg.TextSize = 12
+	msg.TextSize = 11
 	msg.TextColor3 = TEXT_GRAY
 	msg.TextXAlignment = Enum.TextXAlignment.Left
 	msg.TextYAlignment = Enum.TextYAlignment.Top
@@ -285,9 +279,14 @@ local function notify(title, message, duration, color, notifType)
 		local height = card.AbsoluteSize.Y
 		if height <= 0 then task.wait() height = card.AbsoluteSize.Y end
 		local data = { frame = card, height = height, dismissed = false }
-		table.insert(notifications, data)
+		table.insert(notifications, 1, data)
 
-		local slideIn = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = UDim2.new(0, 0, 0, y) })
+		local targetY = 0
+		for _, n in ipairs(notifications) do
+			if n ~= data and not n.dismissed then targetY = targetY + n.height + 8 end
+		end
+
+		local slideIn = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -targetY - height - 20) })
 		slideIn:Play()
 		slideIn.Completed:Wait()
 
