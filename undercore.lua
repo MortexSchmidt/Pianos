@@ -162,7 +162,7 @@ local function recalcPositions()
 	for i = #notifications, 1, -1 do
 		local data = notifications[i]
 		if not data.dismissed then
-			TweenService:Create(data.frame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -y - data.height - NOTIF_BOTTOM) }):Play()
+			TweenService:Create(data.frame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0.5, 0, 1, -y - data.height - NOTIF_BOTTOM) }):Play()
 			y = y + data.height + NOTIF_GAP
 		end
 	end
@@ -177,7 +177,7 @@ local function dismiss(data)
 
 	-- Slide up slightly + fade out smoothly (more negative = higher on screen)
 	local slideUp = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { 
-		Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, currentY + 30),
+		Position = UDim2.new(0.5, 0, 1, currentY + 30),
 		GroupTransparency = 1 
 	})
 	slideUp:Play()
@@ -219,7 +219,7 @@ notify = function(title, message, duration, color, notifType)
 	card.AutomaticSize = Enum.AutomaticSize.Y
 	card.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
 	card.BorderSizePixel = 0
-	card.Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, 50)
+	card.Position = UDim2.new(0.5, 0, 1, 50)
 	card.GroupTransparency = 1
 	card.Parent = container
 
@@ -308,7 +308,7 @@ notify = function(title, message, duration, color, notifType)
 		end
 
 		local slideIn = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { 
-			Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -targetY - height - NOTIF_BOTTOM),
+			Position = UDim2.new(0.5, 0, 1, -targetY - height - NOTIF_BOTTOM),
 			GroupTransparency = 0 
 		})
 		slideIn:Play()
