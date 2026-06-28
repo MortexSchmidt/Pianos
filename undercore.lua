@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.9"
+local SCRIPT_VERSION = "2.5.0"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -1608,22 +1608,90 @@ local function applyCopySkin(targetPlayer)
 		return
 	end
 
-	local ok, desc = pcall(function()
-		return targetHum:GetAppliedDescription()
-	end)
-	if not ok or not desc then
-		notify("Undercore", "Failed to get target skin", 3, RED, "error")
-		return
+	-- Remove existing accessories from my character
+	for _, item in ipairs(myChar:GetChildren()) do
+		if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item.Name == "BodyColors" then
+			pcall(function() item:Destroy() end)
+		end
 	end
 
-	local applyOk, applyErr = pcall(function()
-		myHum:ApplyDescription(desc)
-	end)
-	if not applyOk then
-		notify("Undercore", "ApplyDescription failed: " .. tostring(applyErr), 4, RED, "error")
-	else
-		setCopiedName(targetPlayer.DisplayName)
+	-- Copy accessories
+	for _, item in ipairs(targetChar:GetChildren()) do
+		if item:IsA("Accessory") then
+			local clone = item:Clone()
+			clone.Parent = myChar
+		end
 	end
+
+	-- Copy shirt
+	local targetShirt = targetChar:FindFirstChildOfClass("Shirt")
+	if targetShirt then
+		local myShirt = Instance.new("Shirt")
+		myShirt.ShirtTemplate = targetShirt.ShirtTemplate
+		myShirt.Parent = myChar
+	end
+
+	-- Copy pants
+	local targetPants = targetChar:FindFirstChildOfClass("Pants")
+	if targetPants then
+		local myPants = Instance.new("Pants")
+		myPants.PantsTemplate = targetPants.PantsTemplate
+		myPants.Parent = myChar
+	end
+
+	-- Copy shirt graphic
+	local targetGraphic = targetChar:FindFirstChildOfClass("ShirtGraphic")
+	if targetGraphic then
+		local myGraphic = Instance.new("ShirtGraphic")
+		myGraphic.Graphic = targetGraphic.Graphic
+		myGraphic.Parent = myChar
+	end
+
+	-- Copy body colors
+	local targetBodyColors = targetChar:FindFirstChild("BodyColors")
+	if targetBodyColors then
+		local myBodyColors = myChar:FindFirstChild("BodyColors")
+		if not myBodyColors then
+			myBodyColors = Instance.new("BodyColors")
+			myBodyColors.Parent = myChar
+		end
+		myBodyColors.HeadColor3 = targetBodyColors.HeadColor3
+		myBodyColors.TorsoColor3 = targetBodyColors.TorsoColor3
+		myBodyColors.LeftArmColor3 = targetBodyColors.LeftArmColor3
+		myBodyColors.RightArmColor3 = targetBodyColors.RightArmColor3
+		myBodyColors.LeftLegColor3 = targetBodyColors.LeftLegColor3
+		myBodyColors.RightLegColor3 = targetBodyColors.RightLegColor3
+	end
+
+	-- Copy face
+	local targetHead = targetChar:FindFirstChild("Head")
+	local myHead = myChar:FindFirstChild("Head")
+	if targetHead and myHead then
+		local targetFace = targetHead:FindFirstChild("face")
+		if targetFace and targetFace:IsA("Decal") then
+			local myFace = myHead:FindFirstChild("face")
+			if myFace then
+				myFace.Texture = targetFace.Texture
+			else
+				myFace = Instance.new("Decal")
+				myFace.Name = "face"
+				myFace.Texture = targetFace.Texture
+				myFace.Parent = myHead
+			end
+		end
+	end
+
+	-- Copy humanoid properties
+	pcall(function()
+		myHum.BodyHeightScale = targetHum.BodyHeightScale
+		myHum.BodyWidthScale = targetHum.BodyWidthScale
+		myHum.BodyDepthScale = targetHum.BodyDepthScale
+		myHum.HeadScale = targetHum.HeadScale
+		myHum.RigType = targetHum.RigType
+	end)
+
+	setCopiedName(targetPlayer.DisplayName)
+	notify("Undercore", "Copied skin and name from " .. targetPlayer.DisplayName, 3, GREEN, "success")
 end
 
 local function refreshCopySkinList()
@@ -1686,7 +1754,6 @@ local function refreshCopySkinList()
 			entryFrame.MouseButton1Click:Connect(function()
 				playRandomPageSound()
 				applyCopySkin(plr)
-				notify("Undercore", "Copied skin and name from " .. plr.DisplayName, 3, ACCENT, "info")
 				hideCopySkinSubmenu()
 			end)
 
