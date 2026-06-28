@@ -3523,6 +3523,18 @@ aboutLogo.Image = "rbxassetid://78552548457734"
 aboutLogo.ScaleType = Enum.ScaleType.Fit
 aboutLogo.Parent = aboutPage
 
+local aboutLogoText = Instance.new("TextLabel")
+aboutLogoText.Font = Enum.Font.BuilderSansMedium
+aboutLogoText.TextSize = 18
+aboutLogoText.TextColor3 = M3_PRIMARY
+aboutLogoText.TextXAlignment = Enum.TextXAlignment.Left
+aboutLogoText.TextYAlignment = Enum.TextYAlignment.Center
+aboutLogoText.BackgroundTransparency = 1
+aboutLogoText.Size = UDim2.new(0, 200, 0, 32)
+aboutLogoText.Position = UDim2.new(0, 48, 0, 30)
+aboutLogoText.Text = "Undercore"
+aboutLogoText.Parent = aboutPage
+
 local aboutTitle = Instance.new("TextLabel")
 aboutTitle.Font = Enum.Font.BuilderSansMedium
 aboutTitle.TextSize = 16
@@ -3590,9 +3602,10 @@ donateBtn.TextColor3 = M3_ON_PRIMARY
 donateBtn.TextXAlignment = Enum.TextXAlignment.Center
 donateBtn.TextYAlignment = Enum.TextYAlignment.Center
 donateBtn.BackgroundColor3 = M3_PRIMARY
+donateBtn.AutoButtonColor = false
 donateBtn.BorderSizePixel = 0
-donateBtn.Size = UDim2.new(0, 200, 0, 40)
-donateBtn.Position = UDim2.new(0.5, -100, 0, 322)
+donateBtn.Size = UDim2.new(1, -20, 0, 40)
+donateBtn.Position = UDim2.new(0, 10, 0, 322)
 donateBtn.Text = "  Donate"
 donateBtn.Parent = aboutPage
 
@@ -3621,11 +3634,15 @@ end)
 
 donateBtn.MouseEnter:Connect(function()
 	playSound(SOUND_HOVER, 0.3)
-	TweenService:Create(donateBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 210, 0, 42), Position = UDim2.new(0.5, -105, 0, 321) }):Play()
+	TweenService:Create(donateBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundColor3 = M3_PRIMARY_CONTAINER }):Play()
+	TweenService:Create(donateBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { TextColor3 = M3_ON_PRIMARY_CONTAINER }):Play()
+	TweenService:Create(donateIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { ImageColor3 = M3_ON_PRIMARY_CONTAINER }):Play()
 end)
 
 donateBtn.MouseLeave:Connect(function()
-	TweenService:Create(donateBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 200, 0, 40), Position = UDim2.new(0.5, -100, 0, 322) }):Play()
+	TweenService:Create(donateBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundColor3 = M3_PRIMARY }):Play()
+	TweenService:Create(donateBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { TextColor3 = M3_ON_PRIMARY }):Play()
+	TweenService:Create(donateIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { ImageColor3 = M3_ON_PRIMARY }):Play()
 end)
 
 -- Default page
