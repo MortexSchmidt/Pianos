@@ -10,6 +10,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local TextService = game:GetService("TextService")
 
 local player = Players.LocalPlayer
 local previousConnections = _G.UndercoreConnections
@@ -1676,6 +1677,11 @@ playCustomBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 end -- Songs page scope
 
 -- ===================
+-- Top-level references used across pages
+local pauseBtn
+local updateNowPlaying
+local updateBpmDisplay
+
 -- PLAYER PAGE
 -- ===================
 do
@@ -1696,7 +1702,7 @@ nowPlayingLabel.Size = UDim2.new(1, 0, 0, 32)
 nowPlayingLabel.Text = "Now Playing: None"
 nowPlayingLabel.Parent = playerPage
 
-local function updateNowPlaying()
+updateNowPlaying = function()
 	nowPlayingLabel.Text = "Now Playing: " .. pianoState.currentSongName
 end
 
@@ -1754,7 +1760,7 @@ local bpmUpCorner = Instance.new("UICorner")
 bpmUpCorner.CornerRadius = UDim.new(0, 16)
 bpmUpCorner.Parent = bpmUpBtn
 
-local function updateBpmDisplay()
+updateBpmDisplay = function()
 	bpmDisplay.Text = "BPM: " .. tostring(pianoState.bpm)
 end
 
@@ -1805,7 +1811,7 @@ local playCorner = Instance.new("UICorner")
 playCorner.CornerRadius = UDim.new(0, 20)
 playCorner.Parent = playBtn
 
-local pauseBtn = Instance.new("TextButton")
+pauseBtn = Instance.new("TextButton")
 pauseBtn.Font = Enum.Font.BuilderSansMedium
 pauseBtn.TextSize = 14
 pauseBtn.TextColor3 = M3_ON_SURFACE
@@ -2714,7 +2720,7 @@ reloadBtn.MouseButton1Click:Connect(function()
 	task.wait(3)
 	notify("Undercore", "Script closed. Relaunching...", 3, GREEN, "success")
 	task.wait(3)
-	notifGui:Destroy()
+	pcall(function() if notifGui then notifGui:Destroy() end end)
 	local reloadUrl = "https://gitlab.com/api/v4/projects/neruka783-group%2FUndercore/repository/files/undercore.lua/raw?ref=main&v=" .. tostring(tick())
 	local ok, content = pcall(function() return game:HttpGet(reloadUrl, true) end)
 	if not ok or not content then
@@ -2746,7 +2752,7 @@ confirmBtn.MouseButton1Click:Connect(function()
 	blurEffect:Destroy()
 	exitDialogGui:Destroy()
 	gui:Destroy()
-	notifGui:Destroy()
+	pcall(function() if notifGui then notifGui:Destroy() end end)
 end)
 
 reloadBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
