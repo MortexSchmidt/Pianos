@@ -157,13 +157,15 @@ container.AutomaticSize = Enum.AutomaticSize.Y
 container.BackgroundTransparency = 1
 container.Parent = notifGui
 
+local NOTIF_GAP = 12
+
 local function recalcPositions()
 	local y = 0
 	for i = #notifications, 1, -1 do
 		local data = notifications[i]
 		if not data.dismissed then
-			TweenService:Create(data.frame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -y - data.height - 20) }):Play()
-			y = y + data.height + 8
+			TweenService:Create(data.frame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -y - data.height - 20) }):Play()
+			y = y + data.height + NOTIF_GAP
 		end
 	end
 end
@@ -173,10 +175,15 @@ local function dismiss(data)
 	data.dismissed = true
 
 	local card = data.frame
+	local currentY = card.Position.Y.Offset
 
-	local slideOut = TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, 50) })
-	slideOut:Play()
-	slideOut.Completed:Wait()
+	-- Slide up slightly + fade out smoothly
+	local slideUp = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { 
+		Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, currentY - 30),
+		GroupTransparency = 1 
+	})
+	slideUp:Play()
+	slideUp.Completed:Wait()
 	card:Destroy()
 	for i, n in ipairs(notifications) do
 		if n == data then table.remove(notifications, i) break end
@@ -188,7 +195,7 @@ end
 local NOTIF_ICONS = {
 	info = "rbxassetid://72432575303550",
 	error = "rbxassetid://117665558668208",
-	success = "rbxassetid://92239767679742",
+	success = "rbxassetid://137280763593602",
 }
 
 local NOTIF_COLORS = {
@@ -212,15 +219,16 @@ local function notify(title, message, duration, color, notifType)
 
 	local y = 0
 	for _, n in ipairs(notifications) do
-		if not n.dismissed then y = y + n.height + 8 end
+		if not n.dismissed then y = y + n.height + NOTIF_GAP end
 	end
 
-	local card = Instance.new("Frame")
+	local card = Instance.new("CanvasGroup")
 	card.Size = UDim2.new(0, NOTIF_WIDTH, 0, 0)
 	card.AutomaticSize = Enum.AutomaticSize.Y
 	card.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
 	card.BorderSizePixel = 0
 	card.Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, 50)
+	card.GroupTransparency = 1
 	card.Parent = container
 
 	local cardCorner = Instance.new("UICorner")
@@ -292,10 +300,13 @@ local function notify(title, message, duration, color, notifType)
 
 		local targetY = 0
 		for _, n in ipairs(notifications) do
-			if n ~= data and not n.dismissed then targetY = targetY + n.height + 8 end
+			if n ~= data and not n.dismissed then targetY = targetY + n.height + NOTIF_GAP end
 		end
 
-		local slideIn = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -targetY - height - 20) })
+		local slideIn = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { 
+			Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -targetY - height - 20),
+			GroupTransparency = 0 
+		})
 		slideIn:Play()
 		slideIn.Completed:Wait()
 
