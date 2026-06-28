@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.3"
+local SCRIPT_VERSION = "2.4.4"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -2681,6 +2681,7 @@ end -- initExitDialog function
 initExitDialog()
 
 -- SETTINGS
+local function initSettingsPage()
 local settingsPage = createPage("Settings")
 local navSettings, navSettingsIcon, navSettingsLabel = createNavButton("Settings")
 navButtons["Settings"] = { btn = navSettings, icon = navSettingsIcon, label = navSettingsLabel }
@@ -2845,7 +2846,11 @@ local function initKeybindsPage()
 end
 initKeybindsPage()
 
+end -- initSettingsPage function
+initSettingsPage()
+
 -- ABOUT
+local function initAboutPage()
 local aboutPage = createPage("About")
 local navAbout, navAboutIcon, navAboutLabel = createNavButton("About")
 navButtons["About"] = { btn = navAbout, icon = navAboutIcon, label = navAboutLabel }
@@ -2891,9 +2896,13 @@ aboutDesc.Parent = aboutPage
 -- Default page
 showPage("Movement")
 
+end -- initAboutPage function
+initAboutPage()
+
 -- ===================
 -- TOGGLE BUTTON
 -- ===================
+local function initToggleButton()
 local scriptReady = false
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleBtn"
@@ -3895,6 +3904,9 @@ end))
 
 end -- initESP function
 initESP()
+
+end -- initToggleButton function
+initToggleButton()
 
 -- ===================
 -- INJECTION SEQUENCE
