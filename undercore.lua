@@ -1,4 +1,4 @@
-﻿-- Undercore v3.0.0 - Piano Autoplayer
+-- Undercore v3.0.0 - Piano Autoplayer
 -- Based on TALENTLESS piano engine by hellohellohell012321
 -- Inject via executor
 
