@@ -1461,6 +1461,7 @@ local BUILTIN_SONGS = {
 }
 
 -- ===================
+
 -- SONGS PAGE
 -- ===================
 local selectedSong = nil
@@ -1470,34 +1471,47 @@ local navSongs, navSongsIcon, navSongsLabel = createNavButton("Songs")
 navButtons["Songs"] = { btn = navSongs, icon = navSongsIcon, label = navSongsLabel }
 navSongs.MouseButton1Click:Connect(function() showPage("Songs") end)
 
-createLabel(songsPage, "Songs")
+local function makeCard(parent, height)
+	local card = Instance.new("Frame")
+	card.Size = UDim2.new(1, 0, 0, height)
+	card.BackgroundColor3 = M3_SURFACE_CONTAINER
+	card.BorderSizePixel = 0
+	card.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = card
+	return card
+end
+
+-- Search card
+local searchCard = makeCard(songsPage, 32)
+local searchIcon = Instance.new("ImageLabel")
+searchIcon.Size = UDim2.new(0, 16, 0, 16)
+searchIcon.Position = UDim2.new(0, 10, 0.5, -8)
+searchIcon.BackgroundTransparency = 1
+searchIcon.Image = "rbxassetid://137056122701144"
+searchIcon.ImageColor3 = M3_ON_SURFACE_VAR
+searchIcon.Parent = searchCard
 
 local songSearchBox = Instance.new("TextBox")
 songSearchBox.Font = Enum.Font.BuilderSans
-songSearchBox.TextSize = 14
+songSearchBox.TextSize = 13
 songSearchBox.TextColor3 = M3_ON_SURFACE
 songSearchBox.PlaceholderText = "Search songs..."
 songSearchBox.PlaceholderColor3 = M3_ON_SURFACE_VAR
 songSearchBox.Text = ""
-songSearchBox.BackgroundColor3 = M3_SURFACE_CONTAINER
+songSearchBox.BackgroundTransparency = 1
 songSearchBox.BorderSizePixel = 0
-songSearchBox.Size = UDim2.new(1, 0, 0, 40)
-songSearchBox.Parent = songsPage
+songSearchBox.Size = UDim2.new(1, -36, 1, 0)
+songSearchBox.Position = UDim2.new(0, 30, 0, 0)
+songSearchBox.Parent = searchCard
 
-local songSearchCorner = Instance.new("UICorner")
-songSearchCorner.CornerRadius = UDim.new(0, 16)
-songSearchCorner.Parent = songSearchBox
-
-local songSearchPad = Instance.new("UIPadding")
-songSearchPad.PaddingLeft = UDim.new(0, 12)
-songSearchPad.PaddingRight = UDim.new(0, 12)
-songSearchPad.Parent = songSearchBox
-
+-- Song list
 local songListFrame = Instance.new("ScrollingFrame")
-songListFrame.Size = UDim2.new(1, 0, 0, 300)
+songListFrame.Size = UDim2.new(1, 0, 0, 220)
 songListFrame.BackgroundTransparency = 1
 songListFrame.BorderSizePixel = 0
-songListFrame.ScrollBarThickness = 6
+songListFrame.ScrollBarThickness = 4
 songListFrame.ScrollBarImageColor3 = M3_PRIMARY
 songListFrame.ScrollBarImageTransparency = 0.3
 songListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -1507,7 +1521,7 @@ songListFrame.Parent = songsPage
 local songListLayout = Instance.new("UIListLayout")
 songListLayout.FillDirection = Enum.FillDirection.Vertical
 songListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-songListLayout.Padding = UDim.new(0, 4)
+songListLayout.Padding = UDim.new(0, 2)
 songListLayout.Parent = songListFrame
 
 local songEntries = {}
@@ -1525,34 +1539,45 @@ local function refreshSongList(filter)
 			entryFrame.AutoButtonColor = false
 			entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 			entryFrame.BorderSizePixel = 0
-			entryFrame.Size = UDim2.new(1, 0, 0, 44)
+			entryFrame.Size = UDim2.new(1, 0, 0, 36)
 			entryFrame.LayoutOrder = i
 			entryFrame.Parent = songListFrame
 			local entryCorner = Instance.new("UICorner")
-			entryCorner.CornerRadius = UDim.new(0, 16)
+			entryCorner.CornerRadius = UDim.new(0, 10)
 			entryCorner.Parent = entryFrame
+
+			local noteIcon = Instance.new("ImageLabel")
+			noteIcon.Size = UDim2.new(0, 16, 0, 16)
+			noteIcon.Position = UDim2.new(0, 10, 0.5, -8)
+			noteIcon.BackgroundTransparency = 1
+			noteIcon.Image = "rbxassetid://93101474340373"
+			noteIcon.ImageColor3 = M3_PRIMARY
+			noteIcon.Parent = entryFrame
+
 			local nameLabel = Instance.new("TextLabel")
 			nameLabel.Font = Enum.Font.BuilderSansMedium
-			nameLabel.TextSize = 14
+			nameLabel.TextSize = 13
 			nameLabel.TextColor3 = M3_ON_SURFACE
 			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 			nameLabel.TextYAlignment = Enum.TextYAlignment.Center
 			nameLabel.BackgroundTransparency = 1
-			nameLabel.Size = UDim2.new(1, -80, 1, 0)
-			nameLabel.Position = UDim2.new(0, 14, 0, 0)
+			nameLabel.Size = UDim2.new(1, -92, 1, 0)
+			nameLabel.Position = UDim2.new(0, 32, 0, 0)
 			nameLabel.Text = song.name
 			nameLabel.Parent = entryFrame
+
 			local bpmLabel = Instance.new("TextLabel")
 			bpmLabel.Font = Enum.Font.BuilderSans
-			bpmLabel.TextSize = 12
+			bpmLabel.TextSize = 11
 			bpmLabel.TextColor3 = M3_ON_SURFACE_VAR
 			bpmLabel.TextXAlignment = Enum.TextXAlignment.Right
 			bpmLabel.TextYAlignment = Enum.TextYAlignment.Center
 			bpmLabel.BackgroundTransparency = 1
-			bpmLabel.Size = UDim2.new(0, 60, 1, 0)
-			bpmLabel.Position = UDim2.new(1, -74, 0, 0)
+			bpmLabel.Size = UDim2.new(0, 50, 1, 0)
+			bpmLabel.Position = UDim2.new(1, -62, 0, 0)
 			bpmLabel.Text = tostring(song.bpm) .. " BPM"
 			bpmLabel.Parent = entryFrame
+
 			entryFrame.MouseButton1Click:Connect(function()
 				playRandomPageSound()
 				selectedSong = song
@@ -1581,74 +1606,70 @@ end)
 
 refreshSongList("")
 
--- Custom song input
-createLabel(songsPage, "Custom Song")
+-- Custom song card
+local customCard = makeCard(songsPage, 88)
+local customTitle = Instance.new("TextLabel")
+customTitle.Font = Enum.Font.BuilderSansMedium
+customTitle.TextSize = 12
+customTitle.TextColor3 = M3_ON_SURFACE_VAR
+customTitle.TextXAlignment = Enum.TextXAlignment.Left
+customTitle.BackgroundTransparency = 1
+customTitle.Size = UDim2.new(1, -16, 0, 18)
+customTitle.Position = UDim2.new(0, 10, 0, 6)
+customTitle.Text = "Custom Song"
+customTitle.Parent = customCard
 
 local customSongBox = Instance.new("TextBox")
 customSongBox.Font = Enum.Font.BuilderSans
-customSongBox.TextSize = 13
+customSongBox.TextSize = 12
 customSongBox.TextColor3 = M3_ON_SURFACE
-customSongBox.PlaceholderText = "Paste song URL or code here..."
+customSongBox.PlaceholderText = "Paste URL or code..."
 customSongBox.PlaceholderColor3 = M3_ON_SURFACE_VAR
 customSongBox.Text = ""
-customSongBox.BackgroundColor3 = M3_SURFACE_CONTAINER
+customSongBox.BackgroundColor3 = M3_SURFACE
 customSongBox.BorderSizePixel = 0
-customSongBox.Size = UDim2.new(1, 0, 0, 80)
+customSongBox.Size = UDim2.new(1, -20, 0, 26)
+customSongBox.Position = UDim2.new(0, 10, 0, 26)
 customSongBox.TextWrapped = true
 customSongBox.MultiLine = true
 customSongBox.ClearTextOnFocus = false
-customSongBox.Parent = songsPage
+customSongBox.Parent = customCard
 
-local customSongCorner = Instance.new("UICorner")
-customSongCorner.CornerRadius = UDim.new(0, 16)
-customSongCorner.Parent = customSongBox
-
-local customSongPad = Instance.new("UIPadding")
-customSongPad.PaddingLeft = UDim.new(0, 12)
-customSongPad.PaddingRight = UDim.new(0, 12)
-customSongPad.PaddingTop = UDim.new(0, 8)
-customSongPad.PaddingBottom = UDim.new(0, 8)
-customSongPad.Parent = customSongBox
-
-local customBpmLabel = Instance.new("TextLabel")
-customBpmLabel.Font = Enum.Font.BuilderSansMedium
-customBpmLabel.TextSize = 13
-customBpmLabel.TextColor3 = M3_ON_SURFACE_VAR
-customBpmLabel.TextXAlignment = Enum.TextXAlignment.Left
-customBpmLabel.BackgroundTransparency = 1
-customBpmLabel.Size = UDim2.new(0, 80, 0, 32)
-customBpmLabel.Text = "BPM:"
-customBpmLabel.Parent = songsPage
+local customSongBoxCorner = Instance.new("UICorner")
+customSongBoxCorner.CornerRadius = UDim.new(0, 8)
+customSongBoxCorner.Parent = customSongBox
 
 local customBpmBox = Instance.new("TextBox")
 customBpmBox.Font = Enum.Font.BuilderSans
-customBpmBox.TextSize = 14
+customBpmBox.TextSize = 12
 customBpmBox.TextColor3 = M3_ON_SURFACE
+customBpmBox.PlaceholderText = "BPM"
+customBpmBox.PlaceholderColor3 = M3_ON_SURFACE_VAR
 customBpmBox.Text = "120"
-customBpmBox.BackgroundColor3 = M3_SURFACE_CONTAINER
+customBpmBox.BackgroundColor3 = M3_SURFACE
 customBpmBox.BorderSizePixel = 0
-customBpmBox.Size = UDim2.new(0, 80, 0, 32)
-customBpmBox.Position = UDim2.new(0, 80, 0, 0)
-customBpmBox.Parent = songsPage
+customBpmBox.Size = UDim2.new(0, 50, 0, 22)
+customBpmBox.Position = UDim2.new(0, 10, 0, 58)
+customBpmBox.Parent = customCard
 
-local customBpmCorner = Instance.new("UICorner")
-customBpmCorner.CornerRadius = UDim.new(0, 16)
-customBpmCorner.Parent = customBpmBox
+local customBpmBoxCorner = Instance.new("UICorner")
+customBpmBoxCorner.CornerRadius = UDim.new(0, 8)
+customBpmBoxCorner.Parent = customBpmBox
 
 local playCustomBtn = Instance.new("TextButton")
 playCustomBtn.Font = Enum.Font.BuilderSansMedium
-playCustomBtn.TextSize = 14
+playCustomBtn.TextSize = 12
 playCustomBtn.TextColor3 = M3_ON_PRIMARY
-playCustomBtn.Text = "Play Custom"
+playCustomBtn.Text = "Play"
 playCustomBtn.BackgroundColor3 = M3_PRIMARY
 playCustomBtn.BorderSizePixel = 0
-playCustomBtn.Size = UDim2.new(0, 120, 0, 32)
-playCustomBtn.Position = UDim2.new(1, -128, 0, 0)
-playCustomBtn.Parent = songsPage
+playCustomBtn.Size = UDim2.new(0, 70, 0, 22)
+playCustomBtn.Position = UDim2.new(1, -84, 0, 58)
+playCustomBtn.Parent = customCard
 
-local playCustomCorner = Instance.new("UICorner")
-playCustomCorner.CornerRadius = UDim.new(0, 16)
-playCustomCorner.Parent = playCustomBtn
+local playCustomBtnCorner = Instance.new("UICorner")
+playCustomBtnCorner.CornerRadius = UDim.new(0, 8)
+playCustomBtnCorner.Parent = playCustomBtn
 
 playCustomBtn.MouseButton1Click:Connect(function()
 	playRandomPageSound()
@@ -1676,7 +1697,6 @@ end)
 playCustomBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 end -- Songs page scope
 
--- ===================
 -- Top-level references used across pages
 local pauseBtn
 local updateNowPlaying
@@ -1690,78 +1710,161 @@ local navPlayer, navPlayerIcon, navPlayerLabel = createNavButton("Player")
 navButtons["Player"] = { btn = navPlayer, icon = navPlayerIcon, label = navPlayerLabel }
 navPlayer.MouseButton1Click:Connect(function() showPage("Player") end)
 
-createLabel(playerPage, "Player")
+local function makeCard(parent, height)
+	local card = Instance.new("Frame")
+	card.Size = UDim2.new(1, 0, 0, height)
+	card.BackgroundColor3 = M3_SURFACE_CONTAINER
+	card.BorderSizePixel = 0
+	card.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = card
+	return card
+end
+
+-- Now playing card
+local nowPlayingCard = makeCard(playerPage, 58)
+local nowPlayingIcon = Instance.new("ImageLabel")
+nowPlayingIcon.Size = UDim2.new(0, 20, 0, 20)
+nowPlayingIcon.Position = UDim2.new(0, 10, 0, 10)
+nowPlayingIcon.BackgroundTransparency = 1
+nowPlayingIcon.Image = "rbxassetid://95237403972033"
+nowPlayingIcon.ImageColor3 = M3_PRIMARY
+nowPlayingIcon.Parent = nowPlayingCard
 
 local nowPlayingLabel = Instance.new("TextLabel")
 nowPlayingLabel.Font = Enum.Font.BuilderSansMedium
-nowPlayingLabel.TextSize = 16
-nowPlayingLabel.TextColor3 = M3_PRIMARY
+nowPlayingLabel.TextSize = 14
+nowPlayingLabel.TextColor3 = M3_ON_SURFACE
 nowPlayingLabel.TextXAlignment = Enum.TextXAlignment.Left
+nowPlayingLabel.TextYAlignment = Enum.TextYAlignment.Top
 nowPlayingLabel.BackgroundTransparency = 1
-nowPlayingLabel.Size = UDim2.new(1, 0, 0, 32)
-nowPlayingLabel.Text = "Now Playing: None"
-nowPlayingLabel.Parent = playerPage
+nowPlayingLabel.Size = UDim2.new(1, -44, 0, 20)
+nowPlayingLabel.Position = UDim2.new(0, 36, 0, 8)
+nowPlayingLabel.Text = "Now Playing"
+nowPlayingLabel.Parent = nowPlayingCard
+
+local nowPlayingName = Instance.new("TextLabel")
+nowPlayingName.Font = Enum.Font.BuilderSans
+nowPlayingName.TextSize = 12
+nowPlayingName.TextColor3 = M3_ON_SURFACE_VAR
+nowPlayingName.TextXAlignment = Enum.TextXAlignment.Left
+nowPlayingName.TextYAlignment = Enum.TextYAlignment.Top
+nowPlayingName.BackgroundTransparency = 1
+nowPlayingName.Size = UDim2.new(1, -44, 0, 16)
+nowPlayingName.Position = UDim2.new(0, 36, 0, 30)
+nowPlayingName.Text = "None"
+nowPlayingName.Parent = nowPlayingCard
 
 updateNowPlaying = function()
-	nowPlayingLabel.Text = "Now Playing: " .. pianoState.currentSongName
+	nowPlayingName.Text = pianoState.currentSongName
 end
 
 pianoState.finishCallback = updateNowPlaying
 
--- BPM control
-local bpmControlFrame = Instance.new("Frame")
-bpmControlFrame.Size = UDim2.new(1, 0, 0, 48)
-bpmControlFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
-bpmControlFrame.BorderSizePixel = 0
-bpmControlFrame.Parent = playerPage
+-- Controls card
+local controlsCard = makeCard(playerPage, 96)
 
-local bpmControlCorner = Instance.new("UICorner")
-bpmControlCorner.CornerRadius = UDim.new(0, 16)
-bpmControlCorner.Parent = bpmControlFrame
+local playBtn = Instance.new("TextButton")
+playBtn.Font = Enum.Font.BuilderSansMedium
+playBtn.TextSize = 13
+playBtn.TextColor3 = M3_ON_PRIMARY
+playBtn.Text = "Play"
+playBtn.BackgroundColor3 = M3_PRIMARY
+playBtn.BorderSizePixel = 0
+playBtn.Size = UDim2.new(0, 90, 0, 28)
+playBtn.Position = UDim2.new(0, 10, 0, 10)
+playBtn.Parent = controlsCard
+
+local playBtnCorner = Instance.new("UICorner")
+playBtnCorner.CornerRadius = UDim.new(0, 14)
+playBtnCorner.Parent = playBtn
+
+pauseBtn = Instance.new("TextButton")
+pauseBtn.Font = Enum.Font.BuilderSansMedium
+pauseBtn.TextSize = 13
+pauseBtn.TextColor3 = M3_ON_SURFACE
+pauseBtn.Text = "Pause"
+pauseBtn.BackgroundColor3 = M3_SURFACE_VAR
+pauseBtn.BorderSizePixel = 0
+pauseBtn.Size = UDim2.new(0, 90, 0, 28)
+pauseBtn.Position = UDim2.new(0.5, -45, 0, 10)
+pauseBtn.Parent = controlsCard
+
+local pauseBtnCorner = Instance.new("UICorner")
+pauseBtnCorner.CornerRadius = UDim.new(0, 14)
+pauseBtnCorner.Parent = pauseBtn
+
+local stopBtn = Instance.new("TextButton")
+stopBtn.Font = Enum.Font.BuilderSansMedium
+stopBtn.TextSize = 13
+stopBtn.TextColor3 = M3_ON_ERROR
+stopBtn.Text = "Stop"
+stopBtn.BackgroundColor3 = M3_ERROR_CONTAINER
+stopBtn.BorderSizePixel = 0
+stopBtn.Size = UDim2.new(0, 90, 0, 28)
+stopBtn.Position = UDim2.new(1, -100, 0, 10)
+stopBtn.Parent = controlsCard
+
+local stopBtnCorner = Instance.new("UICorner")
+stopBtnCorner.CornerRadius = UDim.new(0, 14)
+stopBtnCorner.Parent = stopBtn
+
+-- BPM row
+local bpmLabel = Instance.new("TextLabel")
+bpmLabel.Font = Enum.Font.BuilderSansMedium
+bpmLabel.TextSize = 12
+bpmLabel.TextColor3 = M3_ON_SURFACE_VAR
+bpmLabel.TextXAlignment = Enum.TextXAlignment.Left
+bpmLabel.BackgroundTransparency = 1
+bpmLabel.Size = UDim2.new(0, 40, 0, 22)
+bpmLabel.Position = UDim2.new(0, 10, 0, 48)
+bpmLabel.Text = "BPM"
+bpmLabel.Parent = controlsCard
 
 local bpmDownBtn = Instance.new("TextButton")
 bpmDownBtn.Font = Enum.Font.BuilderSansBold
-bpmDownBtn.TextSize = 18
+bpmDownBtn.TextSize = 14
 bpmDownBtn.TextColor3 = M3_ON_SURFACE
 bpmDownBtn.Text = "-"
 bpmDownBtn.BackgroundColor3 = M3_SURFACE_VAR
 bpmDownBtn.BorderSizePixel = 0
-bpmDownBtn.Size = UDim2.new(0, 40, 0, 32)
-bpmDownBtn.Position = UDim2.new(0, 8, 0.5, -16)
-bpmDownBtn.Parent = bpmControlFrame
+bpmDownBtn.Size = UDim2.new(0, 28, 0, 22)
+bpmDownBtn.Position = UDim2.new(0, 52, 0, 48)
+bpmDownBtn.Parent = controlsCard
 
-local bpmDownCorner = Instance.new("UICorner")
-bpmDownCorner.CornerRadius = UDim.new(0, 16)
-bpmDownCorner.Parent = bpmDownBtn
+local bpmDownBtnCorner = Instance.new("UICorner")
+bpmDownBtnCorner.CornerRadius = UDim.new(0, 11)
+bpmDownBtnCorner.Parent = bpmDownBtn
 
 local bpmDisplay = Instance.new("TextLabel")
 bpmDisplay.Font = Enum.Font.BuilderSansMedium
-bpmDisplay.TextSize = 16
+bpmDisplay.TextSize = 13
 bpmDisplay.TextColor3 = M3_ON_SURFACE
 bpmDisplay.TextXAlignment = Enum.TextXAlignment.Center
 bpmDisplay.BackgroundTransparency = 1
-bpmDisplay.Size = UDim2.new(0, 100, 0, 32)
-bpmDisplay.Position = UDim2.new(0, 56, 0.5, -16)
-bpmDisplay.Text = "BPM: 120"
-bpmDisplay.Parent = bpmControlFrame
+bpmDisplay.Size = UDim2.new(0, 60, 0, 22)
+bpmDisplay.Position = UDim2.new(0, 84, 0, 48)
+bpmDisplay.Text = "120"
+bpmDisplay.Parent = controlsCard
 
 local bpmUpBtn = Instance.new("TextButton")
 bpmUpBtn.Font = Enum.Font.BuilderSansBold
-bpmUpBtn.TextSize = 18
+bpmUpBtn.TextSize = 14
 bpmUpBtn.TextColor3 = M3_ON_SURFACE
 bpmUpBtn.Text = "+"
 bpmUpBtn.BackgroundColor3 = M3_SURFACE_VAR
 bpmUpBtn.BorderSizePixel = 0
-bpmUpBtn.Size = UDim2.new(0, 40, 0, 32)
-bpmUpBtn.Position = UDim2.new(0, 164, 0.5, -16)
-bpmUpBtn.Parent = bpmControlFrame
+bpmUpBtn.Size = UDim2.new(0, 28, 0, 22)
+bpmUpBtn.Position = UDim2.new(0, 148, 0, 48)
+bpmUpBtn.Parent = controlsCard
 
-local bpmUpCorner = Instance.new("UICorner")
-bpmUpCorner.CornerRadius = UDim.new(0, 16)
-bpmUpCorner.Parent = bpmUpBtn
+local bpmUpBtnCorner = Instance.new("UICorner")
+bpmUpBtnCorner.CornerRadius = UDim.new(0, 11)
+bpmUpBtnCorner.Parent = bpmUpBtn
 
 updateBpmDisplay = function()
-	bpmDisplay.Text = "BPM: " .. tostring(pianoState.bpm)
+	bpmDisplay.Text = tostring(pianoState.bpm)
 end
 
 bpmDownBtn.MouseButton1Click:Connect(function()
@@ -1779,65 +1882,100 @@ end)
 bpmDownBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 bpmUpBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 
--- Error margin slider
-local errorSlider = createSlider(playerPage, "Error Margin", 0, 100, 0, function(v)
-	pianoState.errorMargin = v / 100
+-- Error margin card
+local errorCard = makeCard(playerPage, 36)
+local errorLabel = Instance.new("TextLabel")
+errorLabel.Font = Enum.Font.BuilderSansMedium
+errorLabel.TextSize = 12
+errorLabel.TextColor3 = M3_ON_SURFACE_VAR
+errorLabel.TextXAlignment = Enum.TextXAlignment.Left
+errorLabel.BackgroundTransparency = 1
+errorLabel.Size = UDim2.new(0, 80, 1, 0)
+errorLabel.Position = UDim2.new(0, 10, 0, 0)
+errorLabel.Text = "Error Margin"
+errorLabel.Parent = errorCard
+
+local errorValue = Instance.new("TextLabel")
+errorValue.Font = Enum.Font.BuilderSansMedium
+errorValue.TextSize = 12
+errorValue.TextColor3 = M3_ON_SURFACE
+errorValue.TextXAlignment = Enum.TextXAlignment.Center
+errorValue.BackgroundTransparency = 1
+errorValue.Size = UDim2.new(0, 40, 0, 22)
+errorValue.Position = UDim2.new(1, -130, 0, 7)
+errorValue.Text = "0%"
+errorValue.Parent = errorCard
+
+local errorDownBtn = Instance.new("TextButton")
+errorDownBtn.Font = Enum.Font.BuilderSansBold
+errorDownBtn.TextSize = 13
+errorDownBtn.TextColor3 = M3_ON_SURFACE
+errorDownBtn.Text = "-"
+errorDownBtn.BackgroundColor3 = M3_SURFACE_VAR
+errorDownBtn.BorderSizePixel = 0
+errorDownBtn.Size = UDim2.new(0, 24, 0, 22)
+errorDownBtn.Position = UDim2.new(1, -102, 0, 7)
+errorDownBtn.Parent = errorCard
+
+local errorDownBtnCorner = Instance.new("UICorner")
+errorDownBtnCorner.CornerRadius = UDim.new(0, 11)
+errorDownBtnCorner.Parent = errorDownBtn
+
+local errorUpBtn = Instance.new("TextButton")
+errorUpBtn.Font = Enum.Font.BuilderSansBold
+errorUpBtn.TextSize = 13
+errorUpBtn.TextColor3 = M3_ON_SURFACE
+errorUpBtn.Text = "+"
+errorUpBtn.BackgroundColor3 = M3_SURFACE_VAR
+errorUpBtn.BorderSizePixel = 0
+errorUpBtn.Size = UDim2.new(0, 24, 0, 22)
+errorUpBtn.Position = UDim2.new(1, -74, 0, 7)
+errorUpBtn.Parent = errorCard
+
+local errorUpBtnCorner = Instance.new("UICorner")
+errorUpBtnCorner.CornerRadius = UDim.new(0, 11)
+errorUpBtnCorner.Parent = errorUpBtn
+
+local errorResetBtn = Instance.new("TextButton")
+errorResetBtn.Font = Enum.Font.BuilderSansMedium
+errorResetBtn.TextSize = 11
+errorResetBtn.TextColor3 = M3_ON_PRIMARY
+errorResetBtn.Text = "Reset"
+errorResetBtn.BackgroundColor3 = M3_PRIMARY
+errorResetBtn.BorderSizePixel = 0
+errorResetBtn.Size = UDim2.new(0, 50, 0, 22)
+errorResetBtn.Position = UDim2.new(1, -56, 0, 7)
+errorResetBtn.Parent = errorCard
+
+local errorResetBtnCorner = Instance.new("UICorner")
+errorResetBtnCorner.CornerRadius = UDim.new(0, 11)
+errorResetBtnCorner.Parent = errorResetBtn
+
+local function updateErrorDisplay()
+	errorValue.Text = tostring(math.floor(pianoState.errorMargin * 100)) .. "%"
+end
+
+errorDownBtn.MouseButton1Click:Connect(function()
+	playRandomPageSound()
+	pianoState.errorMargin = math.max(0, pianoState.errorMargin - 0.05)
+	updateErrorDisplay()
 end)
 
--- Play / Pause / Stop buttons
-local controlsRow = Instance.new("Frame")
-controlsRow.Size = UDim2.new(1, 0, 0, 48)
-controlsRow.BackgroundTransparency = 1
-controlsRow.BorderSizePixel = 0
-controlsRow.Parent = playerPage
+errorUpBtn.MouseButton1Click:Connect(function()
+	playRandomPageSound()
+	pianoState.errorMargin = math.min(1, pianoState.errorMargin + 0.05)
+	updateErrorDisplay()
+end)
 
-local controlsLayout = Instance.new("UIListLayout")
-controlsLayout.FillDirection = Enum.FillDirection.Horizontal
-controlsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-controlsLayout.Padding = UDim.new(0, 8)
-controlsLayout.Parent = controlsRow
+errorResetBtn.MouseButton1Click:Connect(function()
+	playRandomPageSound()
+	pianoState.errorMargin = 0
+	updateErrorDisplay()
+end)
 
-local playBtn = Instance.new("TextButton")
-playBtn.Font = Enum.Font.BuilderSansMedium
-playBtn.TextSize = 14
-playBtn.TextColor3 = M3_ON_PRIMARY
-playBtn.Text = "Play"
-playBtn.BackgroundColor3 = M3_PRIMARY
-playBtn.BorderSizePixel = 0
-playBtn.Size = UDim2.new(0, 100, 0, 40)
-playBtn.Parent = controlsRow
-
-local playCorner = Instance.new("UICorner")
-playCorner.CornerRadius = UDim.new(0, 20)
-playCorner.Parent = playBtn
-
-pauseBtn = Instance.new("TextButton")
-pauseBtn.Font = Enum.Font.BuilderSansMedium
-pauseBtn.TextSize = 14
-pauseBtn.TextColor3 = M3_ON_SURFACE
-pauseBtn.Text = "Pause"
-pauseBtn.BackgroundColor3 = M3_SURFACE_VAR
-pauseBtn.BorderSizePixel = 0
-pauseBtn.Size = UDim2.new(0, 100, 0, 40)
-pauseBtn.Parent = controlsRow
-
-local pauseCorner = Instance.new("UICorner")
-pauseCorner.CornerRadius = UDim.new(0, 20)
-pauseCorner.Parent = pauseBtn
-
-local stopBtn = Instance.new("TextButton")
-stopBtn.Font = Enum.Font.BuilderSansMedium
-stopBtn.TextSize = 14
-stopBtn.TextColor3 = M3_ON_ERROR
-stopBtn.Text = "Stop"
-stopBtn.BackgroundColor3 = M3_ERROR_CONTAINER
-stopBtn.BorderSizePixel = 0
-stopBtn.Size = UDim2.new(0, 100, 0, 40)
-stopBtn.Parent = controlsRow
-
-local stopCorner = Instance.new("UICorner")
-stopCorner.CornerRadius = UDim.new(0, 20)
-stopCorner.Parent = stopBtn
+errorDownBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+errorUpBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+errorResetBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 
 playBtn.MouseButton1Click:Connect(function()
 	playRandomPageSound()
@@ -1889,7 +2027,6 @@ pauseBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 stopBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 end -- Player page scope
 
--- ===================
 -- MARKET PAGE
 -- ===================
 do
