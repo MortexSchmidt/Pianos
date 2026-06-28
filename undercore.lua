@@ -355,6 +355,9 @@ titleBar.Active = true
 titleBar.Parent = mainFrame
 
 -- Dragging + update banner (scoped to free registers)
+local updateBanner
+local updateIcon
+local updateText
 do
 local dragging = false
 local dragInput
@@ -390,7 +393,7 @@ titleText.Position = UDim2.new(0, 20, 0, 0)
 titleText.Text = "Undercore"
 titleText.Parent = titleBar
 
-local updateBanner = Instance.new("TextButton")
+updateBanner = Instance.new("TextButton")
 updateBanner.Name = "UpdateBanner"
 updateBanner.BackgroundTransparency = 1
 updateBanner.Size = UDim2.new(0, 220, 1, 0)
@@ -399,7 +402,7 @@ updateBanner.Text = ""
 updateBanner.Visible = false
 updateBanner.Parent = titleBar
 
-local updateIcon = Instance.new("ImageLabel")
+updateIcon = Instance.new("ImageLabel")
 updateIcon.Name = "UpdateIcon"
 updateIcon.Size = UDim2.new(0, 16, 0, 16)
 updateIcon.Position = UDim2.new(0, 0, 0.5, -8)
@@ -409,7 +412,7 @@ updateIcon.ImageColor3 = ACCENT
 updateIcon.Visible = false
 updateIcon.Parent = updateBanner
 
-local updateText = Instance.new("TextLabel")
+updateText = Instance.new("TextLabel")
 updateText.Name = "UpdateText"
 updateText.Font = Enum.Font.BuilderSans
 updateText.TextSize = 11
