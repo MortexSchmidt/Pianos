@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.5.0"
+local SCRIPT_VERSION = "2.6.0"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -53,24 +53,45 @@ local function protectGui(gui)
 	end
 end
 
--- Colors (Majestic RP dark theme)
-local BG = Color3.fromRGB(29, 29, 29)           -- #1d1d1d main bg
-local BG_DARK = Color3.fromRGB(36, 36, 36)       -- #242424 sidebar / cards
-local BG_LIGHT = Color3.fromRGB(42, 42, 42)      -- #2a2a2a active panels
-local CARD_BG = Color3.fromRGB(36, 36, 36)       -- #242424 card bg
-local CARD_HOVER = Color3.fromRGB(50, 50, 50)    -- #323232 card hover
-local LIST_HOVER = Color3.fromRGB(55, 55, 55)    -- #373737 list hover
-local LIST_ACTIVE = Color3.fromRGB(66, 66, 66)   -- #424242 list active
-local BORDER_COLOR = Color3.fromRGB(60, 60, 60)  -- #3c3c3c border
-local ACCENT = Color3.fromRGB(224, 1, 91)        -- #e0015b magenta accent
-local ACCENT_HOVER = Color3.fromRGB(255, 30, 120) -- #ff1e78 accent hover
-local TEXT_WHITE = Color3.fromRGB(247, 247, 247) -- #f7f7f7 bright text
-local TEXT_GRAY = Color3.fromRGB(122, 122, 122)  -- #7a7a7a muted text
-local TEXT_NORMAL = Color3.fromRGB(200, 200, 200)-- #c8c8c8 normal text
-local GREEN = Color3.fromRGB(37, 185, 37)        -- #25b925 success
-local RED = Color3.fromRGB(224, 1, 19)          -- #e00113 error
-local WARNING = Color3.fromRGB(245, 158, 11)     -- #f59e0b warning
-local BLUE = Color3.fromRGB(52, 129, 220)      -- #3481dc secondary blue
+-- Colors (Material 3 Dark Theme)
+local M3_SURFACE = Color3.fromRGB(28, 27, 31)       -- #1C1B1F surface
+local M3_SURFACE_VAR = Color3.fromRGB(73, 69, 79)    -- #49454F surface variant
+local M3_SURFACE_CONTAINER = Color3.fromRGB(33, 31, 38) -- #211F26 surface container
+local M3_SURFACE_CONTAINER_HIGH = Color3.fromRGB(54, 50, 57) -- #363239 high container
+local M3_PRIMARY = Color3.fromRGB(208, 188, 255)     -- #D0BCFF primary
+local M3_ON_PRIMARY = Color3.fromRGB(56, 30, 114)    -- #381E72 on primary
+local M3_PRIMARY_CONTAINER = Color3.fromRGB(79, 55, 139) -- #4F378B primary container
+local M3_ON_PRIMARY_CONTAINER = Color3.fromRGB(234, 221, 255) -- #EADDFF on primary container
+local M3_SECONDARY = Color3.fromRGB(204, 194, 220)   -- #CCC2DC secondary
+local M3_SECONDARY_CONTAINER = Color3.fromRGB(74, 68, 88) -- #4A4458 secondary container
+local M3_TERTIARY = Color3.fromRGB(239, 184, 200)    -- #EFB8C8 tertiary
+local M3_TERTIARY_CONTAINER = Color3.fromRGB(125, 82, 96) -- #7D5260 tertiary container
+local M3_ERROR = Color3.fromRGB(242, 184, 181)       -- #F2B8B5 error
+local M3_ERROR_CONTAINER = Color3.fromRGB(140, 29, 24) -- #8C1D18 error container
+local M3_ON_ERROR = Color3.fromRGB(96, 20, 16)       -- #601410 on error
+local M3_ON_SURFACE = Color3.fromRGB(230, 224, 233)  -- #E6E0E9 on surface
+local M3_ON_SURFACE_VAR = Color3.fromRGB(202, 196, 208) -- #CAC4D0 on surface variant
+local M3_OUTLINE = Color3.fromRGB(147, 143, 153)     -- #938F99 outline
+local M3_OUTLINE_VAR = Color3.fromRGB(73, 69, 79)    -- #49454F outline variant
+
+-- Aliases for backward compatibility
+local BG = M3_SURFACE
+local BG_DARK = M3_SURFACE_CONTAINER
+local BG_LIGHT = M3_SURFACE_CONTAINER
+local CARD_BG = M3_SURFACE_CONTAINER
+local CARD_HOVER = M3_SURFACE_CONTAINER_HIGH
+local LIST_HOVER = M3_SURFACE_CONTAINER_HIGH
+local LIST_ACTIVE = M3_SURFACE_CONTAINER_HIGH
+local BORDER_COLOR = M3_OUTLINE_VAR
+local ACCENT = M3_PRIMARY
+local ACCENT_HOVER = M3_ON_PRIMARY_CONTAINER
+local TEXT_WHITE = M3_ON_SURFACE
+local TEXT_GRAY = M3_ON_SURFACE_VAR
+local TEXT_NORMAL = M3_ON_SURFACE
+local GREEN = Color3.fromRGB(169, 253, 163)          -- #A9FDA3 M3 success-ish
+local RED = M3_ERROR
+local WARNING = Color3.fromRGB(255, 216, 107)       -- #FFD86B M3 warning-ish
+local BLUE = M3_PRIMARY
 
 -- Sound IDs
 local SOUND_INJECT = "124834506603771"
@@ -197,21 +218,21 @@ local function notify(title, message, duration, color, notifType)
 	local card = Instance.new("Frame")
 	card.Size = UDim2.new(0, NOTIF_WIDTH, 0, 0)
 	card.AutomaticSize = Enum.AutomaticSize.Y
-	card.BackgroundColor3 = CARD_BG
+	card.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
 	card.BorderSizePixel = 0
 	card.Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, 50)
 	card.Parent = container
 
 	local cardCorner = Instance.new("UICorner")
-	cardCorner.CornerRadius = UDim.new(0, 10)
+	cardCorner.CornerRadius = UDim.new(0, 16)
 	cardCorner.Parent = card
 
 	-- Icon on left, vertically centered
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "NotifIcon"
-	icon.Size = UDim2.new(0, 22, 0, 22)
+	icon.Size = UDim2.new(0, 24, 0, 24)
 	icon.AnchorPoint = Vector2.new(0, 0.5)
-	icon.Position = UDim2.new(0, 14, 0.5, 0)
+	icon.Position = UDim2.new(0, 16, 0.5, 0)
 	icon.BackgroundTransparency = 1
 	icon.Image = iconId
 	icon.ImageColor3 = color
@@ -219,38 +240,40 @@ local function notify(title, message, duration, color, notifType)
 	icon.ZIndex = 6
 	icon.Parent = card
 
-	-- Colored right strip, full height
-	local strip = Instance.new("Frame")
-	strip.Name = "Strip"
-	strip.Size = UDim2.new(0, 4, 1, 0)
-	strip.Position = UDim2.new(1, -4, 0, 0)
-	strip.BackgroundColor3 = color
-	strip.BorderSizePixel = 0
-	strip.ZIndex = 6
-	strip.Parent = card
+	-- M3: no right strip, use subtle left accent dot instead
+	local accentDot = Instance.new("Frame")
+	accentDot.Name = "AccentDot"
+	accentDot.Size = UDim2.new(0, 8, 0, 8)
+	accentDot.AnchorPoint = Vector2.new(0, 0.5)
+	accentDot.Position = UDim2.new(0, 44, 0.5, 0)
+	accentDot.BackgroundColor3 = color
+	accentDot.BorderSizePixel = 0
+	accentDot.ZIndex = 6
+	accentDot.Visible = false
+	accentDot.Parent = card
 
-	local stripCorner = Instance.new("UICorner")
-	stripCorner.CornerRadius = UDim.new(0, 10)
-	stripCorner.Parent = strip
+	local dotCorner = Instance.new("UICorner")
+	dotCorner.CornerRadius = UDim.new(1, 0)
+	dotCorner.Parent = accentDot
 
 	-- Content
 	local content = Instance.new("Frame")
-	content.Size = UDim2.new(1, -68, 0, 0)
-	content.Position = UDim2.new(0, 48, 0, 0)
+	content.Size = UDim2.new(1, -72, 0, 0)
+	content.Position = UDim2.new(0, 52, 0, 0)
 	content.AutomaticSize = Enum.AutomaticSize.Y
 	content.BackgroundTransparency = 1
 	content.Parent = card
 
 	local pad = Instance.new("UIPadding")
-	pad.PaddingTop = UDim.new(0, 12)
-	pad.PaddingBottom = UDim.new(0, 12)
-	pad.PaddingRight = UDim.new(0, 14)
+	pad.PaddingTop = UDim.new(0, 16)
+	pad.PaddingBottom = UDim.new(0, 16)
+	pad.PaddingRight = UDim.new(0, 16)
 	pad.Parent = content
 
 	local msg = Instance.new("TextLabel")
-	msg.Font = Enum.Font.Gotham
-	msg.TextSize = 13
-	msg.TextColor3 = TEXT_WHITE
+	msg.Font = Enum.Font.BuilderSansRegular
+	msg.TextSize = 14
+	msg.TextColor3 = M3_ON_SURFACE
 	msg.TextXAlignment = Enum.TextXAlignment.Left
 	msg.TextYAlignment = Enum.TextYAlignment.Top
 	msg.BackgroundTransparency = 1
@@ -300,17 +323,29 @@ mainFrame.Name = "MainFrame"
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 mainFrame.Size = UDim2.new(0, 640, 0, 420)
-mainFrame.BackgroundColor3 = BG
+mainFrame.BackgroundColor3 = M3_SURFACE
 mainFrame.BorderSizePixel = 0
 mainFrame.Visible = false
 mainFrame.Active = false
 mainFrame.GroupColor3 = Color3.fromRGB(255, 255, 255)
 mainFrame.Parent = gui
 
--- Title bar (flat, minimal)
+-- M3 large rounded corners
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 28)
+mainCorner.Parent = mainFrame
+
+-- M3 elevation shadow (subtle)
+local mainShadow = Instance.new("UIStroke")
+mainShadow.Color = Color3.fromRGB(0, 0, 0)
+mainShadow.Thickness = 0
+mainShadow.Transparency = 0.8
+mainShadow.Parent = mainFrame
+
+-- Title bar (M3 top app bar style)
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 36)
-titleBar.BackgroundColor3 = BG
+titleBar.Size = UDim2.new(1, 0, 0, 48)
+titleBar.BackgroundColor3 = M3_SURFACE
 titleBar.BorderSizePixel = 0
 titleBar.Active = true
 -- Dragging
@@ -339,14 +374,14 @@ end)
 titleBar.Parent = mainFrame
 
 local titleText = Instance.new("TextLabel")
-titleText.Font = Enum.Font.GothamMedium
-titleText.TextSize = 13
-titleText.TextColor3 = TEXT_GRAY
+titleText.Font = Enum.Font.BuilderSansMedium
+titleText.TextSize = 16
+titleText.TextColor3 = M3_ON_SURFACE
 titleText.TextXAlignment = Enum.TextXAlignment.Left
 titleText.TextYAlignment = Enum.TextYAlignment.Center
 titleText.BackgroundTransparency = 1
 titleText.Size = UDim2.new(1, -80, 1, 0)
-titleText.Position = UDim2.new(0, 14, 0, 0)
+titleText.Position = UDim2.new(0, 20, 0, 0)
 titleText.Text = "Undercore"
 titleText.Parent = titleBar
 
@@ -372,9 +407,9 @@ updateIcon.Parent = updateBanner
 
 local updateText = Instance.new("TextLabel")
 updateText.Name = "UpdateText"
-updateText.Font = Enum.Font.Gotham
+updateText.Font = Enum.Font.BuilderSansRegular
 updateText.TextSize = 11
-updateText.TextColor3 = ACCENT
+updateText.TextColor3 = M3_PRIMARY
 updateText.TextXAlignment = Enum.TextXAlignment.Left
 updateText.TextYAlignment = Enum.TextYAlignment.Center
 updateText.BackgroundTransparency = 1
@@ -384,11 +419,11 @@ updateText.Text = "New update available - click to restart"
 updateText.Visible = false
 updateText.Parent = updateBanner
 
--- Left navigation (icon-only sidebar, VS Code style)
+-- Left navigation (M3 navigation rail)
 local navFrame = Instance.new("Frame")
-navFrame.Size = UDim2.new(0, 48, 1, -36)
-navFrame.Position = UDim2.new(0, 0, 0, 36)
-navFrame.BackgroundColor3 = BG_DARK
+navFrame.Size = UDim2.new(0, 56, 1, -48)
+navFrame.Position = UDim2.new(0, 0, 0, 48)
+navFrame.BackgroundColor3 = M3_SURFACE
 navFrame.BorderSizePixel = 0
 navFrame.Active = false
 navFrame.Parent = mainFrame
@@ -404,11 +439,11 @@ navPad.PaddingTop = UDim.new(0, 8)
 navPad.PaddingBottom = UDim.new(0, 8)
 navPad.Parent = navFrame
 
--- Right content
+-- Right content (M3 surface)
 local contentFrame = Instance.new("Frame")
-contentFrame.Size = UDim2.new(1, -48, 1, -36)
-contentFrame.Position = UDim2.new(0, 48, 0, 36)
-contentFrame.BackgroundColor3 = BG_LIGHT
+contentFrame.Size = UDim2.new(1, -56, 1, -48)
+contentFrame.Position = UDim2.new(0, 56, 0, 48)
+contentFrame.BackgroundColor3 = M3_SURFACE
 contentFrame.BorderSizePixel = 0
 contentFrame.Active = false
 contentFrame.Parent = mainFrame
@@ -450,38 +485,43 @@ end
 
 local function createNavButton(name)
 	local btn = Instance.new("TextButton")
-	btn.Font = Enum.Font.Gotham
+	btn.Font = Enum.Font.BuilderSansMedium
 	btn.TextSize = 13
-	btn.TextColor3 = TEXT_GRAY
+	btn.TextColor3 = M3_ON_SURFACE_VAR
 	btn.Text = ""
 	btn.TextXAlignment = Enum.TextXAlignment.Left
-	btn.BackgroundColor3 = BG_DARK
+	btn.BackgroundColor3 = M3_SURFACE
 	btn.BorderSizePixel = 0
-	btn.Size = UDim2.new(0, 40, 0, 40)
+	btn.Size = UDim2.new(0, 48, 0, 48)
+	btn.AutoButtonColor = false
 	btn.Parent = navFrame
+
+	local btnCorner = Instance.new("UICorner")
+	btnCorner.CornerRadius = UDim.new(0, 24)
+	btnCorner.Parent = btn
 
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "Icon"
-	icon.Size = UDim2.new(0, 22, 0, 22)
-	icon.Position = UDim2.new(0.5, -11, 0.5, -11)
+	icon.Size = UDim2.new(0, 24, 0, 24)
+	icon.Position = UDim2.new(0.5, -12, 0.5, -12)
 	icon.BackgroundTransparency = 1
 	icon.Image = NAV_ICONS[name] or ""
-	icon.ImageColor3 = TEXT_GRAY
+	icon.ImageColor3 = M3_ON_SURFACE_VAR
 	icon.ScaleType = Enum.ScaleType.Fit
 	icon.ZIndex = 2
 	icon.Parent = btn
 
 	-- Tooltip on hover (launcher-style, parented to mainFrame to avoid clipping)
 	local tooltip = Instance.new("TextLabel")
-	tooltip.Font = Enum.Font.Gotham
+	tooltip.Font = Enum.Font.BuilderSansMedium
 	tooltip.TextSize = 12
-	tooltip.TextColor3 = TEXT_WHITE
+	tooltip.TextColor3 = M3_ON_SURFACE
 	tooltip.TextXAlignment = Enum.TextXAlignment.Left
 	tooltip.TextYAlignment = Enum.TextYAlignment.Center
-	tooltip.BackgroundColor3 = CARD_BG
+	tooltip.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
 	tooltip.BorderSizePixel = 0
-	tooltip.Size = UDim2.new(0, 0, 0, 28)
-	tooltip.Position = UDim2.new(0, 48, 0, 0)
+	tooltip.Size = UDim2.new(0, 0, 0, 32)
+	tooltip.Position = UDim2.new(0, 56, 0, 0)
 	tooltip.Visible = false
 	tooltip.ZIndex = 100
 	tooltip.Text = "  " .. name
@@ -489,7 +529,7 @@ local function createNavButton(name)
 	tooltip.ClipsDescendants = true
 
 	local tooltipCorner = Instance.new("UICorner")
-	tooltipCorner.CornerRadius = UDim.new(0, 12)
+	tooltipCorner.CornerRadius = UDim.new(0, 16)
 	tooltipCorner.Parent = tooltip
 
 	local tooltipShowing = false
@@ -502,21 +542,22 @@ local function createNavButton(name)
 		local mainPos = mainFrame.AbsolutePosition
 		local btnPos = btn.AbsolutePosition
 		local btnSize = btn.AbsoluteSize
-		tooltip.Position = UDim2.new(0, 48, 0, btnPos.Y - mainPos.Y + btnSize.Y / 2 - 14)
-		tooltip.Size = UDim2.new(0, 0, 0, 28)
+		tooltip.Position = UDim2.new(0, 56, 0, btnPos.Y - mainPos.Y + btnSize.Y / 2 - 16)
+		tooltip.Size = UDim2.new(0, 0, 0, 32)
 		tooltip.Visible = true
 		tooltip.BackgroundTransparency = 1
 		tooltip.TextTransparency = 1
 		-- Animate in: slide right + fade in
 		if tooltipTween then tooltipTween:Cancel() end
 		tooltipTween = TweenService:Create(tooltip, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-			Size = UDim2.new(0, 90, 0, 28),
+			Size = UDim2.new(0, 100, 0, 32),
 			BackgroundTransparency = 0,
 			TextTransparency = 0,
 		})
 		tooltipTween:Play()
-		if btn.BackgroundColor3 ~= CARD_HOVER then
-			icon.ImageColor3 = TEXT_NORMAL
+		if btn.BackgroundColor3 ~= M3_SECONDARY_CONTAINER then
+			icon.ImageColor3 = M3_ON_SURFACE
+			btn.BackgroundColor3 = M3_SURFACE_CONTAINER
 		end
 	end)
 
@@ -525,7 +566,7 @@ local function createNavButton(name)
 		-- Animate out: slide left + fade out
 		if tooltipTween then tooltipTween:Cancel() end
 		tooltipTween = TweenService:Create(tooltip, TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-			Size = UDim2.new(0, 0, 0, 28),
+			Size = UDim2.new(0, 0, 0, 32),
 			BackgroundTransparency = 1,
 			TextTransparency = 1,
 		})
@@ -535,8 +576,9 @@ local function createNavButton(name)
 				tooltip.Visible = false
 			end
 		end)
-		if btn.BackgroundColor3 ~= CARD_HOVER then
-			icon.ImageColor3 = TEXT_GRAY
+		if btn.BackgroundColor3 ~= M3_SECONDARY_CONTAINER then
+			icon.ImageColor3 = M3_ON_SURFACE_VAR
+			btn.BackgroundColor3 = M3_SURFACE
 		end
 	end)
 
@@ -550,7 +592,7 @@ local function createPage(name)
 	page.BackgroundTransparency = 1
 	page.BorderSizePixel = 0
 	page.ScrollBarThickness = 3
-	page.ScrollBarImageColor3 = CARD_HOVER
+	page.ScrollBarImageColor3 = M3_SURFACE_VAR
 	page.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	page.CanvasSize = UDim2.new(0, 0, 0, 0)
 	page.Visible = false
@@ -569,16 +611,20 @@ end
 local currentPage = nil
 local pageSwitching = false
 
--- Active nav indicator (blue accent bar on left edge)
+-- Active nav indicator (M3 pill shape behind selected item)
 local navIndicator = Instance.new("Frame")
 navIndicator.Name = "NavIndicator"
-navIndicator.Size = UDim2.new(0, 3, 0, 40)
+navIndicator.Size = UDim2.new(0, 48, 0, 48)
 navIndicator.Position = UDim2.new(0, 0, 0, 50)
-navIndicator.BackgroundColor3 = ACCENT
+navIndicator.BackgroundColor3 = M3_SECONDARY_CONTAINER
 navIndicator.BorderSizePixel = 0
-navIndicator.ZIndex = 20
+navIndicator.ZIndex = 1
 navIndicator.Visible = false
-navIndicator.Parent = mainFrame
+navIndicator.Parent = navFrame
+
+local navIndicatorCorner = Instance.new("UICorner")
+navIndicatorCorner.CornerRadius = UDim.new(0, 24)
+navIndicatorCorner.Parent = navIndicator
 
 -- Forward declarations for visual preview panel (defined later)
 local showVisualPreview
@@ -598,14 +644,14 @@ local function showPage(name)
 	-- Deactivate old button
 	if currentPage and navButtons[currentPage] then
 		local oldData = navButtons[currentPage]
-		oldData.btn.BackgroundColor3 = BG_DARK
-		oldData.icon.ImageColor3 = TEXT_GRAY
+		oldData.btn.BackgroundColor3 = M3_SURFACE
+		oldData.icon.ImageColor3 = M3_ON_SURFACE_VAR
 	end
 
 	-- Fade content
 	local fadeOverlay = Instance.new("Frame")
 	fadeOverlay.Size = UDim2.new(1, 0, 1, 0)
-	fadeOverlay.BackgroundColor3 = BG_LIGHT
+	fadeOverlay.BackgroundColor3 = M3_SURFACE
 	fadeOverlay.BorderSizePixel = 0
 	fadeOverlay.BackgroundTransparency = 1
 	fadeOverlay.ZIndex = 50
@@ -622,14 +668,14 @@ local function showPage(name)
 	-- Activate new button
 	local newData = navButtons[name]
 	if newData then
-		newData.btn.BackgroundColor3 = CARD_HOVER
-		newData.icon.ImageColor3 = TEXT_WHITE
+		newData.btn.BackgroundColor3 = M3_SECONDARY_CONTAINER
+		newData.icon.ImageColor3 = M3_ON_SURFACE
 
 		-- Position indicator at new button
 		local btn = newData.btn
-		local targetY = btn.AbsolutePosition.Y - mainFrame.AbsolutePosition.Y
+		local targetY = btn.AbsolutePosition.Y - navFrame.AbsolutePosition.Y
 		local targetH = btn.AbsoluteSize.Y
-		navIndicator.Size = UDim2.new(0, 3, 0, targetH)
+		navIndicator.Size = UDim2.new(0, 48, 0, targetH)
 		navIndicator.Position = UDim2.new(0, 0, 0, targetY)
 		navIndicator.Visible = true
 	end
@@ -654,34 +700,34 @@ local function createToggle(parent, text, callback)
 	local toggling = false
 
 	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(1, 0, 0, 38)
-	frame.BackgroundColor3 = CARD_BG
+	frame.Size = UDim2.new(1, 0, 0, 56)
+	frame.BackgroundColor3 = M3_SURFACE_CONTAINER
 	frame.BorderSizePixel = 0
 	frame.Parent = parent
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
+	corner.CornerRadius = UDim.new(0, 16)
 	corner.Parent = frame
 
 	local label = Instance.new("TextLabel")
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = TEXT_NORMAL
+	label.Font = Enum.Font.BuilderSansMedium
+	label.TextSize = 14
+	label.TextColor3 = M3_ON_SURFACE
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
 	label.BackgroundTransparency = 1
-	label.Size = UDim2.new(1, -60, 1, 0)
-	label.Position = UDim2.new(0, 14, 0, 0)
+	label.Size = UDim2.new(1, -72, 1, 0)
+	label.Position = UDim2.new(0, 16, 0, 0)
 	label.Text = text
 	label.Parent = frame
 
-	-- Toggle switch background (pill shape)
+	-- M3 switch: track + thumb
 	local switchBg = Instance.new("TextButton")
 	switchBg.Text = ""
-	switchBg.BackgroundColor3 = CARD_HOVER
+	switchBg.BackgroundColor3 = M3_SURFACE_VAR
 	switchBg.BorderSizePixel = 0
-	switchBg.Size = UDim2.new(0, 44, 0, 24)
-	switchBg.Position = UDim2.new(1, -54, 0.5, -12)
+	switchBg.Size = UDim2.new(0, 52, 0, 32)
+	switchBg.Position = UDim2.new(1, -68, 0.5, -16)
 	switchBg.AutoButtonColor = false
 	switchBg.Parent = frame
 
@@ -689,11 +735,18 @@ local function createToggle(parent, text, callback)
 	switchCorner.CornerRadius = UDim.new(1, 0)
 	switchCorner.Parent = switchBg
 
-	-- White circle knob
+	-- M3 switch outline (unselected state)
+	local switchOutline = Instance.new("UIStroke")
+	switchOutline.Color = M3_OUTLINE
+	switchOutline.Thickness = 2
+	switchOutline.Transparency = 0
+	switchOutline.Parent = switchBg
+
+	-- M3 thumb (circle)
 	local knob = Instance.new("Frame")
-	knob.Size = UDim2.new(0, 18, 0, 18)
-	knob.Position = UDim2.new(0, 3, 0.5, -9)
-	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	knob.Size = UDim2.new(0, 16, 0, 16)
+	knob.Position = UDim2.new(0, 4, 0.5, -8)
+	knob.BackgroundColor3 = M3_OUTLINE
 	knob.BorderSizePixel = 0
 	knob.ZIndex = 3
 	knob.Parent = switchBg
@@ -704,12 +757,16 @@ local function createToggle(parent, text, callback)
 
 	local function updateVisual()
 		if enabled then
-			switchBg.BackgroundColor3 = ACCENT
-			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(1, -21, 0.5, -9) })
+			switchBg.BackgroundColor3 = M3_PRIMARY
+			switchOutline.Transparency = 1
+			knob.BackgroundColor3 = M3_ON_PRIMARY
+			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(1, -24, 0.5, -12), Size = UDim2.new(0, 24, 0, 24) })
 			knobTween:Play()
 		else
-			switchBg.BackgroundColor3 = CARD_HOVER
-			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0, 3, 0.5, -9) })
+			switchBg.BackgroundColor3 = M3_SURFACE_VAR
+			switchOutline.Transparency = 0
+			knob.BackgroundColor3 = M3_OUTLINE
+			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0, 4, 0.5, -8), Size = UDim2.new(0, 16, 0, 16) })
 			knobTween:Play()
 		end
 	end
@@ -750,31 +807,31 @@ local function createSlider(parent, text, min, max, default, callback)
 	local value = default
 
 	local frame = Instance.new("Frame")
-	frame.Size = UDim2.new(1, 0, 0, 54)
-	frame.BackgroundColor3 = CARD_BG
+	frame.Size = UDim2.new(1, 0, 0, 56)
+	frame.BackgroundColor3 = M3_SURFACE_CONTAINER
 	frame.BorderSizePixel = 0
 	frame.Parent = parent
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 12)
+	corner.CornerRadius = UDim.new(0, 16)
 	corner.Parent = frame
 
 	local label = Instance.new("TextLabel")
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 13
-	label.TextColor3 = TEXT_NORMAL
+	label.Font = Enum.Font.BuilderSansMedium
+	label.TextSize = 14
+	label.TextColor3 = M3_ON_SURFACE
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
 	label.BackgroundTransparency = 1
-	label.Size = UDim2.new(1, -20, 0, 20)
-	label.Position = UDim2.new(0, 14, 0, 8)
+	label.Size = UDim2.new(1, -20, 0, 24)
+	label.Position = UDim2.new(0, 16, 0, 8)
 	label.Text = text .. ": " .. tostring(default)
 	label.Parent = frame
 
 	local sliderBg = Instance.new("Frame")
-	sliderBg.Size = UDim2.new(1, -28, 0, 4)
-	sliderBg.Position = UDim2.new(0, 14, 0, 36)
-	sliderBg.BackgroundColor3 = CARD_HOVER
+	sliderBg.Size = UDim2.new(1, -32, 0, 4)
+	sliderBg.Position = UDim2.new(0, 16, 0, 38)
+	sliderBg.BackgroundColor3 = M3_SURFACE_VAR
 	sliderBg.BorderSizePixel = 0
 	sliderBg.Parent = frame
 
@@ -784,7 +841,7 @@ local function createSlider(parent, text, min, max, default, callback)
 
 	local sliderFill = Instance.new("Frame")
 	sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-	sliderFill.BackgroundColor3 = ACCENT
+	sliderFill.BackgroundColor3 = M3_PRIMARY
 	sliderFill.BorderSizePixel = 0
 	sliderFill.Parent = sliderBg
 
@@ -818,13 +875,13 @@ end
 
 local function createLabel(parent, text)
 	local label = Instance.new("TextLabel")
-	label.Font = Enum.Font.GothamBold
+	label.Font = Enum.Font.BuilderSansMedium
 	label.TextSize = 14
-	label.TextColor3 = TEXT_WHITE
+	label.TextColor3 = M3_ON_SURFACE_VAR
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextYAlignment = Enum.TextYAlignment.Center
 	label.BackgroundTransparency = 1
-	label.Size = UDim2.new(1, 0, 0, 28)
+	label.Size = UDim2.new(1, 0, 0, 32)
 	label.Text = text
 	label.Parent = parent
 	return label
@@ -863,29 +920,29 @@ editModeOverlay.Parent = editModeGui
 
 editModeHint = Instance.new("Frame")
 editModeHint.Name = "EditModeHint"
-editModeHint.Size = UDim2.new(0, 420, 0, 46)
+editModeHint.Size = UDim2.new(0, 420, 0, 48)
 editModeHint.Position = UDim2.new(1, -440, 1, -62)
-editModeHint.BackgroundColor3 = BG_LIGHT
-editModeHint.BackgroundTransparency = 0.05
+editModeHint.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
+editModeHint.BackgroundTransparency = 0
 editModeHint.BorderSizePixel = 0
 editModeHint.Visible = false
 editModeHint.ZIndex = 10
 editModeHint.Parent = editModeGui
 
 local editModeHintCorner = Instance.new("UICorner")
-editModeHintCorner.CornerRadius = UDim.new(0, 12)
+editModeHintCorner.CornerRadius = UDim.new(0, 16)
 editModeHintCorner.Parent = editModeHint
 
 local editModeHintStroke = Instance.new("UIStroke")
-editModeHintStroke.Color = ACCENT
-editModeHintStroke.Thickness = 1.5
-editModeHintStroke.Transparency = 0.4
+editModeHintStroke.Color = M3_OUTLINE
+editModeHintStroke.Thickness = 1
+editModeHintStroke.Transparency = 0
 editModeHintStroke.Parent = editModeHint
 
 local editModeHintText = Instance.new("TextLabel")
-editModeHintText.Font = Enum.Font.GothamBold
+editModeHintText.Font = Enum.Font.BuilderSansMedium
 editModeHintText.TextSize = 14
-editModeHintText.TextColor3 = TEXT_WHITE
+editModeHintText.TextColor3 = M3_ON_SURFACE
 editModeHintText.TextXAlignment = Enum.TextXAlignment.Left
 editModeHintText.TextYAlignment = Enum.TextYAlignment.Center
 editModeHintText.BackgroundTransparency = 1
@@ -895,19 +952,13 @@ editModeHintText.Text = "Edit Mode — press to exit"
 editModeHintText.ZIndex = 11
 editModeHintText.Parent = editModeHint
 
-local editModeHintTextStroke = Instance.new("UIStroke")
-editModeHintTextStroke.Color = Color3.fromRGB(0, 0, 0)
-editModeHintTextStroke.Thickness = 2
-editModeHintTextStroke.Transparency = 0.6
-editModeHintTextStroke.Parent = editModeHintText
-
 local backspaceBadge = Instance.new("TextLabel")
-backspaceBadge.Font = Enum.Font.GothamBold
+backspaceBadge.Font = Enum.Font.BuilderSansMedium
 backspaceBadge.TextSize = 12
-backspaceBadge.TextColor3 = Color3.fromRGB(30, 30, 30)
+backspaceBadge.TextColor3 = M3_ON_SURFACE
 backspaceBadge.TextXAlignment = Enum.TextXAlignment.Center
 backspaceBadge.TextYAlignment = Enum.TextYAlignment.Center
-backspaceBadge.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+backspaceBadge.BackgroundColor3 = M3_SURFACE_VAR
 backspaceBadge.BorderSizePixel = 0
 backspaceBadge.Size = UDim2.new(0, 90, 0, 28)
 backspaceBadge.Position = UDim2.new(1, -104, 0.5, -14)
@@ -916,7 +967,7 @@ backspaceBadge.ZIndex = 11
 backspaceBadge.Parent = editModeHint
 
 local backspaceBadgeCorner = Instance.new("UICorner")
-backspaceBadgeCorner.CornerRadius = UDim.new(0, 4)
+backspaceBadgeCorner.CornerRadius = UDim.new(0, 14)
 backspaceBadgeCorner.Parent = backspaceBadge
 
 -- On-screen keybind display
@@ -933,21 +984,21 @@ keybindFrame.Name = "KeybindFrame"
 keybindFrame.Size = UDim2.new(0, 180, 0, 0)
 keybindFrame.Position = UDim2.new(1, -190, 1, -60)
 keybindFrame.AnchorPoint = Vector2.new(0, 1)
-keybindFrame.BackgroundColor3 = CARD_BG
-keybindFrame.BackgroundTransparency = 0.15
+keybindFrame.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
+keybindFrame.BackgroundTransparency = 0.05
 keybindFrame.BorderSizePixel = 0
 keybindFrame.AutomaticSize = Enum.AutomaticSize.Y
 keybindFrame.Visible = false
 keybindFrame.Parent = keybindGui
 
 local keybindFrameCorner = Instance.new("UICorner")
-keybindFrameCorner.CornerRadius = UDim.new(0, 12)
+keybindFrameCorner.CornerRadius = UDim.new(0, 16)
 keybindFrameCorner.Parent = keybindFrame
 
 local keybindTitle = Instance.new("TextLabel")
-keybindTitle.Font = Enum.Font.GothamBold
+keybindTitle.Font = Enum.Font.BuilderSansMedium
 keybindTitle.TextSize = 12
-keybindTitle.TextColor3 = TEXT_WHITE
+keybindTitle.TextColor3 = M3_ON_SURFACE_VAR
 keybindTitle.TextXAlignment = Enum.TextXAlignment.Center
 keybindTitle.BackgroundTransparency = 1
 keybindTitle.Size = UDim2.new(1, 0, 0, 24)
@@ -1021,22 +1072,22 @@ local function registerKeybind(keyCode, name, toggleRef, action)
 
 	local item = Instance.new("Frame")
 	item.Size = UDim2.new(1, 0, 0, 22)
-	item.BackgroundColor3 = BG_DARK
+	item.BackgroundColor3 = M3_SURFACE_CONTAINER
 	item.BorderSizePixel = 0
 	item.Visible = false
 	item.Parent = keybindFrame
 
 	local itemCorner = Instance.new("UICorner")
-	itemCorner.CornerRadius = UDim.new(0, 6)
+	itemCorner.CornerRadius = UDim.new(0, 8)
 	itemCorner.Parent = item
 
 	local keyBadge = Instance.new("TextLabel")
-	keyBadge.Font = Enum.Font.GothamBold
+	keyBadge.Font = Enum.Font.BuilderSansMedium
 	keyBadge.TextSize = 11
-	keyBadge.TextColor3 = TEXT_WHITE
+	keyBadge.TextColor3 = M3_ON_PRIMARY
 	keyBadge.TextXAlignment = Enum.TextXAlignment.Center
 	keyBadge.TextYAlignment = Enum.TextYAlignment.Center
-	keyBadge.BackgroundColor3 = ACCENT
+	keyBadge.BackgroundColor3 = M3_PRIMARY
 	keyBadge.BorderSizePixel = 0
 	keyBadge.Size = UDim2.new(0, 0, 0, 18)
 	keyBadge.AutomaticSize = Enum.AutomaticSize.X
@@ -1045,13 +1096,13 @@ local function registerKeybind(keyCode, name, toggleRef, action)
 	keyBadge.Parent = item
 
 	local keyBadgeCorner = Instance.new("UICorner")
-	keyBadgeCorner.CornerRadius = UDim.new(0, 4)
+	keyBadgeCorner.CornerRadius = UDim.new(0, 9)
 	keyBadgeCorner.Parent = keyBadge
 
 	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Font = Enum.Font.Gotham
+	nameLabel.Font = Enum.Font.BuilderSansRegular
 	nameLabel.TextSize = 11
-	nameLabel.TextColor3 = TEXT_NORMAL
+	nameLabel.TextColor3 = M3_ON_SURFACE
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	nameLabel.TextYAlignment = Enum.TextYAlignment.Center
 	nameLabel.BackgroundTransparency = 1
@@ -1210,18 +1261,18 @@ local teleportBtnFrame = Instance.new("TextButton")
 teleportBtnFrame.Text = ""
 teleportBtnFrame.AutoButtonColor = false
 teleportBtnFrame.Size = UDim2.new(1, 0, 0, 38)
-teleportBtnFrame.BackgroundColor3 = CARD_BG
+teleportBtnFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 teleportBtnFrame.BorderSizePixel = 0
 teleportBtnFrame.Parent = playerPage
 
 local teleportCorner = Instance.new("UICorner")
-teleportCorner.CornerRadius = UDim.new(0, 12)
+teleportCorner.CornerRadius = UDim.new(0, 16)
 teleportCorner.Parent = teleportBtnFrame
 
 local teleportBtnLabel = Instance.new("TextLabel")
-teleportBtnLabel.Font = Enum.Font.Gotham
-teleportBtnLabel.TextSize = 13
-teleportBtnLabel.TextColor3 = TEXT_NORMAL
+teleportBtnLabel.Font = Enum.Font.BuilderSansMedium
+teleportBtnLabel.TextSize = 14
+teleportBtnLabel.TextColor3 = M3_ON_SURFACE
 teleportBtnLabel.TextXAlignment = Enum.TextXAlignment.Left
 teleportBtnLabel.TextYAlignment = Enum.TextYAlignment.Center
 teleportBtnLabel.BackgroundTransparency = 1
@@ -1235,7 +1286,7 @@ local teleportPanel = Instance.new("Frame")
 teleportPanel.Name = "TeleportPanel"
 teleportPanel.Size = UDim2.new(0, 250, 0, 400)
 teleportPanel.Position = UDim2.new(0, 0, 0, 0)
-teleportPanel.BackgroundColor3 = BG
+teleportPanel.BackgroundColor3 = M3_SURFACE_CONTAINER
 teleportPanel.BorderSizePixel = 0
 teleportPanel.Visible = false
 teleportPanel.ZIndex = 50
@@ -1243,7 +1294,7 @@ teleportPanel.Parent = gui
 makeDraggable(teleportPanel)
 
 local teleportPanelCorner = Instance.new("UICorner")
-teleportPanelCorner.CornerRadius = UDim.new(0, 12)
+teleportPanelCorner.CornerRadius = UDim.new(0, 16)
 teleportPanelCorner.Parent = teleportPanel
 
 -- Sync teleport panel position with mainFrame (follows when dragged)
@@ -1263,9 +1314,9 @@ end))
 
 -- Submenu title
 local teleportTitle = Instance.new("TextLabel")
-teleportTitle.Font = Enum.Font.GothamBold
+teleportTitle.Font = Enum.Font.BuilderSansMedium
 teleportTitle.TextSize = 14
-teleportTitle.TextColor3 = ACCENT
+teleportTitle.TextColor3 = M3_PRIMARY
 teleportTitle.TextXAlignment = Enum.TextXAlignment.Left
 teleportTitle.BackgroundTransparency = 1
 teleportTitle.Size = UDim2.new(1, -20, 0, 30)
@@ -1277,10 +1328,10 @@ teleportTitle.Parent = teleportPanel
 local teleportListFrame = Instance.new("ScrollingFrame")
 teleportListFrame.Size = UDim2.new(1, -12, 1, -50)
 teleportListFrame.Position = UDim2.new(0, 6, 0, 42)
-teleportListFrame.BackgroundColor3 = BG_DARK
+teleportListFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 teleportListFrame.BorderSizePixel = 0
 teleportListFrame.ScrollBarThickness = 3
-teleportListFrame.ScrollBarImageColor3 = CARD_HOVER
+teleportListFrame.ScrollBarImageColor3 = M3_SURFACE_VAR
 teleportListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 teleportListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 teleportListFrame.Parent = teleportPanel
@@ -1314,7 +1365,7 @@ local function refreshTeleportList()
 		if plr ~= player then
 			local entryFrame = Instance.new("TextButton")
 			entryFrame.Size = UDim2.new(1, 0, 0, 40)
-			entryFrame.BackgroundColor3 = CARD_BG
+			entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 			entryFrame.BorderSizePixel = 0
 			entryFrame.Text = ""
 			entryFrame.AutoButtonColor = false
@@ -1347,9 +1398,9 @@ local function refreshTeleportList()
 
 			-- Player name
 			local nameLabel = Instance.new("TextLabel")
-			nameLabel.Font = Enum.Font.Gotham
+			nameLabel.Font = Enum.Font.BuilderSansMedium
 			nameLabel.TextSize = 12
-			nameLabel.TextColor3 = TEXT_NORMAL
+			nameLabel.TextColor3 = M3_ON_SURFACE
 			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 			nameLabel.BackgroundTransparency = 1
 			nameLabel.Size = UDim2.new(1, -44, 0, 20)
@@ -1359,9 +1410,9 @@ local function refreshTeleportList()
 
 			-- @username
 			local userLabel = Instance.new("TextLabel")
-			userLabel.Font = Enum.Font.Gotham
+			userLabel.Font = Enum.Font.BuilderSansRegular
 			userLabel.TextSize = 10
-			userLabel.TextColor3 = TEXT_GRAY
+			userLabel.TextColor3 = M3_ON_SURFACE_VAR
 			userLabel.TextXAlignment = Enum.TextXAlignment.Left
 			userLabel.BackgroundTransparency = 1
 			userLabel.Size = UDim2.new(1, -44, 0, 14)
@@ -1392,11 +1443,11 @@ local function refreshTeleportList()
 
 			entryFrame.MouseEnter:Connect(function()
 				playSound(SOUND_HOVER, 1.0)
-				entryFrame.BackgroundColor3 = CARD_HOVER
+				entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
 			end)
 
 			entryFrame.MouseLeave:Connect(function()
-				entryFrame.BackgroundColor3 = CARD_BG
+				entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 			end)
 
 			table.insert(teleportEntries, { frame = entryFrame, player = plr })
@@ -1467,18 +1518,18 @@ local copySkinBtnFrame = Instance.new("TextButton")
 copySkinBtnFrame.Text = ""
 copySkinBtnFrame.AutoButtonColor = false
 copySkinBtnFrame.Size = UDim2.new(1, 0, 0, 38)
-copySkinBtnFrame.BackgroundColor3 = CARD_BG
+copySkinBtnFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 copySkinBtnFrame.BorderSizePixel = 0
 copySkinBtnFrame.Parent = playerPage
 
 local copySkinCorner = Instance.new("UICorner")
-copySkinCorner.CornerRadius = UDim.new(0, 12)
+copySkinCorner.CornerRadius = UDim.new(0, 16)
 copySkinCorner.Parent = copySkinBtnFrame
 
 local copySkinBtnLabel = Instance.new("TextLabel")
-copySkinBtnLabel.Font = Enum.Font.Gotham
-copySkinBtnLabel.TextSize = 13
-copySkinBtnLabel.TextColor3 = TEXT_NORMAL
+copySkinBtnLabel.Font = Enum.Font.BuilderSansMedium
+copySkinBtnLabel.TextSize = 14
+copySkinBtnLabel.TextColor3 = M3_ON_SURFACE
 copySkinBtnLabel.TextXAlignment = Enum.TextXAlignment.Left
 copySkinBtnLabel.TextYAlignment = Enum.TextYAlignment.Center
 copySkinBtnLabel.BackgroundTransparency = 1
@@ -1492,7 +1543,7 @@ local copySkinPanel = Instance.new("Frame")
 copySkinPanel.Name = "CopySkinPanel"
 copySkinPanel.Size = UDim2.new(0, 250, 0, 400)
 copySkinPanel.Position = UDim2.new(0, 0, 0, 0)
-copySkinPanel.BackgroundColor3 = BG
+copySkinPanel.BackgroundColor3 = M3_SURFACE_CONTAINER
 copySkinPanel.BorderSizePixel = 0
 copySkinPanel.Visible = false
 copySkinPanel.ZIndex = 50
@@ -1500,7 +1551,7 @@ copySkinPanel.Parent = gui
 makeDraggable(copySkinPanel)
 
 local copySkinPanelCorner = Instance.new("UICorner")
-copySkinPanelCorner.CornerRadius = UDim.new(0, 12)
+copySkinPanelCorner.CornerRadius = UDim.new(0, 16)
 copySkinPanelCorner.Parent = copySkinPanel
 
 -- Sync position with mainFrame
@@ -1515,9 +1566,9 @@ trackConn(RunService.RenderStepped:Connect(function()
 end))
 
 local copySkinTitle = Instance.new("TextLabel")
-copySkinTitle.Font = Enum.Font.GothamBold
+copySkinTitle.Font = Enum.Font.BuilderSansMedium
 copySkinTitle.TextSize = 14
-copySkinTitle.TextColor3 = ACCENT
+copySkinTitle.TextColor3 = M3_PRIMARY
 copySkinTitle.TextXAlignment = Enum.TextXAlignment.Left
 copySkinTitle.BackgroundTransparency = 1
 copySkinTitle.Size = UDim2.new(1, -20, 0, 30)
@@ -1528,10 +1579,10 @@ copySkinTitle.Parent = copySkinPanel
 local copySkinListFrame = Instance.new("ScrollingFrame")
 copySkinListFrame.Size = UDim2.new(1, -12, 1, -50)
 copySkinListFrame.Position = UDim2.new(0, 6, 0, 42)
-copySkinListFrame.BackgroundColor3 = BG_DARK
+copySkinListFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 copySkinListFrame.BorderSizePixel = 0
 copySkinListFrame.ScrollBarThickness = 3
-copySkinListFrame.ScrollBarImageColor3 = CARD_HOVER
+copySkinListFrame.ScrollBarImageColor3 = M3_SURFACE_VAR
 copySkinListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 copySkinListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 copySkinListFrame.Parent = copySkinPanel
@@ -1582,7 +1633,7 @@ local function setCopiedName(name)
 	nameLabel.Name = "CopiedNameLabel"
 	nameLabel.Size = UDim2.new(1, 0, 1, 0)
 	nameLabel.BackgroundTransparency = 1
-	nameLabel.Font = Enum.Font.GothamBold
+	nameLabel.Font = Enum.Font.BuilderSansMedium
 	nameLabel.TextSize = 16
 	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 	nameLabel.TextStrokeTransparency = 0.5
@@ -1700,7 +1751,7 @@ local function refreshCopySkinList()
 		if plr ~= player then
 			local entryFrame = Instance.new("TextButton")
 			entryFrame.Size = UDim2.new(1, 0, 0, 40)
-			entryFrame.BackgroundColor3 = CARD_BG
+			entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 			entryFrame.BorderSizePixel = 0
 			entryFrame.Text = ""
 			entryFrame.AutoButtonColor = false
@@ -1730,9 +1781,9 @@ local function refreshCopySkinList()
 			end)
 
 			local nameLabel = Instance.new("TextLabel")
-			nameLabel.Font = Enum.Font.Gotham
+			nameLabel.Font = Enum.Font.BuilderSansMedium
 			nameLabel.TextSize = 12
-			nameLabel.TextColor3 = TEXT_NORMAL
+			nameLabel.TextColor3 = M3_ON_SURFACE
 			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 			nameLabel.BackgroundTransparency = 1
 			nameLabel.Size = UDim2.new(1, -44, 0, 20)
@@ -1741,9 +1792,9 @@ local function refreshCopySkinList()
 			nameLabel.Parent = entryFrame
 
 			local userLabel = Instance.new("TextLabel")
-			userLabel.Font = Enum.Font.Gotham
+			userLabel.Font = Enum.Font.BuilderSansRegular
 			userLabel.TextSize = 10
-			userLabel.TextColor3 = TEXT_GRAY
+			userLabel.TextColor3 = M3_ON_SURFACE_VAR
 			userLabel.TextXAlignment = Enum.TextXAlignment.Left
 			userLabel.BackgroundTransparency = 1
 			userLabel.Size = UDim2.new(1, -44, 0, 14)
@@ -1759,11 +1810,11 @@ local function refreshCopySkinList()
 
 			entryFrame.MouseEnter:Connect(function()
 				playSound(SOUND_HOVER, 1.0)
-				entryFrame.BackgroundColor3 = CARD_HOVER
+				entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
 			end)
 
 			entryFrame.MouseLeave:Connect(function()
-				entryFrame.BackgroundColor3 = CARD_BG
+				entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 			end)
 
 			table.insert(copySkinEntries, { frame = entryFrame, player = plr })
@@ -1841,18 +1892,18 @@ local spectateBtnFrame = Instance.new("TextButton")
 spectateBtnFrame.Text = ""
 spectateBtnFrame.AutoButtonColor = false
 spectateBtnFrame.Size = UDim2.new(1, 0, 0, 38)
-spectateBtnFrame.BackgroundColor3 = CARD_BG
+spectateBtnFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 spectateBtnFrame.BorderSizePixel = 0
 spectateBtnFrame.Parent = playerPage
 
 local spectateCorner = Instance.new("UICorner")
-spectateCorner.CornerRadius = UDim.new(0, 12)
+spectateCorner.CornerRadius = UDim.new(0, 16)
 spectateCorner.Parent = spectateBtnFrame
 
 local spectateBtnLabel = Instance.new("TextLabel")
-spectateBtnLabel.Font = Enum.Font.Gotham
-spectateBtnLabel.TextSize = 13
-spectateBtnLabel.TextColor3 = TEXT_NORMAL
+spectateBtnLabel.Font = Enum.Font.BuilderSansMedium
+spectateBtnLabel.TextSize = 14
+spectateBtnLabel.TextColor3 = M3_ON_SURFACE
 spectateBtnLabel.TextXAlignment = Enum.TextXAlignment.Left
 spectateBtnLabel.TextYAlignment = Enum.TextYAlignment.Center
 spectateBtnLabel.BackgroundTransparency = 1
@@ -1866,7 +1917,7 @@ local spectatePanel = Instance.new("Frame")
 spectatePanel.Name = "SpectatePanel"
 spectatePanel.Size = UDim2.new(0, 250, 0, 420)
 spectatePanel.Position = UDim2.new(0, 0, 0, 0)
-spectatePanel.BackgroundColor3 = BG
+spectatePanel.BackgroundColor3 = M3_SURFACE_CONTAINER
 spectatePanel.BorderSizePixel = 0
 spectatePanel.Visible = false
 spectatePanel.ZIndex = 50
@@ -1874,7 +1925,7 @@ spectatePanel.Parent = gui
 makeDraggable(spectatePanel)
 
 local spectatePanelCorner = Instance.new("UICorner")
-spectatePanelCorner.CornerRadius = UDim.new(0, 12)
+spectatePanelCorner.CornerRadius = UDim.new(0, 16)
 spectatePanelCorner.Parent = spectatePanel
 
 -- Sync spectate panel position with mainFrame (left side, top aligned)
@@ -1890,9 +1941,9 @@ end))
 
 -- Spectate panel title
 local spectateTitle = Instance.new("TextLabel")
-spectateTitle.Font = Enum.Font.GothamBold
+spectateTitle.Font = Enum.Font.BuilderSansMedium
 spectateTitle.TextSize = 14
-spectateTitle.TextColor3 = ACCENT
+spectateTitle.TextColor3 = M3_PRIMARY
 spectateTitle.TextXAlignment = Enum.TextXAlignment.Left
 spectateTitle.BackgroundTransparency = 1
 spectateTitle.Size = UDim2.new(1, -20, 0, 30)
@@ -1902,9 +1953,9 @@ spectateTitle.Parent = spectatePanel
 
 -- Status label showing current target
 local spectateStatus = Instance.new("TextLabel")
-spectateStatus.Font = Enum.Font.Gotham
+spectateStatus.Font = Enum.Font.BuilderSansRegular
 spectateStatus.TextSize = 11
-spectateStatus.TextColor3 = TEXT_GRAY
+spectateStatus.TextColor3 = M3_ON_SURFACE_VAR
 spectateStatus.TextXAlignment = Enum.TextXAlignment.Left
 spectateStatus.BackgroundTransparency = 1
 spectateStatus.Size = UDim2.new(1, -20, 0, 16)
@@ -1916,10 +1967,10 @@ spectateStatus.Parent = spectatePanel
 local spectateListFrame = Instance.new("ScrollingFrame")
 spectateListFrame.Size = UDim2.new(1, -12, 1, -100)
 spectateListFrame.Position = UDim2.new(0, 6, 0, 52)
-spectateListFrame.BackgroundColor3 = BG_DARK
+spectateListFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 spectateListFrame.BorderSizePixel = 0
 spectateListFrame.ScrollBarThickness = 3
-spectateListFrame.ScrollBarImageColor3 = CARD_HOVER
+spectateListFrame.ScrollBarImageColor3 = M3_SURFACE_VAR
 spectateListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 spectateListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 spectateListFrame.Parent = spectatePanel
@@ -1939,11 +1990,11 @@ spectateListPad.Parent = spectateListFrame
 
 -- Stop following button
 local stopFollowBtn = Instance.new("TextButton")
-stopFollowBtn.Font = Enum.Font.GothamBold
+stopFollowBtn.Font = Enum.Font.BuilderSansMedium
 stopFollowBtn.TextSize = 12
-stopFollowBtn.TextColor3 = TEXT_WHITE
+stopFollowBtn.TextColor3 = M3_ON_SURFACE
 stopFollowBtn.Text = "Stop Following"
-stopFollowBtn.BackgroundColor3 = RED
+stopFollowBtn.BackgroundColor3 = M3_ERROR
 stopFollowBtn.BorderSizePixel = 0
 stopFollowBtn.Size = UDim2.new(1, -12, 0, 32)
 stopFollowBtn.Position = UDim2.new(0, 6, 1, -38)
@@ -1951,7 +2002,7 @@ stopFollowBtn.Visible = false
 stopFollowBtn.Parent = spectatePanel
 
 local stopFollowCorner = Instance.new("UICorner")
-stopFollowCorner.CornerRadius = UDim.new(0, 12)
+stopFollowCorner.CornerRadius = UDim.new(0, 16)
 stopFollowCorner.Parent = stopFollowBtn
 
 -- Store spectate entries
@@ -1970,7 +2021,7 @@ local function refreshSpectateList()
 		if plr ~= player then
 			local entryFrame = Instance.new("TextButton")
 			entryFrame.Size = UDim2.new(1, 0, 0, 40)
-			entryFrame.BackgroundColor3 = CARD_BG
+			entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 			entryFrame.BorderSizePixel = 0
 			entryFrame.Text = ""
 			entryFrame.AutoButtonColor = false
@@ -1996,9 +2047,9 @@ local function refreshSpectateList()
 			end)
 
 			local nameLabel = Instance.new("TextLabel")
-			nameLabel.Font = Enum.Font.Gotham
+			nameLabel.Font = Enum.Font.BuilderSansMedium
 			nameLabel.TextSize = 12
-			nameLabel.TextColor3 = TEXT_NORMAL
+			nameLabel.TextColor3 = M3_ON_SURFACE
 			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 			nameLabel.BackgroundTransparency = 1
 			nameLabel.Size = UDim2.new(1, -44, 0, 20)
@@ -2007,9 +2058,9 @@ local function refreshSpectateList()
 			nameLabel.Parent = entryFrame
 
 			local userLabel = Instance.new("TextLabel")
-			userLabel.Font = Enum.Font.Gotham
+			userLabel.Font = Enum.Font.BuilderSansRegular
 			userLabel.TextSize = 10
-			userLabel.TextColor3 = TEXT_GRAY
+			userLabel.TextColor3 = M3_ON_SURFACE_VAR
 			userLabel.TextXAlignment = Enum.TextXAlignment.Left
 			userLabel.BackgroundTransparency = 1
 			userLabel.Size = UDim2.new(1, -44, 0, 14)
@@ -2041,7 +2092,7 @@ local function refreshSpectateList()
 						e.icon.Visible = (e.player == plr)
 					end
 					if e.frame then
-						e.frame.BackgroundColor3 = (e.player == plr) and CARD_HOVER or CARD_BG
+						e.frame.BackgroundColor3 = (e.player == plr) and M3_SURFACE_CONTAINER_HIGH or M3_SURFACE_CONTAINER
 					end
 				end
 			end)
@@ -2049,13 +2100,13 @@ local function refreshSpectateList()
 			entryFrame.MouseEnter:Connect(function()
 				playSound(SOUND_HOVER, 1.0)
 				if spectateTarget ~= plr then
-					entryFrame.BackgroundColor3 = CARD_HOVER
+					entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
 				end
 			end)
 
 			entryFrame.MouseLeave:Connect(function()
 				if spectateTarget ~= plr then
-					entryFrame.BackgroundColor3 = CARD_BG
+					entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 				end
 			end)
 
@@ -2073,7 +2124,7 @@ stopFollowBtn.MouseButton1Click:Connect(function()
 	stopFollowBtn.Visible = false
 	for _, e in ipairs(spectateEntries) do
 		if e.icon then e.icon.Visible = false end
-		if e.frame then e.frame.BackgroundColor3 = CARD_BG end
+		if e.frame then e.frame.BackgroundColor3 = M3_SURFACE_CONTAINER end
 	end
 	notify("Undercore", "Stopped following", 3, ACCENT, "info")
 end)
@@ -2207,7 +2258,7 @@ local visualPanel = Instance.new("Frame")
 visualPanel.Name = "VisualPreviewPanel"
 visualPanel.Size = UDim2.new(0, 250, 0, 400)
 visualPanel.Position = UDim2.new(0, 0, 0, 0)
-visualPanel.BackgroundColor3 = BG
+visualPanel.BackgroundColor3 = M3_SURFACE_CONTAINER
 visualPanel.BorderSizePixel = 0
 visualPanel.Visible = false
 visualPanel.ZIndex = 50
@@ -2215,7 +2266,7 @@ visualPanel.Parent = gui
 makeDraggable(visualPanel)
 
 local visualPanelCorner = Instance.new("UICorner")
-visualPanelCorner.CornerRadius = UDim.new(0, 12)
+visualPanelCorner.CornerRadius = UDim.new(0, 16)
 visualPanelCorner.Parent = visualPanel
 
 -- Sync visual panel position with mainFrame (right side, top aligned)
@@ -2231,9 +2282,9 @@ end))
 
 -- Title
 local visualPreviewTitle = Instance.new("TextLabel")
-visualPreviewTitle.Font = Enum.Font.GothamBold
+visualPreviewTitle.Font = Enum.Font.BuilderSansMedium
 visualPreviewTitle.TextSize = 14
-visualPreviewTitle.TextColor3 = ACCENT
+visualPreviewTitle.TextColor3 = M3_PRIMARY
 visualPreviewTitle.TextXAlignment = Enum.TextXAlignment.Left
 visualPreviewTitle.BackgroundTransparency = 1
 visualPreviewTitle.Size = UDim2.new(1, -20, 0, 30)
@@ -2245,7 +2296,7 @@ visualPreviewTitle.Parent = visualPanel
 local viewportFrame = Instance.new("ViewportFrame")
 viewportFrame.Size = UDim2.new(1, -12, 0, 200)
 viewportFrame.Position = UDim2.new(0, 6, 0, 38)
-viewportFrame.BackgroundColor3 = BG_DARK
+viewportFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 viewportFrame.BorderSizePixel = 0
 viewportFrame.Parent = visualPanel
 
@@ -2323,9 +2374,9 @@ previewHealth.Parent = espPreviewContainer
 
 -- ESP name preview
 local previewName = Instance.new("TextLabel")
-previewName.Font = Enum.Font.Gotham
+previewName.Font = Enum.Font.BuilderSansMedium
 previewName.TextSize = 13
-previewName.TextColor3 = TEXT_WHITE
+previewName.TextColor3 = M3_ON_SURFACE
 previewName.BackgroundTransparency = 1
 previewName.Size = UDim2.new(0, 100, 0, 16)
 previewName.Position = UDim2.new(0.5, -50, 0, 0)
@@ -2334,9 +2385,9 @@ previewName.Parent = espPreviewContainer
 
 -- ESP role preview
 local previewRole = Instance.new("TextLabel")
-previewRole.Font = Enum.Font.Gotham
+previewRole.Font = Enum.Font.BuilderSansRegular
 previewRole.TextSize = 12
-previewRole.TextColor3 = ACCENT
+previewRole.TextColor3 = M3_PRIMARY
 previewRole.BackgroundTransparency = 1
 previewRole.Size = UDim2.new(0, 100, 0, 14)
 previewRole.Position = UDim2.new(0.5, -50, 0, 0)
@@ -2345,9 +2396,9 @@ previewRole.Parent = espPreviewContainer
 
 -- ESP distance preview
 local previewDist = Instance.new("TextLabel")
-previewDist.Font = Enum.Font.Gotham
+previewDist.Font = Enum.Font.BuilderSansRegular
 previewDist.TextSize = 12
-previewDist.TextColor3 = TEXT_GRAY
+previewDist.TextColor3 = M3_ON_SURFACE_VAR
 previewDist.BackgroundTransparency = 1
 previewDist.Size = UDim2.new(0, 60, 0, 14)
 previewDist.Position = UDim2.new(0.5, -30, 1, -14)
@@ -2492,11 +2543,11 @@ local function createPreviewButton(text, getY, callback)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -12, 0, 28)
 	btn.Position = UDim2.new(0, 6, 0, getY)
-	btn.BackgroundColor3 = BG_DARK
+	btn.BackgroundColor3 = M3_SURFACE_CONTAINER
 	btn.BorderSizePixel = 0
-	btn.Font = Enum.Font.Gotham
+	btn.Font = Enum.Font.BuilderSansMedium
 	btn.TextSize = 12
-	btn.TextColor3 = TEXT_GRAY
+	btn.TextColor3 = M3_ON_SURFACE_VAR
 	btn.Text = text
 	btn.AutoButtonColor = false
 	btn.Parent = visualPanel
@@ -2515,11 +2566,11 @@ end
 
 local function updatePreviewButtonStyle(btn, active)
 	if active then
-		btn.BackgroundColor3 = ACCENT
-		btn.TextColor3 = TEXT_WHITE
+		btn.BackgroundColor3 = M3_PRIMARY
+		btn.TextColor3 = M3_ON_PRIMARY
 	else
-		btn.BackgroundColor3 = BG_DARK
-		btn.TextColor3 = TEXT_GRAY
+		btn.BackgroundColor3 = M3_SURFACE_CONTAINER
+		btn.TextColor3 = M3_ON_SURFACE_VAR
 	end
 end
 
@@ -2688,7 +2739,7 @@ local dialogFrame = Instance.new("CanvasGroup")
 dialogFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 dialogFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 dialogFrame.Size = UDim2.new(0, 380, 0, 220)
-dialogFrame.BackgroundColor3 = CARD_BG
+dialogFrame.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
 dialogFrame.BorderSizePixel = 0
 dialogFrame.Visible = false
 dialogFrame.GroupColor3 = Color3.fromRGB(255, 255, 255)
@@ -2697,13 +2748,13 @@ dialogFrame.ZIndex = 10
 dialogFrame.Parent = blurFrame
 
 local dialogCorner = Instance.new("UICorner")
-dialogCorner.CornerRadius = UDim.new(0, 12)
+dialogCorner.CornerRadius = UDim.new(0, 28)
 dialogCorner.Parent = dialogFrame
 
 local dialogTitle = Instance.new("TextLabel")
-dialogTitle.Font = Enum.Font.GothamBold
-dialogTitle.TextSize = 16
-dialogTitle.TextColor3 = TEXT_WHITE
+dialogTitle.Font = Enum.Font.BuilderSansMedium
+dialogTitle.TextSize = 18
+dialogTitle.TextColor3 = M3_ON_SURFACE
 dialogTitle.TextXAlignment = Enum.TextXAlignment.Center
 dialogTitle.TextYAlignment = Enum.TextYAlignment.Center
 dialogTitle.BackgroundTransparency = 1
@@ -2713,9 +2764,9 @@ dialogTitle.Text = "Undercore"
 dialogTitle.Parent = dialogFrame
 
 local dialogMsg = Instance.new("TextLabel")
-dialogMsg.Font = Enum.Font.Gotham
-dialogMsg.TextSize = 13
-dialogMsg.TextColor3 = TEXT_GRAY
+dialogMsg.Font = Enum.Font.BuilderSansRegular
+dialogMsg.TextSize = 14
+dialogMsg.TextColor3 = M3_ON_SURFACE_VAR
 dialogMsg.TextXAlignment = Enum.TextXAlignment.Center
 dialogMsg.TextYAlignment = Enum.TextYAlignment.Top
 dialogMsg.BackgroundTransparency = 1
@@ -2726,48 +2777,48 @@ dialogMsg.Text = "Select an action:"
 dialogMsg.Parent = dialogFrame
 
 local cancelBtn = Instance.new("TextButton")
-cancelBtn.Font = Enum.Font.GothamBold
-cancelBtn.TextSize = 13
-cancelBtn.TextColor3 = TEXT_NORMAL
+cancelBtn.Font = Enum.Font.BuilderSansMedium
+cancelBtn.TextSize = 14
+cancelBtn.TextColor3 = M3_ON_SURFACE
 cancelBtn.Text = "Cancel"
-cancelBtn.BackgroundColor3 = CARD_HOVER
+cancelBtn.BackgroundColor3 = M3_SURFACE_VAR
 cancelBtn.BorderSizePixel = 0
-cancelBtn.Size = UDim2.new(0, 100, 0, 36)
+cancelBtn.Size = UDim2.new(0, 100, 0, 40)
 cancelBtn.Position = UDim2.new(0, 20, 0, 145)
 cancelBtn.Parent = dialogFrame
 
 local cancelCorner = Instance.new("UICorner")
-cancelCorner.CornerRadius = UDim.new(0, 12)
+cancelCorner.CornerRadius = UDim.new(0, 20)
 cancelCorner.Parent = cancelBtn
 
 local reloadBtn = Instance.new("TextButton")
-reloadBtn.Font = Enum.Font.GothamBold
-reloadBtn.TextSize = 13
-reloadBtn.TextColor3 = TEXT_WHITE
+reloadBtn.Font = Enum.Font.BuilderSansMedium
+reloadBtn.TextSize = 14
+reloadBtn.TextColor3 = M3_ON_PRIMARY
 reloadBtn.Text = "Reload"
-reloadBtn.BackgroundColor3 = ACCENT
+reloadBtn.BackgroundColor3 = M3_PRIMARY
 reloadBtn.BorderSizePixel = 0
-reloadBtn.Size = UDim2.new(0, 100, 0, 36)
+reloadBtn.Size = UDim2.new(0, 100, 0, 40)
 reloadBtn.Position = UDim2.new(0.5, -50, 0, 145)
 reloadBtn.Parent = dialogFrame
 
 local reloadCorner = Instance.new("UICorner")
-reloadCorner.CornerRadius = UDim.new(0, 12)
+reloadCorner.CornerRadius = UDim.new(0, 20)
 reloadCorner.Parent = reloadBtn
 
 local confirmBtn = Instance.new("TextButton")
-confirmBtn.Font = Enum.Font.GothamBold
-confirmBtn.TextSize = 13
-confirmBtn.TextColor3 = TEXT_WHITE
+confirmBtn.Font = Enum.Font.BuilderSansMedium
+confirmBtn.TextSize = 14
+confirmBtn.TextColor3 = M3_ON_ERROR
 confirmBtn.Text = "Terminate"
-confirmBtn.BackgroundColor3 = RED
+confirmBtn.BackgroundColor3 = M3_ERROR
 confirmBtn.BorderSizePixel = 0
-confirmBtn.Size = UDim2.new(0, 100, 0, 36)
+confirmBtn.Size = UDim2.new(0, 100, 0, 40)
 confirmBtn.Position = UDim2.new(1, -120, 0, 145)
 confirmBtn.Parent = dialogFrame
 
 local confirmCorner = Instance.new("UICorner")
-confirmCorner.CornerRadius = UDim.new(0, 12)
+confirmCorner.CornerRadius = UDim.new(0, 20)
 confirmCorner.Parent = confirmBtn
 
 -- Info text below buttons
@@ -2782,9 +2833,9 @@ infoIcon.ZIndex = 11
 infoIcon.Parent = dialogFrame
 
 local infoText = Instance.new("TextLabel")
-infoText.Font = Enum.Font.Gotham
-infoText.TextSize = 11
-infoText.TextColor3 = TEXT_GRAY
+infoText.Font = Enum.Font.BuilderSansRegular
+infoText.TextSize = 12
+infoText.TextColor3 = M3_ON_SURFACE_VAR
 infoText.TextXAlignment = Enum.TextXAlignment.Left
 infoText.TextYAlignment = Enum.TextYAlignment.Center
 infoText.BackgroundTransparency = 1
@@ -2798,11 +2849,15 @@ infoText.Parent = dialogFrame
 local function createTooltip(btn, text)
 	local tooltip = Instance.new("Frame")
 	tooltip.Size = UDim2.new(0, 220, 0, 0)
-	tooltip.BackgroundColor3 = BG_DARK
+	tooltip.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
 	tooltip.BorderSizePixel = 0
 	tooltip.Visible = false
 	tooltip.ZIndex = 100
 	tooltip.Parent = exitDialogGui
+
+	local tooltipCorner = Instance.new("UICorner")
+	tooltipCorner.CornerRadius = UDim.new(0, 16)
+	tooltipCorner.Parent = tooltip
 
 	local infoIcon = Instance.new("ImageLabel")
 	infoIcon.Size = UDim2.new(0, 16, 0, 16)
@@ -2815,9 +2870,9 @@ local function createTooltip(btn, text)
 	infoIcon.Parent = tooltip
 
 	local tooltipText = Instance.new("TextLabel")
-	tooltipText.Font = Enum.Font.Gotham
-	tooltipText.TextSize = 11
-	tooltipText.TextColor3 = TEXT_WHITE
+	tooltipText.Font = Enum.Font.BuilderSansRegular
+	tooltipText.TextSize = 12
+	tooltipText.TextColor3 = M3_ON_SURFACE
 	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
 	tooltipText.TextYAlignment = Enum.TextYAlignment.Center
 	tooltipText.BackgroundTransparency = 1
@@ -3075,17 +3130,17 @@ local testNotif = createToggle(settingsPage, "Test Notification", function(v)
 end)
 
 local editModeBtn = Instance.new("TextButton")
-editModeBtn.Font = Enum.Font.GothamBold
-editModeBtn.TextSize = 13
-editModeBtn.TextColor3 = TEXT_WHITE
+editModeBtn.Font = Enum.Font.BuilderSansMedium
+editModeBtn.TextSize = 14
+editModeBtn.TextColor3 = M3_ON_PRIMARY
 editModeBtn.Text = "EDIT INTERFACE (RightShift + E)"
-editModeBtn.BackgroundColor3 = ACCENT
+editModeBtn.BackgroundColor3 = M3_PRIMARY
 editModeBtn.BorderSizePixel = 0
-editModeBtn.Size = UDim2.new(1, 0, 0, 38)
+editModeBtn.Size = UDim2.new(1, 0, 0, 48)
 editModeBtn.Parent = settingsPage
 
 local editModeBtnCorner = Instance.new("UICorner")
-editModeBtnCorner.CornerRadius = UDim.new(0, 12)
+editModeBtnCorner.CornerRadius = UDim.new(0, 20)
 editModeBtnCorner.Parent = editModeBtn
 
 editModeBtn.MouseButton1Click:Connect(function()
@@ -3098,17 +3153,17 @@ editModeBtn.MouseEnter:Connect(function()
 end)
 
 local exitBtn = Instance.new("TextButton")
-exitBtn.Font = Enum.Font.GothamBold
-exitBtn.TextSize = 13
-exitBtn.TextColor3 = TEXT_WHITE
+exitBtn.Font = Enum.Font.BuilderSansMedium
+exitBtn.TextSize = 14
+exitBtn.TextColor3 = M3_ON_ERROR
 exitBtn.Text = "TERMINATE SCRIPT"
-exitBtn.BackgroundColor3 = RED
+exitBtn.BackgroundColor3 = M3_ERROR
 exitBtn.BorderSizePixel = 0
-exitBtn.Size = UDim2.new(1, 0, 0, 38)
+exitBtn.Size = UDim2.new(1, 0, 0, 48)
 exitBtn.Parent = settingsPage
 
 local exitBtnCorner = Instance.new("UICorner")
-exitBtnCorner.CornerRadius = UDim.new(0, 12)
+exitBtnCorner.CornerRadius = UDim.new(0, 20)
 exitBtnCorner.Parent = exitBtn
 
 exitBtn.MouseButton1Click:Connect(function()
@@ -3154,18 +3209,18 @@ local function initKeybindsPage()
 	for _, feature in ipairs(bindableFeatures) do
 		local row = Instance.new("Frame")
 		row.Size = UDim2.new(1, 0, 0, 36)
-		row.BackgroundColor3 = CARD_BG
+		row.BackgroundColor3 = M3_SURFACE_CONTAINER
 		row.BorderSizePixel = 0
 		row.Parent = keybindsPage
 
 		local rowCorner = Instance.new("UICorner")
-		rowCorner.CornerRadius = UDim.new(0, 10)
+		rowCorner.CornerRadius = UDim.new(0, 16)
 		rowCorner.Parent = row
 
 		local nameLabel = Instance.new("TextLabel")
-		nameLabel.Font = Enum.Font.Gotham
+		nameLabel.Font = Enum.Font.BuilderSansMedium
 		nameLabel.TextSize = 12
-		nameLabel.TextColor3 = TEXT_NORMAL
+		nameLabel.TextColor3 = M3_ON_SURFACE
 		nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 		nameLabel.TextYAlignment = Enum.TextYAlignment.Center
 		nameLabel.BackgroundTransparency = 1
@@ -3175,10 +3230,10 @@ local function initKeybindsPage()
 		nameLabel.Parent = row
 
 		local bindBtn = Instance.new("TextButton")
-		bindBtn.Font = Enum.Font.GothamBold
+		bindBtn.Font = Enum.Font.BuilderSansMedium
 		bindBtn.TextSize = 11
-		bindBtn.TextColor3 = TEXT_WHITE
-		bindBtn.BackgroundColor3 = BG_DARK
+		bindBtn.TextColor3 = M3_ON_SURFACE
+		bindBtn.BackgroundColor3 = M3_SURFACE_CONTAINER
 		bindBtn.BorderSizePixel = 0
 		bindBtn.Size = UDim2.new(0, 90, 0, 26)
 		bindBtn.Position = UDim2.new(1, -102, 0.5, -13)
@@ -3187,25 +3242,25 @@ local function initKeybindsPage()
 		bindBtn.Parent = row
 
 		local bindBtnCorner = Instance.new("UICorner")
-		bindBtnCorner.CornerRadius = UDim.new(0, 6)
+		bindBtnCorner.CornerRadius = UDim.new(0, 13)
 		bindBtnCorner.Parent = bindBtn
 
 		local function updateText()
 			for _, entry in ipairs(keybindEntries) do
 				if entry.toggle == feature.toggle then
 					bindBtn.Text = keyCodeName(entry.keyCode)
-					bindBtn.BackgroundColor3 = ACCENT
+					bindBtn.BackgroundColor3 = M3_PRIMARY
 					return
 				end
 			end
 			bindBtn.Text = "UNBOUND"
-			bindBtn.BackgroundColor3 = BG_DARK
+			bindBtn.BackgroundColor3 = M3_SURFACE_CONTAINER
 		end
 
 		bindBtn.MouseButton1Click:Connect(function()
 			playRandomPageSound()
 			bindBtn.Text = "..."
-			bindBtn.BackgroundColor3 = WARNING
+			bindBtn.BackgroundColor3 = M3_TERTIARY
 			listeningForKey = true
 			keyCaptureCallback = function(keyCode)
 				bindKeyToToggle(keyCode, feature.name, feature.toggle)
@@ -3237,9 +3292,9 @@ navAbout.MouseButton1Click:Connect(function() showPage("About") end)
 createLabel(aboutPage, "About")
 
 local aboutTitle = Instance.new("TextLabel")
-aboutTitle.Font = Enum.Font.GothamBold
+aboutTitle.Font = Enum.Font.BuilderSansMedium
 aboutTitle.TextSize = 16
-aboutTitle.TextColor3 = ACCENT
+aboutTitle.TextColor3 = M3_PRIMARY
 aboutTitle.TextXAlignment = Enum.TextXAlignment.Left
 aboutTitle.BackgroundTransparency = 1
 aboutTitle.Size = UDim2.new(1, -20, 0, 30)
@@ -3248,9 +3303,9 @@ aboutTitle.Text = "Undercore - Custom Cheat Menu"
 aboutTitle.Parent = aboutPage
 
 local aboutVersion = Instance.new("TextLabel")
-aboutVersion.Font = Enum.Font.GothamBold
+aboutVersion.Font = Enum.Font.BuilderSansMedium
 aboutVersion.TextSize = 14
-aboutVersion.TextColor3 = ACCENT
+aboutVersion.TextColor3 = M3_PRIMARY
 aboutVersion.TextXAlignment = Enum.TextXAlignment.Left
 aboutVersion.BackgroundTransparency = 1
 aboutVersion.Size = UDim2.new(1, -20, 0, 25)
@@ -3259,9 +3314,9 @@ aboutVersion.Text = "Version: " .. SCRIPT_VERSION
 aboutVersion.Parent = aboutPage
 
 local aboutDesc = Instance.new("TextLabel")
-aboutDesc.Font = Enum.Font.Gotham
+aboutDesc.Font = Enum.Font.BuilderSansRegular
 aboutDesc.TextSize = 13
-aboutDesc.TextColor3 = TEXT_GRAY
+aboutDesc.TextColor3 = M3_ON_SURFACE_VAR
 aboutDesc.TextXAlignment = Enum.TextXAlignment.Left
 aboutDesc.TextYAlignment = Enum.TextYAlignment.Top
 aboutDesc.TextWrapped = true
@@ -3286,12 +3341,12 @@ local function initToggleButton()
 toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleBtn"
 toggleBtn.Text = "U"
-toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.Font = Enum.Font.BuilderSansMedium
 toggleBtn.TextSize = 14
-toggleBtn.TextColor3 = TEXT_GRAY
-toggleBtn.BackgroundColor3 = BG_DARK
+toggleBtn.TextColor3 = M3_ON_SURFACE_VAR
+toggleBtn.BackgroundColor3 = M3_SURFACE_CONTAINER
 toggleBtn.BorderSizePixel = 0
-toggleBtn.Size = UDim2.new(0, 32, 0, 32)
+toggleBtn.Size = UDim2.new(0, 40, 0, 40)
 toggleBtn.Position = UDim2.new(0, 10, 0, 10)
 toggleBtn.ZIndex = 50
 toggleBtn.Visible = false
@@ -3299,8 +3354,14 @@ toggleBtn.Parent = gui
 makeDraggable(toggleBtn)
 
 local toggleBtnCorner = Instance.new("UICorner")
-toggleBtnCorner.CornerRadius = UDim.new(0, 12)
+toggleBtnCorner.CornerRadius = UDim.new(0, 20)
 toggleBtnCorner.Parent = toggleBtn
+
+local toggleBtnStroke = Instance.new("UIStroke")
+toggleBtnStroke.Color = M3_OUTLINE
+toggleBtnStroke.Thickness = 1
+toggleBtnStroke.Transparency = 0
+toggleBtnStroke.Parent = toggleBtn
 
 openMenu = function()
 	playRandomPageSound()
