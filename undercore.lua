@@ -429,7 +429,6 @@ local navFrame = Instance.new("ScrollingFrame")
 navFrame.Size = UDim2.new(0, 56, 1, -48)
 navFrame.Position = UDim2.new(0, 0, 0, 48)
 navFrame.ScrollBarThickness = 0
-navFrame.ScrollDirection = Enum.ScrollDirection.Y
 navFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 navFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 navFrame.BackgroundColor3 = M3_SURFACE
