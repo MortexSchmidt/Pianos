@@ -150,11 +150,10 @@ notifGui.Parent = uiParent
 local NOTIF_GAP = 12
 local NOTIF_BOTTOM = 20
 
--- Fixed full-screen container so Y.Scale=1 always means bottom of screen
+-- Full-screen container so card positions are relative to screen, not a small frame
 local container = Instance.new("Frame")
-container.AnchorPoint = Vector2.new(0.5, 1)
-container.Position = UDim2.new(0.5, 0, 1, -NOTIF_BOTTOM)
-container.Size = UDim2.new(0, NOTIF_WIDTH, 1, 0)
+container.Size = UDim2.new(1, 0, 1, 0)
+container.Position = UDim2.new(0, 0, 0, 0)
 container.BackgroundTransparency = 1
 container.Parent = notifGui
 
@@ -374,7 +373,6 @@ local updateIcon
 local updateText
 do
 local dragging = false
-local dragInput
 local dragStart
 local startPos
 
@@ -389,11 +387,14 @@ titleBar.InputBegan:Connect(function(input)
 	end
 end)
 
-titleBar.InputChanged:Connect(function(input)
+trackConn(UserInputService.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
+		if dragging then
+			local delta = input.Position - dragStart
+			mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
 	end
-end)
+end))
 
 local titleText = Instance.new("TextLabel")
 titleText.Font = Enum.Font.BuilderSansMedium
@@ -3537,6 +3538,76 @@ aboutDesc.Size = UDim2.new(1, -20, 0, 120)
 aboutDesc.Position = UDim2.new(0, 10, 0, 105)
 aboutDesc.Text = "A custom cheat menu for Roblox featuring Fly, Speed, Noclip, ESP, Fling, Auto Fling, and more.\n\nReal-time update checking via GitLab with automatic notifications.\n\nControls:\n- Toggle menu: RightShift / K / F8\n- Toggle button: U\n- Hold F8 or U for 5s to terminate\n\nMade by Neruka"
 aboutDesc.Parent = aboutPage
+
+-- Support section
+local supportLabel = Instance.new("TextLabel")
+supportLabel.Font = Enum.Font.BuilderSansMedium
+supportLabel.TextSize = 16
+supportLabel.TextColor3 = M3_PRIMARY
+supportLabel.TextXAlignment = Enum.TextXAlignment.Left
+supportLabel.BackgroundTransparency = 1
+supportLabel.Size = UDim2.new(1, -20, 0, 30)
+supportLabel.Position = UDim2.new(0, 10, 0, 240)
+supportLabel.Text = "Support Us"
+supportLabel.Parent = aboutPage
+
+local supportDesc = Instance.new("TextLabel")
+supportDesc.Font = Enum.Font.BuilderSans
+supportDesc.TextSize = 13
+supportDesc.TextColor3 = M3_ON_SURFACE_VAR
+supportDesc.TextXAlignment = Enum.TextXAlignment.Left
+supportDesc.TextYAlignment = Enum.TextYAlignment.Top
+supportDesc.TextWrapped = true
+supportDesc.BackgroundTransparency = 1
+supportDesc.Size = UDim2.new(1, -20, 0, 40)
+supportDesc.Position = UDim2.new(0, 10, 0, 272)
+supportDesc.Text = "If you enjoy Undercore, consider supporting development with a donation."
+supportDesc.Parent = aboutPage
+
+local donateBtn = Instance.new("TextButton")
+donateBtn.Font = Enum.Font.BuilderSansMedium
+donateBtn.TextSize = 14
+donateBtn.TextColor3 = M3_ON_PRIMARY
+donateBtn.TextXAlignment = Enum.TextXAlignment.Center
+donateBtn.TextYAlignment = Enum.TextYAlignment.Center
+donateBtn.BackgroundColor3 = M3_PRIMARY
+donateBtn.BorderSizePixel = 0
+donateBtn.Size = UDim2.new(0, 200, 0, 40)
+donateBtn.Position = UDim2.new(0.5, -100, 0, 322)
+donateBtn.Text = "  Donate"
+donateBtn.Parent = aboutPage
+
+local donateCorner = Instance.new("UICorner")
+donateCorner.CornerRadius = UDim.new(0, 20)
+donateCorner.Parent = donateBtn
+
+local donateIcon = Instance.new("ImageLabel")
+donateIcon.Size = UDim2.new(0, 18, 0, 18)
+donateIcon.Position = UDim2.new(0, 12, 0.5, -9)
+donateIcon.BackgroundTransparency = 1
+donateIcon.Image = "rbxassetid://136952031423283"
+donateIcon.ImageColor3 = M3_ON_PRIMARY
+donateIcon.ScaleType = Enum.ScaleType.Fit
+donateIcon.Parent = donateBtn
+
+donateBtn.MouseButton1Click:Connect(function()
+	playRandomPageSound()
+	pcall(function()
+		if setclipboard then
+			setclipboard("https://www.donationalerts.com/r/neruka")
+			notify("Undercore", "Donation link copied to clipboard!", 4, GREEN, "success")
+		end
+	end)
+end)
+
+donateBtn.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 0.3)
+	TweenService:Create(donateBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 210, 0, 42), Position = UDim2.new(0.5, -105, 0, 321) }):Play()
+end)
+
+donateBtn.MouseLeave:Connect(function()
+	TweenService:Create(donateBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 200, 0, 40), Position = UDim2.new(0.5, -100, 0, 322) }):Play()
+end)
 
 -- Default page
 showPage("Movement")
