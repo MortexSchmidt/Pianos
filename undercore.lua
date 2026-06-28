@@ -271,7 +271,7 @@ local function notify(title, message, duration, color, notifType)
 	pad.Parent = content
 
 	local msg = Instance.new("TextLabel")
-	msg.Font = Enum.Font.BuilderSansRegular
+	msg.Font = Enum.Font.BuilderSans
 	msg.TextSize = 14
 	msg.TextColor3 = M3_ON_SURFACE
 	msg.TextXAlignment = Enum.TextXAlignment.Left
@@ -407,7 +407,7 @@ updateIcon.Parent = updateBanner
 
 local updateText = Instance.new("TextLabel")
 updateText.Name = "UpdateText"
-updateText.Font = Enum.Font.BuilderSansRegular
+updateText.Font = Enum.Font.BuilderSans
 updateText.TextSize = 11
 updateText.TextColor3 = M3_PRIMARY
 updateText.TextXAlignment = Enum.TextXAlignment.Left
@@ -1100,7 +1100,7 @@ local function registerKeybind(keyCode, name, toggleRef, action)
 	keyBadgeCorner.Parent = keyBadge
 
 	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Font = Enum.Font.BuilderSansRegular
+	nameLabel.Font = Enum.Font.BuilderSans
 	nameLabel.TextSize = 11
 	nameLabel.TextColor3 = M3_ON_SURFACE
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1410,7 +1410,7 @@ local function refreshTeleportList()
 
 			-- @username
 			local userLabel = Instance.new("TextLabel")
-			userLabel.Font = Enum.Font.BuilderSansRegular
+			userLabel.Font = Enum.Font.BuilderSans
 			userLabel.TextSize = 10
 			userLabel.TextColor3 = M3_ON_SURFACE_VAR
 			userLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1792,7 +1792,7 @@ local function refreshCopySkinList()
 			nameLabel.Parent = entryFrame
 
 			local userLabel = Instance.new("TextLabel")
-			userLabel.Font = Enum.Font.BuilderSansRegular
+			userLabel.Font = Enum.Font.BuilderSans
 			userLabel.TextSize = 10
 			userLabel.TextColor3 = M3_ON_SURFACE_VAR
 			userLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1953,7 +1953,7 @@ spectateTitle.Parent = spectatePanel
 
 -- Status label showing current target
 local spectateStatus = Instance.new("TextLabel")
-spectateStatus.Font = Enum.Font.BuilderSansRegular
+spectateStatus.Font = Enum.Font.BuilderSans
 spectateStatus.TextSize = 11
 spectateStatus.TextColor3 = M3_ON_SURFACE_VAR
 spectateStatus.TextXAlignment = Enum.TextXAlignment.Left
@@ -2058,7 +2058,7 @@ local function refreshSpectateList()
 			nameLabel.Parent = entryFrame
 
 			local userLabel = Instance.new("TextLabel")
-			userLabel.Font = Enum.Font.BuilderSansRegular
+			userLabel.Font = Enum.Font.BuilderSans
 			userLabel.TextSize = 10
 			userLabel.TextColor3 = M3_ON_SURFACE_VAR
 			userLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -2385,7 +2385,7 @@ previewName.Parent = espPreviewContainer
 
 -- ESP role preview
 local previewRole = Instance.new("TextLabel")
-previewRole.Font = Enum.Font.BuilderSansRegular
+previewRole.Font = Enum.Font.BuilderSans
 previewRole.TextSize = 12
 previewRole.TextColor3 = M3_PRIMARY
 previewRole.BackgroundTransparency = 1
@@ -2396,7 +2396,7 @@ previewRole.Parent = espPreviewContainer
 
 -- ESP distance preview
 local previewDist = Instance.new("TextLabel")
-previewDist.Font = Enum.Font.BuilderSansRegular
+previewDist.Font = Enum.Font.BuilderSans
 previewDist.TextSize = 12
 previewDist.TextColor3 = M3_ON_SURFACE_VAR
 previewDist.BackgroundTransparency = 1
@@ -2764,7 +2764,7 @@ dialogTitle.Text = "Undercore"
 dialogTitle.Parent = dialogFrame
 
 local dialogMsg = Instance.new("TextLabel")
-dialogMsg.Font = Enum.Font.BuilderSansRegular
+dialogMsg.Font = Enum.Font.BuilderSans
 dialogMsg.TextSize = 14
 dialogMsg.TextColor3 = M3_ON_SURFACE_VAR
 dialogMsg.TextXAlignment = Enum.TextXAlignment.Center
@@ -2833,7 +2833,7 @@ infoIcon.ZIndex = 11
 infoIcon.Parent = dialogFrame
 
 local infoText = Instance.new("TextLabel")
-infoText.Font = Enum.Font.BuilderSansRegular
+infoText.Font = Enum.Font.BuilderSans
 infoText.TextSize = 12
 infoText.TextColor3 = M3_ON_SURFACE_VAR
 infoText.TextXAlignment = Enum.TextXAlignment.Left
@@ -2870,7 +2870,7 @@ local function createTooltip(btn, text)
 	infoIcon.Parent = tooltip
 
 	local tooltipText = Instance.new("TextLabel")
-	tooltipText.Font = Enum.Font.BuilderSansRegular
+	tooltipText.Font = Enum.Font.BuilderSans
 	tooltipText.TextSize = 12
 	tooltipText.TextColor3 = M3_ON_SURFACE
 	tooltipText.TextXAlignment = Enum.TextXAlignment.Left
@@ -3314,7 +3314,7 @@ aboutVersion.Text = "Version: " .. SCRIPT_VERSION
 aboutVersion.Parent = aboutPage
 
 local aboutDesc = Instance.new("TextLabel")
-aboutDesc.Font = Enum.Font.BuilderSansRegular
+aboutDesc.Font = Enum.Font.BuilderSans
 aboutDesc.TextSize = 13
 aboutDesc.TextColor3 = M3_ON_SURFACE_VAR
 aboutDesc.TextXAlignment = Enum.TextXAlignment.Left
