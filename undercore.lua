@@ -2027,6 +2027,7 @@ pauseBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 stopBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 end -- Player page scope
 
+
 -- MARKET PAGE
 -- ===================
 do
@@ -2035,40 +2036,54 @@ local navMarket, navMarketIcon, navMarketLabel = createNavButton("Market")
 navButtons["Market"] = { btn = navMarket, icon = navMarketIcon, label = navMarketLabel }
 navMarket.MouseButton1Click:Connect(function() showPage("Market") end)
 
-createLabel(marketPage, "Market")
+local function makeCard(parent, height)
+	local card = Instance.new("Frame")
+	card.Size = UDim2.new(1, 0, 0, height)
+	card.BackgroundColor3 = M3_SURFACE_CONTAINER
+	card.BorderSizePixel = 0
+	card.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = card
+	return card
+end
 
-local marketDesc = Instance.new("TextLabel")
-marketDesc.Font = Enum.Font.BuilderSans
-marketDesc.TextSize = 13
-marketDesc.TextColor3 = M3_ON_SURFACE_VAR
-marketDesc.TextXAlignment = Enum.TextXAlignment.Left
-marketDesc.TextWrapped = true
-marketDesc.BackgroundTransparency = 1
-marketDesc.Size = UDim2.new(1, 0, 0, 40)
-marketDesc.Text = "Browse and play songs shared by the community. Songs are fetched from the server."
-marketDesc.Parent = marketPage
+-- Market list header
+local listHeader = Instance.new("Frame")
+listHeader.Size = UDim2.new(1, 0, 0, 24)
+listHeader.BackgroundTransparency = 1
+listHeader.Parent = marketPage
 
-local refreshMarketBtn = Instance.new("TextButton")
-refreshMarketBtn.Font = Enum.Font.BuilderSansMedium
-refreshMarketBtn.TextSize = 13
-refreshMarketBtn.TextColor3 = M3_ON_PRIMARY
-refreshMarketBtn.Text = "Refresh"
-refreshMarketBtn.BackgroundColor3 = M3_PRIMARY
-refreshMarketBtn.BorderSizePixel = 0
-refreshMarketBtn.Size = UDim2.new(0, 100, 0, 32)
-refreshMarketBtn.Parent = marketPage
+local listTitle = Instance.new("TextLabel")
+listTitle.Font = Enum.Font.BuilderSansMedium
+listTitle.TextSize = 12
+listTitle.TextColor3 = M3_ON_SURFACE_VAR
+listTitle.TextXAlignment = Enum.TextXAlignment.Left
+listTitle.BackgroundTransparency = 1
+listTitle.Size = UDim2.new(0, 120, 1, 0)
+listTitle.Text = "Market Songs"
+listTitle.Parent = listHeader
 
-local refreshMarketCorner = Instance.new("UICorner")
-refreshMarketCorner.CornerRadius = UDim.new(0, 16)
-refreshMarketCorner.Parent = refreshMarketBtn
+local refreshBtn = Instance.new("TextButton")
+refreshBtn.Font = Enum.Font.BuilderSansMedium
+refreshBtn.TextSize = 11
+refreshBtn.TextColor3 = M3_ON_PRIMARY
+refreshBtn.Text = "Refresh"
+refreshBtn.BackgroundColor3 = M3_PRIMARY
+refreshBtn.BorderSizePixel = 0
+refreshBtn.Size = UDim2.new(0, 70, 0, 22)
+refreshBtn.Position = UDim2.new(1, -74, 0, 1)
+refreshBtn.Parent = listHeader
 
-refreshMarketBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+local refreshBtnCorner = Instance.new("UICorner")
+refreshBtnCorner.CornerRadius = UDim.new(0, 11)
+refreshBtnCorner.Parent = refreshBtn
 
 local marketListFrame = Instance.new("ScrollingFrame")
-marketListFrame.Size = UDim2.new(1, 0, 0, 300)
+marketListFrame.Size = UDim2.new(1, 0, 0, 160)
 marketListFrame.BackgroundTransparency = 1
 marketListFrame.BorderSizePixel = 0
-marketListFrame.ScrollBarThickness = 6
+marketListFrame.ScrollBarThickness = 4
 marketListFrame.ScrollBarImageColor3 = M3_PRIMARY
 marketListFrame.ScrollBarImageTransparency = 0.3
 marketListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -2078,7 +2093,7 @@ marketListFrame.Parent = marketPage
 local marketListLayout = Instance.new("UIListLayout")
 marketListLayout.FillDirection = Enum.FillDirection.Vertical
 marketListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-marketListLayout.Padding = UDim.new(0, 4)
+marketListLayout.Padding = UDim.new(0, 2)
 marketListLayout.Parent = marketListFrame
 
 local marketEntries = {}
@@ -2098,186 +2113,164 @@ local function refreshMarketList()
 		return game:HttpGet(MARKET_URL .. "?v=" .. tostring(tick()), true)
 	end)
 	if not ok or not result or result == "" then
-		local placeholder = Instance.new("TextLabel")
-		placeholder.Font = Enum.Font.BuilderSans
-		placeholder.TextSize = 13
-		placeholder.TextColor3 = M3_ON_SURFACE_VAR
-		placeholder.TextXAlignment = Enum.TextXAlignment.Center
-		placeholder.BackgroundTransparency = 1
-		placeholder.Size = UDim2.new(1, 0, 0, 40)
-		placeholder.Text = "No songs available. Market server not yet configured."
-		placeholder.Parent = marketListFrame
-		table.insert(marketEntries, { frame = placeholder })
+		notify("Undercore", "Failed to load market songs.", 3, RED, "error")
 		return
 	end
-	local songs = {}
-	pcall(function()
-		songs = game:GetService("HttpService"):JSONDecode(result)
+	local ok2, marketSongs = pcall(function()
+		return HttpService:JSONDecode(result)
 	end)
-	if type(songs) ~= "table" or #songs == 0 then
-		local placeholder = Instance.new("TextLabel")
-		placeholder.Font = Enum.Font.BuilderSans
-		placeholder.TextSize = 13
-		placeholder.TextColor3 = M3_ON_SURFACE_VAR
-		placeholder.TextXAlignment = Enum.TextXAlignment.Center
-		placeholder.BackgroundTransparency = 1
-		placeholder.Size = UDim2.new(1, 0, 0, 40)
-		placeholder.Text = "No songs found on market."
-		placeholder.Parent = marketListFrame
-		table.insert(marketEntries, { frame = placeholder })
+	if not ok2 or type(marketSongs) ~= "table" then
+		notify("Undercore", "Invalid market data.", 3, RED, "error")
 		return
 	end
-	for i, song in ipairs(songs) do
+	for i, song in ipairs(marketSongs) do
 		local entryFrame = Instance.new("TextButton")
 		entryFrame.Text = ""
 		entryFrame.AutoButtonColor = false
 		entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
 		entryFrame.BorderSizePixel = 0
-		entryFrame.Size = UDim2.new(1, 0, 0, 56)
+		entryFrame.Size = UDim2.new(1, 0, 0, 36)
 		entryFrame.LayoutOrder = i
 		entryFrame.Parent = marketListFrame
 		local entryCorner = Instance.new("UICorner")
-		entryCorner.CornerRadius = UDim.new(0, 16)
+		entryCorner.CornerRadius = UDim.new(0, 10)
 		entryCorner.Parent = entryFrame
+
+		local noteIcon = Instance.new("ImageLabel")
+		noteIcon.Size = UDim2.new(0, 16, 0, 16)
+		noteIcon.Position = UDim2.new(0, 10, 0.5, -8)
+		noteIcon.BackgroundTransparency = 1
+		noteIcon.Image = "rbxassetid://93101474340373"
+		noteIcon.ImageColor3 = M3_PRIMARY
+		noteIcon.Parent = entryFrame
+
 		local nameLabel = Instance.new("TextLabel")
 		nameLabel.Font = Enum.Font.BuilderSansMedium
-		nameLabel.TextSize = 14
+		nameLabel.TextSize = 13
 		nameLabel.TextColor3 = M3_ON_SURFACE
 		nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-		nameLabel.TextYAlignment = Enum.TextYAlignment.Top
+		nameLabel.TextYAlignment = Enum.TextYAlignment.Center
 		nameLabel.BackgroundTransparency = 1
-		nameLabel.Size = UDim2.new(1, -80, 0, 20)
-		nameLabel.Position = UDim2.new(0, 14, 0, 8)
-		nameLabel.Text = song.name or "Unknown"
+		nameLabel.Size = UDim2.new(1, -92, 1, 0)
+		nameLabel.Position = UDim2.new(0, 32, 0, 0)
+		nameLabel.Text = tostring(song.name or "Unknown")
 		nameLabel.Parent = entryFrame
-		local uploaderLabel = Instance.new("TextLabel")
-		uploaderLabel.Font = Enum.Font.BuilderSans
-		uploaderLabel.TextSize = 12
-		uploaderLabel.TextColor3 = M3_ON_SURFACE_VAR
-		uploaderLabel.TextXAlignment = Enum.TextXAlignment.Left
-		uploaderLabel.TextYAlignment = Enum.TextYAlignment.Top
-		uploaderLabel.BackgroundTransparency = 1
-		uploaderLabel.Size = UDim2.new(1, -80, 0, 16)
-		uploaderLabel.Position = UDim2.new(0, 14, 0, 30)
-		uploaderLabel.Text = "By: " .. (song.uploader or "Unknown") .. "  |  " .. tostring(song.bpm or 120) .. " BPM"
-		uploaderLabel.Parent = entryFrame
-		local playIcon = Instance.new("ImageLabel")
-		playIcon.Size = UDim2.new(0, 20, 0, 20)
-		playIcon.Position = UDim2.new(1, -34, 0.5, -10)
-		playIcon.BackgroundTransparency = 1
-		playIcon.Image = "rbxassetid://95237403972033"
-		playIcon.ScaleType = Enum.ScaleType.Fit
-		playIcon.ImageColor3 = M3_PRIMARY
-		playIcon.Parent = entryFrame
+
+		local bpmLabel = Instance.new("TextLabel")
+		bpmLabel.Font = Enum.Font.BuilderSans
+		bpmLabel.TextSize = 11
+		bpmLabel.TextColor3 = M3_ON_SURFACE_VAR
+		bpmLabel.TextXAlignment = Enum.TextXAlignment.Right
+		bpmLabel.TextYAlignment = Enum.TextYAlignment.Center
+		bpmLabel.BackgroundTransparency = 1
+		bpmLabel.Size = UDim2.new(0, 50, 1, 0)
+		bpmLabel.Position = UDim2.new(1, -62, 0, 0)
+		bpmLabel.Text = tostring(song.bpm or 120) .. " BPM"
+		bpmLabel.Parent = entryFrame
+
 		entryFrame.MouseButton1Click:Connect(function()
 			playRandomPageSound()
-			if pianoState.songPlaying then stopSong() end
-			notify("Undercore", "Loading: " .. (song.name or "Unknown"), 2, ACCENT, "info")
-			local ok2, code = pcall(function() return game:HttpGet(song.url, true) end)
-			if not ok2 or not code then
+			selectedSong = { name = song.name or "Unknown", url = song.url or "", bpm = song.bpm or 120 }
+			local ok, code = pcall(function() return game:HttpGet(song.url, true) end)
+			if ok and code then
+				playSong(code, selectedSong.name, selectedSong.bpm)
+				updateNowPlaying()
+				notify("Undercore", "Playing: " .. selectedSong.name, 3, GREEN, "success")
+			else
 				notify("Undercore", "Failed to fetch song.", 3, RED, "error")
-				return
 			end
-			playSong(code, song.name or "Unknown", song.bpm or 120)
-			updateNowPlaying()
-			notify("Undercore", "Playing: " .. (song.name or "Unknown"), 3, GREEN, "success")
 		end)
-		entryFrame.MouseEnter:Connect(function()
-			entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
-		end)
-		entryFrame.MouseLeave:Connect(function()
-			entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER
-		end)
+		entryFrame.MouseEnter:Connect(function() entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH end)
+		entryFrame.MouseLeave:Connect(function() entryFrame.BackgroundColor3 = M3_SURFACE_CONTAINER end)
+		refreshBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 		table.insert(marketEntries, { frame = entryFrame, song = song })
 	end
-	notify("Undercore", "Loaded " .. #songs .. " market songs.", 3, GREEN, "success")
+	notify("Undercore", "Loaded " .. #marketEntries .. " market songs.", 3, GREEN, "success")
 end
 
-refreshMarketBtn.MouseButton1Click:Connect(function()
+refreshBtn.MouseButton1Click:Connect(function()
 	playRandomPageSound()
 	refreshMarketList()
 end)
 
--- Upload section
-createLabel(marketPage, "Share a Song")
-
-local shareUrlBox = Instance.new("TextBox")
-shareUrlBox.Font = Enum.Font.BuilderSans
-shareUrlBox.TextSize = 13
-shareUrlBox.TextColor3 = M3_ON_SURFACE
-shareUrlBox.PlaceholderText = "Song URL (raw link to .txt file)"
-shareUrlBox.PlaceholderColor3 = M3_ON_SURFACE_VAR
-shareUrlBox.Text = ""
-shareUrlBox.BackgroundColor3 = M3_SURFACE_CONTAINER
-shareUrlBox.BorderSizePixel = 0
-shareUrlBox.Size = UDim2.new(1, 0, 0, 36)
-shareUrlBox.Parent = marketPage
-
-local shareUrlCorner = Instance.new("UICorner")
-shareUrlCorner.CornerRadius = UDim.new(0, 16)
-shareUrlCorner.Parent = shareUrlBox
-
-local shareUrlPad = Instance.new("UIPadding")
-shareUrlPad.PaddingLeft = UDim.new(0, 12)
-shareUrlPad.PaddingRight = UDim.new(0, 12)
-shareUrlPad.Parent = shareUrlBox
+-- Share song card
+local shareCard = makeCard(marketPage, 120)
+local shareTitle = Instance.new("TextLabel")
+shareTitle.Font = Enum.Font.BuilderSansMedium
+shareTitle.TextSize = 12
+shareTitle.TextColor3 = M3_ON_SURFACE_VAR
+shareTitle.TextXAlignment = Enum.TextXAlignment.Left
+shareTitle.BackgroundTransparency = 1
+shareTitle.Size = UDim2.new(1, -16, 0, 18)
+shareTitle.Position = UDim2.new(0, 10, 0, 6)
+shareTitle.Text = "Share Song"
+shareTitle.Parent = shareCard
 
 local shareNameBox = Instance.new("TextBox")
 shareNameBox.Font = Enum.Font.BuilderSans
-shareNameBox.TextSize = 13
+shareNameBox.TextSize = 12
 shareNameBox.TextColor3 = M3_ON_SURFACE
 shareNameBox.PlaceholderText = "Song name"
 shareNameBox.PlaceholderColor3 = M3_ON_SURFACE_VAR
 shareNameBox.Text = ""
-shareNameBox.BackgroundColor3 = M3_SURFACE_CONTAINER
+shareNameBox.BackgroundColor3 = M3_SURFACE
 shareNameBox.BorderSizePixel = 0
-shareNameBox.Size = UDim2.new(1, -130, 0, 36)
-shareNameBox.Parent = marketPage
+shareNameBox.Size = UDim2.new(1, -20, 0, 24)
+shareNameBox.Position = UDim2.new(0, 10, 0, 26)
+shareNameBox.Parent = shareCard
 
-local shareNameCorner = Instance.new("UICorner")
-shareNameCorner.CornerRadius = UDim.new(0, 16)
-shareNameCorner.Parent = shareNameBox
+local shareNameBoxCorner = Instance.new("UICorner")
+shareNameBoxCorner.CornerRadius = UDim.new(0, 8)
+shareNameBoxCorner.Parent = shareNameBox
 
-local shareNamePad = Instance.new("UIPadding")
-shareNamePad.PaddingLeft = UDim.new(0, 12)
-shareNamePad.PaddingRight = UDim.new(0, 12)
-shareNamePad.Parent = shareNameBox
+local shareUrlBox = Instance.new("TextBox")
+shareUrlBox.Font = Enum.Font.BuilderSans
+shareUrlBox.TextSize = 12
+shareUrlBox.TextColor3 = M3_ON_SURFACE
+shareUrlBox.PlaceholderText = "Paste raw URL..."
+shareUrlBox.PlaceholderColor3 = M3_ON_SURFACE_VAR
+shareUrlBox.Text = ""
+shareUrlBox.BackgroundColor3 = M3_SURFACE
+shareUrlBox.BorderSizePixel = 0
+shareUrlBox.Size = UDim2.new(1, -80, 0, 24)
+shareUrlBox.Position = UDim2.new(0, 10, 0, 54)
+shareUrlBox.Parent = shareCard
+
+local shareUrlBoxCorner = Instance.new("UICorner")
+shareUrlBoxCorner.CornerRadius = UDim.new(0, 8)
+shareUrlBoxCorner.Parent = shareUrlBox
 
 local shareBpmBox = Instance.new("TextBox")
 shareBpmBox.Font = Enum.Font.BuilderSans
-shareBpmBox.TextSize = 13
+shareBpmBox.TextSize = 12
 shareBpmBox.TextColor3 = M3_ON_SURFACE
 shareBpmBox.PlaceholderText = "BPM"
 shareBpmBox.PlaceholderColor3 = M3_ON_SURFACE_VAR
 shareBpmBox.Text = "120"
-shareBpmBox.BackgroundColor3 = M3_SURFACE_CONTAINER
+shareBpmBox.BackgroundColor3 = M3_SURFACE
 shareBpmBox.BorderSizePixel = 0
-shareBpmBox.Size = UDim2.new(0, 60, 0, 36)
-shareBpmBox.Position = UDim2.new(1, -128, 0, 0)
-shareBpmBox.Parent = marketPage
+shareBpmBox.Size = UDim2.new(0, 54, 0, 24)
+shareBpmBox.Position = UDim2.new(1, -66, 0, 54)
+shareBpmBox.Parent = shareCard
 
-local shareBpmCorner = Instance.new("UICorner")
-shareBpmCorner.CornerRadius = UDim.new(0, 16)
-shareBpmCorner.Parent = shareBpmBox
-
-local shareBpmPad = Instance.new("UIPadding")
-shareBpmPad.PaddingLeft = UDim.new(0, 12)
-shareBpmPad.PaddingRight = UDim.new(0, 12)
-shareBpmPad.Parent = shareBpmBox
+local shareBpmBoxCorner = Instance.new("UICorner")
+shareBpmBoxCorner.CornerRadius = UDim.new(0, 8)
+shareBpmBoxCorner.Parent = shareBpmBox
 
 local copyShareBtn = Instance.new("TextButton")
 copyShareBtn.Font = Enum.Font.BuilderSansMedium
-copyShareBtn.TextSize = 14
+copyShareBtn.TextSize = 12
 copyShareBtn.TextColor3 = M3_ON_PRIMARY
 copyShareBtn.Text = "Copy Share Code"
 copyShareBtn.BackgroundColor3 = M3_PRIMARY
 copyShareBtn.BorderSizePixel = 0
-copyShareBtn.Size = UDim2.new(1, 0, 0, 40)
-copyShareBtn.Parent = marketPage
+copyShareBtn.Size = UDim2.new(1, -20, 0, 24)
+copyShareBtn.Position = UDim2.new(0, 10, 0, 86)
+copyShareBtn.Parent = shareCard
 
-local copyShareCorner = Instance.new("UICorner")
-copyShareCorner.CornerRadius = UDim.new(0, 20)
-copyShareCorner.Parent = copyShareBtn
+local copyShareBtnCorner = Instance.new("UICorner")
+copyShareBtnCorner.CornerRadius = UDim.new(0, 12)
+copyShareBtnCorner.Parent = copyShareBtn
 
 copyShareBtn.MouseButton1Click:Connect(function()
 	playRandomPageSound()
@@ -2298,9 +2291,10 @@ copyShareBtn.MouseButton1Click:Connect(function()
 end)
 
 copyShareBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+
+refreshMarketList()
 end -- Market page scope
 
--- ===================
 -- SETTINGS PAGE
 -- ===================
 do
@@ -2309,9 +2303,65 @@ local navSettings, navSettingsIcon, navSettingsLabel = createNavButton("Settings
 navButtons["Settings"] = { btn = navSettings, icon = navSettingsIcon, label = navSettingsLabel }
 navSettings.MouseButton1Click:Connect(function() showPage("Settings") end)
 
-createLabel(settingsPage, "Settings")
-createLabel(settingsPage, "Toggle Key: RightShift / K / F8")
+local function makeCard(parent, height)
+	local card = Instance.new("Frame")
+	card.Size = UDim2.new(1, 0, 0, height)
+	card.BackgroundColor3 = M3_SURFACE_CONTAINER
+	card.BorderSizePixel = 0
+	card.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = card
+	return card
+end
 
+local function makeCompactBtn(parent, text, color, textColor, pos, size, callback)
+	local btn = Instance.new("TextButton")
+	btn.Font = Enum.Font.BuilderSansMedium
+	btn.TextSize = 12
+	btn.TextColor3 = textColor
+	btn.Text = text
+	btn.BackgroundColor3 = color
+	btn.BorderSizePixel = 0
+	btn.Size = size
+	btn.Position = pos
+	btn.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = btn
+	btn.MouseButton1Click:Connect(function()
+		playRandomPageSound()
+		callback()
+	end)
+	btn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+	return btn
+end
+
+-- Info card
+local infoCard = makeCard(settingsPage, 58)
+local toggleKeyLabel = Instance.new("TextLabel")
+toggleKeyLabel.Font = Enum.Font.BuilderSansMedium
+toggleKeyLabel.TextSize = 13
+toggleKeyLabel.TextColor3 = M3_ON_SURFACE
+toggleKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+toggleKeyLabel.BackgroundTransparency = 1
+toggleKeyLabel.Size = UDim2.new(1, -20, 0, 20)
+toggleKeyLabel.Position = UDim2.new(0, 10, 0, 8)
+toggleKeyLabel.Text = "Toggle Key"
+toggleKeyLabel.Parent = infoCard
+
+local toggleKeyValue = Instance.new("TextLabel")
+toggleKeyValue.Font = Enum.Font.BuilderSans
+toggleKeyValue.TextSize = 12
+toggleKeyValue.TextColor3 = M3_ON_SURFACE_VAR
+toggleKeyValue.TextXAlignment = Enum.TextXAlignment.Left
+toggleKeyValue.BackgroundTransparency = 1
+toggleKeyValue.Size = UDim2.new(1, -20, 0, 18)
+toggleKeyValue.Position = UDim2.new(0, 10, 0, 32)
+toggleKeyValue.Text = "RightShift / K / F8"
+toggleKeyValue.Parent = infoCard
+
+-- Test notification toggle
 local testNotif = createToggle(settingsPage, "Test Notification", function(v)
 	if v then
 		notify("Undercore", "Test notification works!", 3, ACCENT, "info")
@@ -2319,40 +2369,41 @@ local testNotif = createToggle(settingsPage, "Test Notification", function(v)
 	end
 end)
 
+-- Actions card
+local actionsCard = makeCard(settingsPage, 126)
 local editModeBtn = Instance.new("TextButton")
 editModeBtn.Font = Enum.Font.BuilderSansMedium
-editModeBtn.TextSize = 14
+editModeBtn.TextSize = 12
 editModeBtn.TextColor3 = M3_ON_PRIMARY
-editModeBtn.Text = "EDIT INTERFACE (RightShift + E)"
+editModeBtn.Text = "Edit Interface (RightShift + E)"
 editModeBtn.BackgroundColor3 = M3_PRIMARY
 editModeBtn.BorderSizePixel = 0
-editModeBtn.Size = UDim2.new(1, 0, 0, 48)
-editModeBtn.Parent = settingsPage
-
+editModeBtn.Size = UDim2.new(1, -20, 0, 28)
+editModeBtn.Position = UDim2.new(0, 10, 0, 10)
+editModeBtn.Parent = actionsCard
 local editModeBtnCorner = Instance.new("UICorner")
-editModeBtnCorner.CornerRadius = UDim.new(0, 20)
+editModeBtnCorner.CornerRadius = UDim.new(0, 14)
 editModeBtnCorner.Parent = editModeBtn
 
 editModeBtn.MouseButton1Click:Connect(function()
 	playRandomPageSound()
 	setEditMode(not editMode)
 end)
-
 editModeBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 
 local stopAllBtn = Instance.new("TextButton")
 stopAllBtn.Font = Enum.Font.BuilderSansMedium
-stopAllBtn.TextSize = 14
+stopAllBtn.TextSize = 12
 stopAllBtn.TextColor3 = M3_ON_ERROR
-stopAllBtn.Text = "STOP ALL SONGS"
+stopAllBtn.Text = "Stop All Songs"
 stopAllBtn.BackgroundColor3 = M3_ERROR_CONTAINER
 stopAllBtn.BorderSizePixel = 0
-stopAllBtn.Size = UDim2.new(1, 0, 0, 48)
-stopAllBtn.Parent = settingsPage
-
-local stopAllCorner = Instance.new("UICorner")
-stopAllCorner.CornerRadius = UDim.new(0, 20)
-stopAllCorner.Parent = stopAllBtn
+stopAllBtn.Size = UDim2.new(1, -20, 0, 28)
+stopAllBtn.Position = UDim2.new(0, 10, 0, 46)
+stopAllBtn.Parent = actionsCard
+local stopAllBtnCorner = Instance.new("UICorner")
+stopAllBtnCorner.CornerRadius = UDim.new(0, 14)
+stopAllBtnCorner.Parent = stopAllBtn
 
 stopAllBtn.MouseButton1Click:Connect(function()
 	playRandomPageSound()
@@ -2361,32 +2412,29 @@ stopAllBtn.MouseButton1Click:Connect(function()
 	updateNowPlaying()
 	notify("Undercore", "All songs stopped.", 3, ACCENT, "info")
 end)
-
 stopAllBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 
 local exitBtn = Instance.new("TextButton")
 exitBtn.Font = Enum.Font.BuilderSansMedium
-exitBtn.TextSize = 14
+exitBtn.TextSize = 12
 exitBtn.TextColor3 = M3_ON_ERROR
-exitBtn.Text = "TERMINATE SCRIPT"
+exitBtn.Text = "Terminate Script"
 exitBtn.BackgroundColor3 = M3_ERROR
 exitBtn.BorderSizePixel = 0
-exitBtn.Size = UDim2.new(1, 0, 0, 48)
-exitBtn.Parent = settingsPage
-
+exitBtn.Size = UDim2.new(1, -20, 0, 28)
+exitBtn.Position = UDim2.new(0, 10, 0, 82)
+exitBtn.Parent = actionsCard
 local exitBtnCorner = Instance.new("UICorner")
-exitBtnCorner.CornerRadius = UDim.new(0, 20)
+exitBtnCorner.CornerRadius = UDim.new(0, 14)
 exitBtnCorner.Parent = exitBtn
 
 exitBtn.MouseButton1Click:Connect(function()
 	if exitDialogVisible then return end
 	showExitDialog()
 end)
-
 exitBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 end -- Settings page scope
 
--- ===================
 -- KEYBINDS PAGE
 -- ===================
 do
@@ -2395,19 +2443,25 @@ local navKeybinds, navKeybindsIcon, navKeybindsLabel = createNavButton("Keybinds
 navButtons["Keybinds"] = { btn = navKeybinds, icon = navKeybindsIcon, label = navKeybindsLabel }
 navKeybinds.MouseButton1Click:Connect(function() showPage("Keybinds") end)
 
-createLabel(keybindsPage, "Keybinds")
-createLabel(keybindsPage, "Click a button and press a key to bind. Backspace to unbind.")
+local keybindsListFrame = Instance.new("ScrollingFrame")
+keybindsListFrame.Size = UDim2.new(1, 0, 1, 0)
+keybindsListFrame.BackgroundTransparency = 1
+keybindsListFrame.BorderSizePixel = 0
+keybindsListFrame.ScrollBarThickness = 4
+keybindsListFrame.ScrollBarImageColor3 = M3_PRIMARY
+keybindsListFrame.ScrollBarImageTransparency = 0.3
+keybindsListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+keybindsListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+keybindsListFrame.Parent = keybindsPage
 
-local bindableActions = {
-	{ name = "Play Selected Song", action = function()
-		if selectedSong and not pianoState.songPlaying then
-			local ok, code = pcall(function() return game:HttpGet(selectedSong.url, true) end)
-			if ok and code then
-				playSong(code, selectedSong.name, selectedSong.bpm)
-				updateNowPlaying()
-			end
-		end
-	end },
+local keybindsListLayout = Instance.new("UIListLayout")
+keybindsListLayout.FillDirection = Enum.FillDirection.Vertical
+keybindsListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+keybindsListLayout.Padding = UDim.new(0, 2)
+keybindsListLayout.Parent = keybindsListFrame
+
+local keybindFeatures = {
+	{ name = "Toggle Menu", action = function() toggleMenu() end },
 	{ name = "Stop Song", action = function()
 		stopSong()
 		pauseBtn.Text = "Pause"
@@ -2429,61 +2483,68 @@ local bindableActions = {
 	end },
 }
 
-for _, feature in ipairs(bindableActions) do
-	local row = Instance.new("Frame")
-	row.Size = UDim2.new(1, 0, 0, 36)
-	row.BackgroundColor3 = M3_SURFACE_CONTAINER
-	row.BorderSizePixel = 0
-	row.Parent = keybindsPage
+local keybindEntries = {}
+local listeningForKey = false
+local keyCaptureCallback = nil
 
-	local rowCorner = Instance.new("UICorner")
-	rowCorner.CornerRadius = UDim.new(0, 16)
-	rowCorner.Parent = row
+local function keyCodeName(keyCode)
+	return keyCode and tostring(keyCode):gsub("Enum.KeyCode.", "") or "None"
+end
+
+local function updateKeybindDisplay(item, featureName, keyCode)
+	item.nameLabel.Text = featureName
+	item.keyLabel.Text = keyCodeName(keyCode)
+end
+
+local function registerKeybind(keyCode, featureName, entryItem, action)
+	keybinds[keyCode] = action
+	if entryItem then
+		entryItem.keyCode = keyCode
+		updateKeybindDisplay(entryItem, featureName, keyCode)
+	end
+end
+
+local function createKeybindRow(feature)
+	local frame = Instance.new("Frame")
+	frame.BackgroundColor3 = M3_SURFACE_CONTAINER
+	frame.BorderSizePixel = 0
+	frame.Size = UDim2.new(1, 0, 0, 36)
+	frame.Parent = keybindsListFrame
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = frame
 
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Font = Enum.Font.BuilderSansMedium
-	nameLabel.TextSize = 12
+	nameLabel.TextSize = 13
 	nameLabel.TextColor3 = M3_ON_SURFACE
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	nameLabel.TextYAlignment = Enum.TextYAlignment.Center
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Size = UDim2.new(1, -110, 1, 0)
-	nameLabel.Position = UDim2.new(0, 12, 0, 0)
+	nameLabel.Position = UDim2.new(0, 10, 0, 0)
 	nameLabel.Text = feature.name
-	nameLabel.Parent = row
+	nameLabel.Parent = frame
 
 	local bindBtn = Instance.new("TextButton")
 	bindBtn.Font = Enum.Font.BuilderSansMedium
 	bindBtn.TextSize = 11
-	bindBtn.TextColor3 = M3_ON_SURFACE
-	bindBtn.BackgroundColor3 = M3_SURFACE_CONTAINER
+	bindBtn.TextColor3 = M3_ON_SURFACE_VAR
+	bindBtn.Text = "None"
+	bindBtn.BackgroundColor3 = M3_SURFACE
 	bindBtn.BorderSizePixel = 0
-	bindBtn.Size = UDim2.new(0, 90, 0, 26)
-	bindBtn.Position = UDim2.new(1, -102, 0.5, -13)
-	bindBtn.AutoButtonColor = false
-	bindBtn.Text = "UNBOUND"
-	bindBtn.Parent = row
-
+	bindBtn.Size = UDim2.new(0, 90, 0, 22)
+	bindBtn.Position = UDim2.new(1, -100, 0.5, -11)
+	bindBtn.Parent = frame
 	local bindBtnCorner = Instance.new("UICorner")
-	bindBtnCorner.CornerRadius = UDim.new(0, 13)
+	bindBtnCorner.CornerRadius = UDim.new(0, 11)
 	bindBtnCorner.Parent = bindBtn
 
-	local function updateText()
-		for _, entry in ipairs(keybindEntries) do
-			if entry.action == feature.action then
-				bindBtn.Text = keyCodeName(entry.keyCode)
-				bindBtn.BackgroundColor3 = M3_PRIMARY
-				return
-			end
-		end
-		bindBtn.Text = "UNBOUND"
-		bindBtn.BackgroundColor3 = M3_SURFACE_CONTAINER
-	end
-
+	local item = { frame = frame, nameLabel = nameLabel, keyLabel = bindBtn, action = feature.action, keyCode = nil }
 	bindBtn.MouseButton1Click:Connect(function()
 		playRandomPageSound()
 		bindBtn.Text = "..."
-		bindBtn.BackgroundColor3 = M3_TERTIARY
+		bindBtn.BackgroundColor3 = M3_PRIMARY_CONTAINER
 		listeningForKey = true
 		keyCaptureCallback = function(keyCode)
 			if keyCode == Enum.KeyCode.Unknown or keyCode == Enum.KeyCode.Backspace then
@@ -2503,17 +2564,39 @@ for _, feature in ipairs(bindableActions) do
 					end
 				end
 				if keybinds[keyCode] then keybinds[keyCode] = nil end
-				registerKeybind(keyCode, feature.name, nil, feature.action)
+				registerKeybind(keyCode, feature.name, item, feature.action)
 			end
-			updateText()
+			bindBtn.BackgroundColor3 = M3_SURFACE
 		end
 	end)
-
 	bindBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+
+	local existing = nil
+	for k, v in pairs(keybinds) do
+		if v == feature.action then existing = k; break end
+	end
+	if existing then
+		registerKeybind(existing, feature.name, item, feature.action)
+	end
+
+	table.insert(keybindEntries, { action = feature.action, keyCode = item.keyCode, item = frame })
+	return frame
 end
+
+for _, feature in ipairs(keybindFeatures) do
+	createKeybindRow(feature)
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed or not listeningForKey then return end
+	if keyCaptureCallback then
+		keyCaptureCallback(input.KeyCode)
+		keyCaptureCallback = nil
+		listeningForKey = false
+	end
+end)
 end -- Keybinds page scope
 
--- ===================
 -- ABOUT PAGE
 -- ===================
 do
@@ -2522,95 +2605,107 @@ local navAbout, navAboutIcon, navAboutLabel = createNavButton("About")
 navButtons["About"] = { btn = navAbout, icon = navAboutIcon, label = navAboutLabel }
 navAbout.MouseButton1Click:Connect(function() showPage("About") end)
 
-createLabel(aboutPage, "About")
+local function makeCard(parent, height)
+	local card = Instance.new("Frame")
+	card.Size = UDim2.new(1, 0, 0, height)
+	card.BackgroundColor3 = M3_SURFACE_CONTAINER
+	card.BorderSizePixel = 0
+	card.Parent = parent
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = card
+	return card
+end
 
-local aboutLogoRow = Instance.new("Frame")
-aboutLogoRow.Size = UDim2.new(1, 0, 0, 40)
-aboutLogoRow.BackgroundTransparency = 1
-aboutLogoRow.BorderSizePixel = 0
-aboutLogoRow.Parent = aboutPage
-
+-- Header card
+local headerCard = makeCard(aboutPage, 80)
 local aboutLogo = Instance.new("ImageLabel")
-aboutLogo.Size = UDim2.new(0, 28, 0, 28)
-aboutLogo.Position = UDim2.new(0, 10, 0.5, -14)
+aboutLogo.Size = UDim2.new(0, 40, 0, 40)
+aboutLogo.Position = UDim2.new(0, 12, 0, 12)
 aboutLogo.BackgroundTransparency = 1
 aboutLogo.Image = "rbxassetid://78552548457734"
 aboutLogo.ScaleType = Enum.ScaleType.Fit
-aboutLogo.Parent = aboutLogoRow
+aboutLogo.Parent = headerCard
 
 local aboutTitle = Instance.new("TextLabel")
 aboutTitle.Font = Enum.Font.BuilderSansMedium
 aboutTitle.TextSize = 16
-aboutTitle.TextColor3 = M3_PRIMARY
+aboutTitle.TextColor3 = M3_ON_SURFACE
 aboutTitle.TextXAlignment = Enum.TextXAlignment.Left
+aboutTitle.TextYAlignment = Enum.TextYAlignment.Center
 aboutTitle.BackgroundTransparency = 1
-aboutTitle.Size = UDim2.new(1, -48, 0, 40)
-aboutTitle.Position = UDim2.new(0, 44, 0, 0)
-aboutTitle.Text = "Undercore - Piano Autoplayer"
-aboutTitle.Parent = aboutLogoRow
+aboutTitle.Size = UDim2.new(1, -64, 0, 24)
+aboutTitle.Position = UDim2.new(0, 60, 0, 12)
+aboutTitle.Text = "Undercore"
+aboutTitle.Parent = headerCard
 
 local aboutVersion = Instance.new("TextLabel")
 aboutVersion.Font = Enum.Font.BuilderSans
-aboutVersion.TextSize = 13
+aboutVersion.TextSize = 12
 aboutVersion.TextColor3 = M3_ON_SURFACE_VAR
 aboutVersion.TextXAlignment = Enum.TextXAlignment.Left
+aboutVersion.TextYAlignment = Enum.TextYAlignment.Center
 aboutVersion.BackgroundTransparency = 1
-aboutVersion.Size = UDim2.new(1, 0, 0, 24)
-aboutVersion.Text = "Version " .. SCRIPT_VERSION
-aboutVersion.Parent = aboutPage
+aboutVersion.Size = UDim2.new(1, -64, 0, 18)
+aboutVersion.Position = UDim2.new(0, 60, 0, 38)
+aboutVersion.Text = "Piano Autoplayer v" .. SCRIPT_VERSION
+aboutVersion.Parent = headerCard
 
 local aboutDesc = Instance.new("TextLabel")
 aboutDesc.Font = Enum.Font.BuilderSans
-aboutDesc.TextSize = 13
+aboutDesc.TextSize = 12
 aboutDesc.TextColor3 = M3_ON_SURFACE_VAR
 aboutDesc.TextXAlignment = Enum.TextXAlignment.Left
 aboutDesc.TextWrapped = true
 aboutDesc.BackgroundTransparency = 1
-aboutDesc.Size = UDim2.new(1, 0, 0, 48)
-aboutDesc.Text = "Piano autoplayer for Roblox Virtual Piano. Based on the TALENTLESS engine by hellohellohell012321. Play MIDI songs, browse the market, and share your music."
+aboutDesc.Size = UDim2.new(1, 0, 0, 50)
+aboutDesc.Text = "Piano autoplayer for Roblox Virtual Piano. Based on the TALENTLESS engine. Play MIDI songs, browse the market, and share your music."
 aboutDesc.Parent = aboutPage
 
-local aboutSpacer = Instance.new("Frame")
-aboutSpacer.Size = UDim2.new(1, 0, 0, 8)
-aboutSpacer.BackgroundTransparency = 1
-aboutSpacer.Parent = aboutPage
-
-createLabel(aboutPage, "Support Us")
+-- Support card
+local supportCard = makeCard(aboutPage, 70)
+local supportTitle = Instance.new("TextLabel")
+supportTitle.Font = Enum.Font.BuilderSansMedium
+supportTitle.TextSize = 12
+supportTitle.TextColor3 = M3_ON_SURFACE_VAR
+supportTitle.TextXAlignment = Enum.TextXAlignment.Left
+supportTitle.BackgroundTransparency = 1
+supportTitle.Size = UDim2.new(1, -16, 0, 18)
+supportTitle.Position = UDim2.new(0, 10, 0, 6)
+supportTitle.Text = "Support Us"
+supportTitle.Parent = supportCard
 
 local supportDesc = Instance.new("TextLabel")
 supportDesc.Font = Enum.Font.BuilderSans
-supportDesc.TextSize = 13
+supportDesc.TextSize = 11
 supportDesc.TextColor3 = M3_ON_SURFACE_VAR
 supportDesc.TextXAlignment = Enum.TextXAlignment.Left
 supportDesc.TextWrapped = true
 supportDesc.BackgroundTransparency = 1
-supportDesc.Size = UDim2.new(1, 0, 0, 32)
-supportDesc.Text = "Enjoying Undercore? Consider supporting development."
-supportDesc.Parent = aboutPage
+supportDesc.Size = UDim2.new(1, -110, 0, 26)
+supportDesc.Position = UDim2.new(0, 10, 0, 26)
+supportDesc.Text = "Help us keep the project alive."
+supportDesc.Parent = supportCard
 
 local donateBtn = Instance.new("TextButton")
 donateBtn.Font = Enum.Font.BuilderSansMedium
-donateBtn.TextSize = 14
+donateBtn.TextSize = 11
 donateBtn.TextColor3 = M3_ON_PRIMARY
+donateBtn.Text = "Donate"
 donateBtn.BackgroundColor3 = M3_PRIMARY
-donateBtn.AutoButtonColor = false
 donateBtn.BorderSizePixel = 0
-donateBtn.Size = UDim2.new(1, 0, 0, 36)
-donateBtn.Text = "  Donate"
-donateBtn.TextXAlignment = Enum.TextXAlignment.Left
-donateBtn.TextYAlignment = Enum.TextYAlignment.Center
-donateBtn.Parent = aboutPage
-
-local donateCorner = Instance.new("UICorner")
-donateCorner.CornerRadius = UDim.new(0, 18)
-donateCorner.Parent = donateBtn
+donateBtn.Size = UDim2.new(0, 80, 0, 24)
+donateBtn.Position = UDim2.new(1, -92, 0.5, -12)
+donateBtn.Parent = supportCard
+local donateBtnCorner = Instance.new("UICorner")
+donateBtnCorner.CornerRadius = UDim.new(0, 12)
+donateBtnCorner.Parent = donateBtn
 
 local donateIcon = Instance.new("ImageLabel")
-donateIcon.Size = UDim2.new(0, 18, 0, 18)
-donateIcon.Position = UDim2.new(1, -28, 0.5, -9)
+donateIcon.Size = UDim2.new(0, 14, 0, 14)
+donateIcon.Position = UDim2.new(0, 8, 0.5, -7)
 donateIcon.BackgroundTransparency = 1
-donateIcon.Image = "rbxassetid://136952031423283"
-donateIcon.ScaleType = Enum.ScaleType.Fit
+donateIcon.Image = "rbxassetid://138919359077420"
 donateIcon.ImageColor3 = M3_ON_PRIMARY
 donateIcon.Parent = donateBtn
 
@@ -2624,49 +2719,62 @@ donateBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
-donateBtn.MouseEnter:Connect(function()
-	playSound(SOUND_HOVER, 1.0)
-	TweenService:Create(donateBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = M3_PRIMARY_CONTAINER }):Play()
-	TweenService:Create(donateIcon, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { ImageColor3 = M3_ON_PRIMARY_CONTAINER }):Play()
-end)
+donateBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 
-donateBtn.MouseLeave:Connect(function()
-	TweenService:Create(donateBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundColor3 = M3_PRIMARY }):Play()
-	TweenService:Create(donateIcon, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { ImageColor3 = M3_ON_PRIMARY }):Play()
-end)
-
-createLabel(aboutPage, "Controls")
+-- Controls card
+local controlsCard = makeCard(aboutPage, 86)
+local controlsTitle = Instance.new("TextLabel")
+controlsTitle.Font = Enum.Font.BuilderSansMedium
+controlsTitle.TextSize = 12
+controlsTitle.TextColor3 = M3_ON_SURFACE_VAR
+controlsTitle.TextXAlignment = Enum.TextXAlignment.Left
+controlsTitle.BackgroundTransparency = 1
+controlsTitle.Size = UDim2.new(1, -16, 0, 18)
+controlsTitle.Position = UDim2.new(0, 10, 0, 6)
+controlsTitle.Text = "Controls"
+controlsTitle.Parent = controlsCard
 
 local controlsText = Instance.new("TextLabel")
 controlsText.Font = Enum.Font.BuilderSans
-controlsText.TextSize = 13
+controlsText.TextSize = 12
 controlsText.TextColor3 = M3_ON_SURFACE_VAR
 controlsText.TextXAlignment = Enum.TextXAlignment.Left
 controlsText.TextWrapped = true
 controlsText.BackgroundTransparency = 1
-controlsText.Size = UDim2.new(1, 0, 0, 56)
+controlsText.Size = UDim2.new(1, -20, 0, 56)
+controlsText.Position = UDim2.new(0, 10, 0, 24)
 controlsText.Text = "Toggle menu: RightShift / K / F8\nToggle button: U\nHold F8 or U for 5s to terminate"
-controlsText.Parent = aboutPage
+controlsText.Parent = controlsCard
 
-createLabel(aboutPage, "Credits")
+-- Credits card
+local creditsCard = makeCard(aboutPage, 54)
+local creditsTitle = Instance.new("TextLabel")
+creditsTitle.Font = Enum.Font.BuilderSansMedium
+creditsTitle.TextSize = 12
+creditsTitle.TextColor3 = M3_ON_SURFACE_VAR
+creditsTitle.TextXAlignment = Enum.TextXAlignment.Left
+creditsTitle.BackgroundTransparency = 1
+creditsTitle.Size = UDim2.new(1, -16, 0, 18)
+creditsTitle.Position = UDim2.new(0, 10, 0, 6)
+creditsTitle.Text = "Credits"
+creditsTitle.Parent = creditsCard
 
 local creditsText = Instance.new("TextLabel")
 creditsText.Font = Enum.Font.BuilderSans
-creditsText.TextSize = 13
+creditsText.TextSize = 12
 creditsText.TextColor3 = M3_ON_SURFACE_VAR
 creditsText.TextXAlignment = Enum.TextXAlignment.Left
 creditsText.TextWrapped = true
 creditsText.BackgroundTransparency = 1
-creditsText.Size = UDim2.new(1, 0, 0, 40)
+creditsText.Size = UDim2.new(1, -20, 0, 26)
+creditsText.Position = UDim2.new(0, 10, 0, 24)
 creditsText.Text = "Piano engine: TALENTLESS by hellohellohell012321\nUI: Undercore by neruka"
-creditsText.Parent = aboutPage
+creditsText.Parent = creditsCard
 end -- About page scope
 
 -- Default page
 showPage("Songs")
 
--- ===================
--- HARD EXIT DIALOG
 -- ===================
 local showExitDialog
 local hideExitDialog
