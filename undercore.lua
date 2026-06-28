@@ -147,22 +147,23 @@ notifGui.IgnoreGuiInset = true
 protectGui(notifGui)
 notifGui.Parent = uiParent
 
+local NOTIF_GAP = 12
+local NOTIF_BOTTOM = 20
+
+-- Fixed full-screen container so Y.Scale=1 always means bottom of screen
 local container = Instance.new("Frame")
 container.AnchorPoint = Vector2.new(0.5, 1)
-container.Position = UDim2.new(0.5, 0, 1, -20)
-container.Size = UDim2.new(0, NOTIF_WIDTH, 0, 0)
-container.AutomaticSize = Enum.AutomaticSize.Y
+container.Position = UDim2.new(0.5, 0, 1, -NOTIF_BOTTOM)
+container.Size = UDim2.new(0, NOTIF_WIDTH, 1, 0)
 container.BackgroundTransparency = 1
 container.Parent = notifGui
-
-local NOTIF_GAP = 12
 
 local function recalcPositions()
 	local y = 0
 	for i = #notifications, 1, -1 do
 		local data = notifications[i]
 		if not data.dismissed then
-			TweenService:Create(data.frame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -y - data.height - 20) }):Play()
+			TweenService:Create(data.frame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -y - data.height - NOTIF_BOTTOM) }):Play()
 			y = y + data.height + NOTIF_GAP
 		end
 	end
@@ -175,9 +176,9 @@ local function dismiss(data)
 	local card = data.frame
 	local currentY = card.Position.Y.Offset
 
-	-- Slide up slightly + fade out smoothly
+	-- Slide up slightly + fade out smoothly (more negative = higher on screen)
 	local slideUp = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In), { 
-		Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, currentY - 30),
+		Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, currentY + 30),
 		GroupTransparency = 1 
 	})
 	slideUp:Play()
@@ -214,6 +215,7 @@ notify = function(title, message, duration, color, notifType)
 	end
 
 	local card = Instance.new("CanvasGroup")
+	card.AnchorPoint = Vector2.new(0.5, 1)
 	card.Size = UDim2.new(0, NOTIF_WIDTH, 0, 0)
 	card.AutomaticSize = Enum.AutomaticSize.Y
 	card.BackgroundColor3 = M3_SURFACE_CONTAINER_HIGH
@@ -285,7 +287,19 @@ notify = function(title, message, duration, color, notifType)
 	task.defer(function()
 		task.wait()
 		local height = card.AbsoluteSize.Y
-		if height <= 0 then task.wait() height = card.AbsoluteSize.Y end
+		-- Wait for AutomaticSize to settle (may take 2-3 frames for wrapped text)
+		if height <= 0 then
+			task.wait()
+			height = card.AbsoluteSize.Y
+		end
+		if height <= 0 then
+			task.wait()
+			height = card.AbsoluteSize.Y
+		end
+		-- Fallback: estimate from text bounds
+		if height <= 0 then
+			height = 60
+		end
 		local data = { frame = card, height = height, dismissed = false }
 		table.insert(notifications, 1, data)
 
@@ -295,7 +309,7 @@ notify = function(title, message, duration, color, notifType)
 		end
 
 		local slideIn = TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { 
-			Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -targetY - height - 20),
+			Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, -targetY - height - NOTIF_BOTTOM),
 			GroupTransparency = 0 
 		})
 		slideIn:Play()
