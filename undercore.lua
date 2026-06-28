@@ -396,6 +396,16 @@ trackConn(UserInputService.InputChanged:Connect(function(input)
 	end
 end))
 
+local titleLogo = Instance.new("ImageLabel")
+titleLogo.Name = "Logo"
+titleLogo.Size = UDim2.new(0, 22, 0, 22)
+titleLogo.Position = UDim2.new(0, 12, 0.5, -11)
+titleLogo.BackgroundTransparency = 1
+titleLogo.Image = "rbxassetid://78552548457734"
+titleLogo.ScaleType = Enum.ScaleType.Fit
+titleLogo.ZIndex = 5
+titleLogo.Parent = titleBar
+
 local titleText = Instance.new("TextLabel")
 titleText.Font = Enum.Font.BuilderSansMedium
 titleText.TextSize = 16
@@ -404,7 +414,7 @@ titleText.TextXAlignment = Enum.TextXAlignment.Left
 titleText.TextYAlignment = Enum.TextYAlignment.Center
 titleText.BackgroundTransparency = 1
 titleText.Size = UDim2.new(1, -80, 1, 0)
-titleText.Position = UDim2.new(0, 20, 0, 0)
+titleText.Position = UDim2.new(0, 42, 0, 0)
 titleText.Text = "Undercore"
 titleText.Parent = titleBar
 
@@ -496,7 +506,7 @@ local NAV_ICONS = {
 	["Player"] = "rbxassetid://114284249768955",
 	["Keybinds"] = "rbxassetid://93982901670694",
 	["Settings"] = "rbxassetid://93982901670694",
-	["About"] = "rbxassetid://72432575303550",
+	["About"] = "rbxassetid://78552548457734",
 }
 
 -- Preload all icons so they appear instantly
@@ -504,6 +514,7 @@ do
 	local allIcons = {}
 	for _, v in pairs(NOTIF_ICONS) do table.insert(allIcons, v) end
 	for _, v in pairs(NAV_ICONS) do table.insert(allIcons, v) end
+	table.insert(allIcons, "rbxassetid://78552548457734")
 	for _, id in ipairs(allIcons) do
 		local img = Instance.new("ImageLabel")
 		img.Image = id
@@ -3504,14 +3515,22 @@ navAbout.MouseButton1Click:Connect(function() showPage("About") end)
 
 createLabel(aboutPage, "About")
 
+local aboutLogo = Instance.new("ImageLabel")
+aboutLogo.Size = UDim2.new(0, 32, 0, 32)
+aboutLogo.Position = UDim2.new(0, 10, 0, 30)
+aboutLogo.BackgroundTransparency = 1
+aboutLogo.Image = "rbxassetid://78552548457734"
+aboutLogo.ScaleType = Enum.ScaleType.Fit
+aboutLogo.Parent = aboutPage
+
 local aboutTitle = Instance.new("TextLabel")
 aboutTitle.Font = Enum.Font.BuilderSansMedium
 aboutTitle.TextSize = 16
 aboutTitle.TextColor3 = M3_PRIMARY
 aboutTitle.TextXAlignment = Enum.TextXAlignment.Left
 aboutTitle.BackgroundTransparency = 1
-aboutTitle.Size = UDim2.new(1, -20, 0, 30)
-aboutTitle.Position = UDim2.new(0, 10, 0, 35)
+aboutTitle.Size = UDim2.new(1, -52, 0, 30)
+aboutTitle.Position = UDim2.new(0, 48, 0, 35)
 aboutTitle.Text = "Undercore - Custom Cheat Menu"
 aboutTitle.Parent = aboutPage
 
@@ -3621,12 +3640,10 @@ initAboutPage()
 local scriptReady = false
 local toggleBtn
 local function initToggleButton()
-toggleBtn = Instance.new("TextButton")
+	toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleBtn"
-toggleBtn.Text = "U"
-toggleBtn.Font = Enum.Font.BuilderSansMedium
-toggleBtn.TextSize = 14
-toggleBtn.TextColor3 = M3_ON_SURFACE_VAR
+toggleBtn.Text = ""
+toggleBtn.AutoButtonColor = false
 toggleBtn.BackgroundColor3 = M3_SURFACE_CONTAINER
 toggleBtn.BorderSizePixel = 0
 toggleBtn.Size = UDim2.new(0, 40, 0, 40)
@@ -3635,6 +3652,16 @@ toggleBtn.ZIndex = 50
 toggleBtn.Visible = false
 toggleBtn.Parent = gui
 makeDraggable(toggleBtn)
+
+local toggleBtnIcon = Instance.new("ImageLabel")
+toggleBtnIcon.Name = "Logo"
+toggleBtnIcon.Size = UDim2.new(0, 24, 0, 24)
+toggleBtnIcon.Position = UDim2.new(0.5, -12, 0.5, -12)
+toggleBtnIcon.BackgroundTransparency = 1
+toggleBtnIcon.Image = "rbxassetid://78552548457734"
+toggleBtnIcon.ScaleType = Enum.ScaleType.Fit
+toggleBtnIcon.ZIndex = 51
+toggleBtnIcon.Parent = toggleBtn
 
 local toggleBtnCorner = Instance.new("UICorner")
 toggleBtnCorner.CornerRadius = UDim.new(0, 20)
