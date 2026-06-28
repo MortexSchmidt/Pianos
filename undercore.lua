@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.6"
+local SCRIPT_VERSION = "2.4.7"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -153,7 +153,7 @@ local function dismiss(data)
 
 	local card = data.frame
 
-	local slideOut = TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, 50), GroupTransparency = 1 })
+	local slideOut = TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, 50) })
 	slideOut:Play()
 	slideOut.Completed:Wait()
 	card:Destroy()
@@ -863,9 +863,9 @@ editModeOverlay.Parent = editModeGui
 
 editModeHint = Instance.new("Frame")
 editModeHint.Name = "EditModeHint"
-editModeHint.Size = UDim2.new(0, 420, 0, 44)
-editModeHint.Position = UDim2.new(1, -440, 1, -60)
-editModeHint.BackgroundColor3 = BG_DARK
+editModeHint.Size = UDim2.new(0, 420, 0, 46)
+editModeHint.Position = UDim2.new(1, -440, 1, -62)
+editModeHint.BackgroundColor3 = BG_LIGHT
 editModeHint.BackgroundTransparency = 0.05
 editModeHint.BorderSizePixel = 0
 editModeHint.Visible = false
@@ -876,17 +876,30 @@ local editModeHintCorner = Instance.new("UICorner")
 editModeHintCorner.CornerRadius = UDim.new(0, 12)
 editModeHintCorner.Parent = editModeHint
 
+local editModeHintStroke = Instance.new("UIStroke")
+editModeHintStroke.Color = ACCENT
+editModeHintStroke.Thickness = 1.5
+editModeHintStroke.Transparency = 0.4
+editModeHintStroke.Parent = editModeHint
+
 local editModeHintText = Instance.new("TextLabel")
-editModeHintText.Font = Enum.Font.Gotham
-editModeHintText.TextSize = 13
+editModeHintText.Font = Enum.Font.GothamBold
+editModeHintText.TextSize = 14
 editModeHintText.TextColor3 = TEXT_WHITE
 editModeHintText.TextXAlignment = Enum.TextXAlignment.Left
 editModeHintText.TextYAlignment = Enum.TextYAlignment.Center
 editModeHintText.BackgroundTransparency = 1
-editModeHintText.Size = UDim2.new(1, -110, 1, 0)
+editModeHintText.Size = UDim2.new(1, -130, 1, 0)
 editModeHintText.Position = UDim2.new(0, 16, 0, 0)
 editModeHintText.Text = "Edit Mode — press to exit"
+editModeHintText.ZIndex = 11
 editModeHintText.Parent = editModeHint
+
+local editModeHintTextStroke = Instance.new("UIStroke")
+editModeHintTextStroke.Color = Color3.fromRGB(0, 0, 0)
+editModeHintTextStroke.Thickness = 2
+editModeHintTextStroke.Transparency = 0.6
+editModeHintTextStroke.Parent = editModeHintText
 
 local backspaceBadge = Instance.new("TextLabel")
 backspaceBadge.Font = Enum.Font.GothamBold
@@ -897,8 +910,9 @@ backspaceBadge.TextYAlignment = Enum.TextYAlignment.Center
 backspaceBadge.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 backspaceBadge.BorderSizePixel = 0
 backspaceBadge.Size = UDim2.new(0, 90, 0, 28)
-backspaceBadge.Position = UDim2.new(1, -106, 0.5, -14)
+backspaceBadge.Position = UDim2.new(1, -104, 0.5, -14)
 backspaceBadge.Text = "Backspace"
+backspaceBadge.ZIndex = 11
 backspaceBadge.Parent = editModeHint
 
 local backspaceBadgeCorner = Instance.new("UICorner")
