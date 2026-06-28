@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.4"
+local SCRIPT_VERSION = "2.4.5"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -242,28 +242,15 @@ local function notify(title, message, duration, color, notifType)
 	content.Parent = card
 
 	local pad = Instance.new("UIPadding")
-	pad.PaddingTop = UDim.new(0, 10)
-	pad.PaddingBottom = UDim.new(0, 10)
+	pad.PaddingTop = UDim.new(0, 12)
+	pad.PaddingBottom = UDim.new(0, 12)
 	pad.PaddingRight = UDim.new(0, 12)
 	pad.Parent = content
 
-	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Font = Enum.Font.GothamBold
-	titleLabel.TextSize = 12
-	titleLabel.TextColor3 = TEXT_WHITE
-	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-	titleLabel.TextYAlignment = Enum.TextYAlignment.Top
-	titleLabel.BackgroundTransparency = 1
-	titleLabel.Size = UDim2.new(1, 0, 0, 0)
-	titleLabel.AutomaticSize = Enum.AutomaticSize.Y
-	titleLabel.TextWrapped = true
-	titleLabel.Text = title
-	titleLabel.Parent = content
-
 	local msg = Instance.new("TextLabel")
 	msg.Font = Enum.Font.Gotham
-	msg.TextSize = 11
-	msg.TextColor3 = TEXT_GRAY
+	msg.TextSize = 13
+	msg.TextColor3 = TEXT_WHITE
 	msg.TextXAlignment = Enum.TextXAlignment.Left
 	msg.TextYAlignment = Enum.TextYAlignment.Top
 	msg.BackgroundTransparency = 1
@@ -876,11 +863,10 @@ editModeOverlay.Parent = editModeGui
 
 editModeHint = Instance.new("Frame")
 editModeHint.Name = "EditModeHint"
-editModeHint.Size = UDim2.new(0, 460, 0, 40)
-editModeHint.Position = UDim2.new(1, -470, 1, -60)
-editModeHint.AnchorPoint = Vector2.new(0, 0)
-editModeHint.BackgroundColor3 = CARD_BG
-editModeHint.BackgroundTransparency = 0.1
+editModeHint.Size = UDim2.new(0, 420, 0, 44)
+editModeHint.Position = UDim2.new(1, -440, 1, -60)
+editModeHint.BackgroundColor3 = BG_DARK
+editModeHint.BackgroundTransparency = 0.05
 editModeHint.BorderSizePixel = 0
 editModeHint.Visible = false
 editModeHint.ZIndex = 10
@@ -892,27 +878,27 @@ editModeHintCorner.Parent = editModeHint
 
 local editModeHintText = Instance.new("TextLabel")
 editModeHintText.Font = Enum.Font.Gotham
-editModeHintText.TextSize = 12
-editModeHintText.TextColor3 = TEXT_NORMAL
-editModeHintText.TextXAlignment = Enum.TextXAlignment.Center
+editModeHintText.TextSize = 13
+editModeHintText.TextColor3 = TEXT_WHITE
+editModeHintText.TextXAlignment = Enum.TextXAlignment.Left
 editModeHintText.TextYAlignment = Enum.TextYAlignment.Center
 editModeHintText.BackgroundTransparency = 1
-editModeHintText.Size = UDim2.new(1, 0, 1, 0)
-editModeHintText.Text = "Вы находитесь в режиме редактирования интерфейса. Нажмите  чтобы выйти"
+editModeHintText.Size = UDim2.new(1, -110, 1, 0)
+editModeHintText.Position = UDim2.new(0, 16, 0, 0)
+editModeHintText.Text = "Edit Mode — press to exit"
 editModeHintText.Parent = editModeHint
 
 local backspaceBadge = Instance.new("TextLabel")
 backspaceBadge.Font = Enum.Font.GothamBold
-backspaceBadge.TextSize = 11
+backspaceBadge.TextSize = 12
 backspaceBadge.TextColor3 = Color3.fromRGB(30, 30, 30)
 backspaceBadge.TextXAlignment = Enum.TextXAlignment.Center
 backspaceBadge.TextYAlignment = Enum.TextYAlignment.Center
 backspaceBadge.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 backspaceBadge.BorderSizePixel = 0
-backspaceBadge.Size = UDim2.new(0, 0, 0, 20)
-backspaceBadge.AutomaticSize = Enum.AutomaticSize.X
-backspaceBadge.Position = UDim2.new(0, 315, 0.5, -10)
-backspaceBadge.Text = "  Backspace  "
+backspaceBadge.Size = UDim2.new(0, 90, 0, 28)
+backspaceBadge.Position = UDim2.new(1, -106, 0.5, -14)
+backspaceBadge.Text = "Backspace"
 backspaceBadge.Parent = editModeHint
 
 local backspaceBadgeCorner = Instance.new("UICorner")
@@ -2902,9 +2888,10 @@ initAboutPage()
 -- ===================
 -- TOGGLE BUTTON
 -- ===================
-local function initToggleButton()
 local scriptReady = false
-local toggleBtn = Instance.new("TextButton")
+local toggleBtn
+local function initToggleButton()
+toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleBtn"
 toggleBtn.Text = "U"
 toggleBtn.Font = Enum.Font.GothamBold
