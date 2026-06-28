@@ -3515,13 +3515,19 @@ navAbout.MouseButton1Click:Connect(function() showPage("About") end)
 
 createLabel(aboutPage, "About")
 
+-- Logo + Undercore text row
+local logoRow = Instance.new("Frame")
+logoRow.Size = UDim2.new(1, 0, 0, 40)
+logoRow.BackgroundTransparency = 1
+logoRow.Parent = aboutPage
+
 local aboutLogo = Instance.new("ImageLabel")
 aboutLogo.Size = UDim2.new(0, 32, 0, 32)
-aboutLogo.Position = UDim2.new(0, 10, 0, 30)
+aboutLogo.Position = UDim2.new(0, 0, 0.5, -16)
 aboutLogo.BackgroundTransparency = 1
 aboutLogo.Image = "rbxassetid://78552548457734"
 aboutLogo.ScaleType = Enum.ScaleType.Fit
-aboutLogo.Parent = aboutPage
+aboutLogo.Parent = logoRow
 
 local aboutLogoText = Instance.new("TextLabel")
 aboutLogoText.Font = Enum.Font.BuilderSansMedium
@@ -3530,10 +3536,10 @@ aboutLogoText.TextColor3 = M3_PRIMARY
 aboutLogoText.TextXAlignment = Enum.TextXAlignment.Left
 aboutLogoText.TextYAlignment = Enum.TextYAlignment.Center
 aboutLogoText.BackgroundTransparency = 1
-aboutLogoText.Size = UDim2.new(0, 200, 0, 32)
-aboutLogoText.Position = UDim2.new(0, 48, 0, 30)
+aboutLogoText.Size = UDim2.new(1, -42, 0, 40)
+aboutLogoText.Position = UDim2.new(0, 38, 0, 0)
 aboutLogoText.Text = "Undercore"
-aboutLogoText.Parent = aboutPage
+aboutLogoText.Parent = logoRow
 
 local aboutTitle = Instance.new("TextLabel")
 aboutTitle.Font = Enum.Font.BuilderSansMedium
@@ -3541,8 +3547,7 @@ aboutTitle.TextSize = 16
 aboutTitle.TextColor3 = M3_PRIMARY
 aboutTitle.TextXAlignment = Enum.TextXAlignment.Left
 aboutTitle.BackgroundTransparency = 1
-aboutTitle.Size = UDim2.new(1, -52, 0, 30)
-aboutTitle.Position = UDim2.new(0, 48, 0, 35)
+aboutTitle.Size = UDim2.new(1, 0, 0, 25)
 aboutTitle.Text = "Undercore - Custom Cheat Menu"
 aboutTitle.Parent = aboutPage
 
@@ -3552,8 +3557,7 @@ aboutVersion.TextSize = 14
 aboutVersion.TextColor3 = M3_PRIMARY
 aboutVersion.TextXAlignment = Enum.TextXAlignment.Left
 aboutVersion.BackgroundTransparency = 1
-aboutVersion.Size = UDim2.new(1, -20, 0, 25)
-aboutVersion.Position = UDim2.new(0, 10, 0, 70)
+aboutVersion.Size = UDim2.new(1, 0, 0, 25)
 aboutVersion.Text = "Version: " .. SCRIPT_VERSION
 aboutVersion.Parent = aboutPage
 
@@ -3565,8 +3569,7 @@ aboutDesc.TextXAlignment = Enum.TextXAlignment.Left
 aboutDesc.TextYAlignment = Enum.TextYAlignment.Top
 aboutDesc.TextWrapped = true
 aboutDesc.BackgroundTransparency = 1
-aboutDesc.Size = UDim2.new(1, -20, 0, 120)
-aboutDesc.Position = UDim2.new(0, 10, 0, 105)
+aboutDesc.Size = UDim2.new(1, 0, 0, 120)
 aboutDesc.Text = "A custom cheat menu for Roblox featuring Fly, Speed, Noclip, ESP, Fling, Auto Fling, and more.\n\nReal-time update checking via GitLab with automatic notifications.\n\nControls:\n- Toggle menu: RightShift / K / F8\n- Toggle button: U\n- Hold F8 or U for 5s to terminate\n\nMade by Neruka"
 aboutDesc.Parent = aboutPage
 
@@ -3577,8 +3580,7 @@ supportLabel.TextSize = 16
 supportLabel.TextColor3 = M3_PRIMARY
 supportLabel.TextXAlignment = Enum.TextXAlignment.Left
 supportLabel.BackgroundTransparency = 1
-supportLabel.Size = UDim2.new(1, -20, 0, 30)
-supportLabel.Position = UDim2.new(0, 10, 0, 240)
+supportLabel.Size = UDim2.new(1, 0, 0, 30)
 supportLabel.Text = "Support Us"
 supportLabel.Parent = aboutPage
 
@@ -3590,8 +3592,7 @@ supportDesc.TextXAlignment = Enum.TextXAlignment.Left
 supportDesc.TextYAlignment = Enum.TextYAlignment.Top
 supportDesc.TextWrapped = true
 supportDesc.BackgroundTransparency = 1
-supportDesc.Size = UDim2.new(1, -20, 0, 40)
-supportDesc.Position = UDim2.new(0, 10, 0, 272)
+supportDesc.Size = UDim2.new(1, 0, 0, 40)
 supportDesc.Text = "If you enjoy Undercore, consider supporting development with a donation."
 supportDesc.Parent = aboutPage
 
@@ -3604,8 +3605,7 @@ donateBtn.TextYAlignment = Enum.TextYAlignment.Center
 donateBtn.BackgroundColor3 = M3_PRIMARY
 donateBtn.AutoButtonColor = false
 donateBtn.BorderSizePixel = 0
-donateBtn.Size = UDim2.new(1, -20, 0, 40)
-donateBtn.Position = UDim2.new(0, 10, 0, 322)
+donateBtn.Size = UDim2.new(1, 0, 0, 40)
 donateBtn.Text = "  Donate"
 donateBtn.Parent = aboutPage
 
