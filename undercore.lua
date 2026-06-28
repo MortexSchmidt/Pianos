@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.8"
+local SCRIPT_VERSION = "2.4.9"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -1596,22 +1596,34 @@ end
 local function applyCopySkin(targetPlayer)
 	local targetChar = targetPlayer.Character
 	local myChar = player.Character
-	if not targetChar or not myChar then return end
+	if not targetChar or not myChar then
+		notify("Undercore", "Character not found", 3, RED, "error")
+		return
+	end
 
 	local targetHum = targetChar:FindFirstChildOfClass("Humanoid")
 	local myHum = myChar:FindFirstChildOfClass("Humanoid")
-	if not targetHum or not myHum then return end
+	if not targetHum or not myHum then
+		notify("Undercore", "Humanoid not found", 3, RED, "error")
+		return
+	end
 
 	local ok, desc = pcall(function()
 		return targetHum:GetAppliedDescription()
 	end)
-	if ok and desc then
-		pcall(function()
-			myHum:ApplyDescription(desc)
-		end)
+	if not ok or not desc then
+		notify("Undercore", "Failed to get target skin", 3, RED, "error")
+		return
 	end
 
-	setCopiedName(targetPlayer.DisplayName)
+	local applyOk, applyErr = pcall(function()
+		myHum:ApplyDescription(desc)
+	end)
+	if not applyOk then
+		notify("Undercore", "ApplyDescription failed: " .. tostring(applyErr), 4, RED, "error")
+	else
+		setCopiedName(targetPlayer.DisplayName)
+	end
 end
 
 local function refreshCopySkinList()
@@ -1674,7 +1686,7 @@ local function refreshCopySkinList()
 			entryFrame.MouseButton1Click:Connect(function()
 				playRandomPageSound()
 				applyCopySkin(plr)
-				notify("Copied skin and name from " .. plr.DisplayName, 3, ACCENT, "info")
+				notify("Undercore", "Copied skin and name from " .. plr.DisplayName, 3, ACCENT, "info")
 				hideCopySkinSubmenu()
 			end)
 
