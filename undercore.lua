@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.7"
+local SCRIPT_VERSION = "2.4.8"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -1187,6 +1187,11 @@ local infJump = createToggle(playerPage, "Infinite Jump", function(v) _G.Underco
 local godMode = createToggle(playerPage, "God Mode", function(v) _G.Undercore.GodMode = v end)
 local antiFlingToggle = createToggle(playerPage, "Anti-Fling", function(v) _G.Undercore.AntiFling = v end)
 
+-- COPY SKIN SUBMENU
+local copySkinSubmenuVisible = false
+local showCopySkinSubmenu
+local hideCopySkinSubmenu
+
 -- TELEPORT SUBMENU
 local teleportSubmenuVisible = false
 local showTeleportSubmenu
@@ -1453,6 +1458,300 @@ end)
 
 end -- initTeleportSubmenu function
 initTeleportSubmenu()
+
+-- ===================
+-- COPY SKIN SUBMENU
+-- ===================
+local function initCopySkinSubmenu()
+local copySkinBtnFrame = Instance.new("TextButton")
+copySkinBtnFrame.Text = ""
+copySkinBtnFrame.AutoButtonColor = false
+copySkinBtnFrame.Size = UDim2.new(1, 0, 0, 38)
+copySkinBtnFrame.BackgroundColor3 = CARD_BG
+copySkinBtnFrame.BorderSizePixel = 0
+copySkinBtnFrame.Parent = playerPage
+
+local copySkinCorner = Instance.new("UICorner")
+copySkinCorner.CornerRadius = UDim.new(0, 12)
+copySkinCorner.Parent = copySkinBtnFrame
+
+local copySkinBtnLabel = Instance.new("TextLabel")
+copySkinBtnLabel.Font = Enum.Font.Gotham
+copySkinBtnLabel.TextSize = 13
+copySkinBtnLabel.TextColor3 = TEXT_NORMAL
+copySkinBtnLabel.TextXAlignment = Enum.TextXAlignment.Left
+copySkinBtnLabel.TextYAlignment = Enum.TextYAlignment.Center
+copySkinBtnLabel.BackgroundTransparency = 1
+copySkinBtnLabel.Size = UDim2.new(1, -20, 1, 0)
+copySkinBtnLabel.Position = UDim2.new(0, 14, 0, 0)
+copySkinBtnLabel.Text = "Copy Skin & Name"
+copySkinBtnLabel.Parent = copySkinBtnFrame
+
+-- Panel
+local copySkinPanel = Instance.new("Frame")
+copySkinPanel.Name = "CopySkinPanel"
+copySkinPanel.Size = UDim2.new(0, 250, 0, 400)
+copySkinPanel.Position = UDim2.new(0, 0, 0, 0)
+copySkinPanel.BackgroundColor3 = BG
+copySkinPanel.BorderSizePixel = 0
+copySkinPanel.Visible = false
+copySkinPanel.ZIndex = 50
+copySkinPanel.Parent = gui
+makeDraggable(copySkinPanel)
+
+local copySkinPanelCorner = Instance.new("UICorner")
+copySkinPanelCorner.CornerRadius = UDim.new(0, 12)
+copySkinPanelCorner.Parent = copySkinPanel
+
+-- Sync position with mainFrame
+trackConn(RunService.RenderStepped:Connect(function()
+	if copySkinPanel.Visible then
+		copySkinPanel.Position = UDim2.new(
+			0.5, mainFrame.Position.X.Offset + 320,
+			0.5, mainFrame.Position.Y.Offset - 210
+		)
+		copySkinPanel.Size = UDim2.new(0, 250, 0, 420)
+	end
+end))
+
+local copySkinTitle = Instance.new("TextLabel")
+copySkinTitle.Font = Enum.Font.GothamBold
+copySkinTitle.TextSize = 14
+copySkinTitle.TextColor3 = ACCENT
+copySkinTitle.TextXAlignment = Enum.TextXAlignment.Left
+copySkinTitle.BackgroundTransparency = 1
+copySkinTitle.Size = UDim2.new(1, -20, 0, 30)
+copySkinTitle.Position = UDim2.new(0, 12, 0, 8)
+copySkinTitle.Text = "Copy Skin & Name"
+copySkinTitle.Parent = copySkinPanel
+
+local copySkinListFrame = Instance.new("ScrollingFrame")
+copySkinListFrame.Size = UDim2.new(1, -12, 1, -50)
+copySkinListFrame.Position = UDim2.new(0, 6, 0, 42)
+copySkinListFrame.BackgroundColor3 = BG_DARK
+copySkinListFrame.BorderSizePixel = 0
+copySkinListFrame.ScrollBarThickness = 3
+copySkinListFrame.ScrollBarImageColor3 = CARD_HOVER
+copySkinListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+copySkinListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+copySkinListFrame.Parent = copySkinPanel
+
+local copySkinListLayout = Instance.new("UIListLayout")
+copySkinListLayout.FillDirection = Enum.FillDirection.Vertical
+copySkinListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+copySkinListLayout.Padding = UDim.new(0, 2)
+copySkinListLayout.Parent = copySkinListFrame
+
+local copySkinListPad = Instance.new("UIPadding")
+copySkinListPad.PaddingTop = UDim.new(0, 4)
+copySkinListPad.PaddingBottom = UDim.new(0, 4)
+copySkinListPad.PaddingLeft = UDim.new(0, 4)
+copySkinListPad.PaddingRight = UDim.new(0, 4)
+copySkinListPad.Parent = copySkinListFrame
+
+local copySkinEntries = {}
+
+local function clearCopySkinList()
+	for _, entry in ipairs(copySkinEntries) do
+		if entry.frame then entry.frame:Destroy() end
+	end
+	copySkinEntries = {}
+end
+
+local copiedNameTag = nil
+local function setCopiedName(name)
+	if copiedNameTag then
+		pcall(function() copiedNameTag:Destroy() end)
+		copiedNameTag = nil
+	end
+	local char = player.Character
+	if not char then return end
+	local head = char:FindFirstChild("Head")
+	if not head then return end
+
+	local bill = Instance.new("BillboardGui")
+	bill.Name = "UndercoreCopiedName"
+	bill.Adornee = head
+	bill.Size = UDim2.new(0, 200, 0, 50)
+	bill.StudsOffset = Vector3.new(0, 2.8, 0)
+	bill.AlwaysOnTop = false
+	bill.MaxDistance = 100
+	bill.Parent = head
+
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Name = "CopiedNameLabel"
+	nameLabel.Size = UDim2.new(1, 0, 1, 0)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Font = Enum.Font.GothamBold
+	nameLabel.TextSize = 16
+	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	nameLabel.TextStrokeTransparency = 0.5
+	nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+	nameLabel.Text = name
+	nameLabel.Parent = bill
+
+	copiedNameTag = bill
+end
+
+local function applyCopySkin(targetPlayer)
+	local targetChar = targetPlayer.Character
+	local myChar = player.Character
+	if not targetChar or not myChar then return end
+
+	local targetHum = targetChar:FindFirstChildOfClass("Humanoid")
+	local myHum = myChar:FindFirstChildOfClass("Humanoid")
+	if not targetHum or not myHum then return end
+
+	local ok, desc = pcall(function()
+		return targetHum:GetAppliedDescription()
+	end)
+	if ok and desc then
+		pcall(function()
+			myHum:ApplyDescription(desc)
+		end)
+	end
+
+	setCopiedName(targetPlayer.DisplayName)
+end
+
+local function refreshCopySkinList()
+	clearCopySkinList()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local entryFrame = Instance.new("TextButton")
+			entryFrame.Size = UDim2.new(1, 0, 0, 40)
+			entryFrame.BackgroundColor3 = CARD_BG
+			entryFrame.BorderSizePixel = 0
+			entryFrame.Text = ""
+			entryFrame.AutoButtonColor = false
+			entryFrame.LayoutOrder = #copySkinEntries
+			entryFrame.Parent = copySkinListFrame
+
+			local entryCorner = Instance.new("UICorner")
+			entryCorner.CornerRadius = UDim.new(0, 12)
+			entryCorner.Parent = entryFrame
+
+			local avatar = Instance.new("ImageLabel")
+			avatar.Size = UDim2.new(0, 32, 0, 32)
+			avatar.Position = UDim2.new(0, 4, 0.5, -16)
+			avatar.BackgroundTransparency = 1
+			avatar.ScaleType = Enum.ScaleType.Crop
+			avatar.Parent = entryFrame
+
+			task.spawn(function()
+				pcall(function()
+					local thumbType = Enum.ThumbnailType.HeadShot
+					local thumbSize = Enum.ThumbnailSize.Size48x48
+					local content, isReady = Players:GetUserThumbnailAsync(plr.UserId, thumbType, thumbSize)
+					if isReady then
+						avatar.Image = content
+					end
+				end)
+			end)
+
+			local nameLabel = Instance.new("TextLabel")
+			nameLabel.Font = Enum.Font.Gotham
+			nameLabel.TextSize = 12
+			nameLabel.TextColor3 = TEXT_NORMAL
+			nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+			nameLabel.BackgroundTransparency = 1
+			nameLabel.Size = UDim2.new(1, -44, 0, 20)
+			nameLabel.Position = UDim2.new(0, 42, 0, 4)
+			nameLabel.Text = plr.DisplayName
+			nameLabel.Parent = entryFrame
+
+			local userLabel = Instance.new("TextLabel")
+			userLabel.Font = Enum.Font.Gotham
+			userLabel.TextSize = 10
+			userLabel.TextColor3 = TEXT_GRAY
+			userLabel.TextXAlignment = Enum.TextXAlignment.Left
+			userLabel.BackgroundTransparency = 1
+			userLabel.Size = UDim2.new(1, -44, 0, 14)
+			userLabel.Position = UDim2.new(0, 42, 0, 22)
+			userLabel.Text = "@" .. plr.Name
+			userLabel.Parent = entryFrame
+
+			entryFrame.MouseButton1Click:Connect(function()
+				playRandomPageSound()
+				applyCopySkin(plr)
+				notify("Copied skin and name from " .. plr.DisplayName, 3, ACCENT, "info")
+				hideCopySkinSubmenu()
+			end)
+
+			entryFrame.MouseEnter:Connect(function()
+				playSound(SOUND_HOVER, 1.0)
+				entryFrame.BackgroundColor3 = CARD_HOVER
+			end)
+
+			entryFrame.MouseLeave:Connect(function()
+				entryFrame.BackgroundColor3 = CARD_BG
+			end)
+
+			table.insert(copySkinEntries, { frame = entryFrame, player = plr })
+		end
+	end
+end
+
+showCopySkinSubmenu = function()
+	if copySkinSubmenuVisible then return end
+	copySkinSubmenuVisible = true
+	playRandomPageSound()
+	refreshCopySkinList()
+
+	local panelHeight = 420
+	copySkinPanel.Visible = true
+	copySkinPanel.Size = UDim2.new(0, 0, 0, panelHeight)
+
+	local sizeTween = TweenService:Create(copySkinPanel, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 250, 0, panelHeight) })
+	sizeTween:Play()
+	sizeTween.Completed:Wait()
+end
+
+hideCopySkinSubmenu = function()
+	if not copySkinSubmenuVisible then return end
+	copySkinSubmenuVisible = false
+	playRandomPageSound()
+
+	local sizeTween = TweenService:Create(copySkinPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 420) })
+	sizeTween:Play()
+	sizeTween.Completed:Wait()
+
+	copySkinPanel.Visible = false
+end
+
+copySkinBtnFrame.MouseButton1Click:Connect(function()
+	if copySkinSubmenuVisible then
+		hideCopySkinSubmenu()
+	else
+		showCopySkinSubmenu()
+	end
+end)
+
+copySkinBtnFrame.MouseEnter:Connect(function()
+	playSound(SOUND_HOVER, 1.0)
+end)
+
+Players.PlayerAdded:Connect(function()
+	if copySkinSubmenuVisible then
+		refreshCopySkinList()
+	end
+end)
+Players.PlayerRemoving:Connect(function()
+	if copySkinSubmenuVisible then
+		refreshCopySkinList()
+	end
+end)
+
+-- Re-apply name tag on respawn
+trackConn(player.CharacterAdded:Connect(function(char)
+	if copiedNameTag then
+		local savedName = copiedNameTag.CopiedNameLabel.Text
+		setCopiedName(savedName)
+	end
+end))
+
+end -- initCopySkinSubmenu function
+initCopySkinSubmenu()
 
 -- ===================
 -- SPECTATE / FOLLOW SUBMENU
@@ -2938,6 +3237,11 @@ end
 
 closeMenu = function()
 	playRandomPageSound()
+
+	-- Close copy skin submenu if open (with animation)
+	if copySkinSubmenuVisible then
+		hideCopySkinSubmenu()
+	end
 
 	-- Close teleport submenu if open (with animation)
 	if teleportSubmenuVisible then
