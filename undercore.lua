@@ -1175,7 +1175,6 @@ local function makeDraggable(element)
 end
 
 -- Apply draggable behavior to UI elements created before makeDraggable was defined
-makeDraggable(container)
 makeDraggable(mainFrame)
 makeDraggable(keybindFrame)
 
