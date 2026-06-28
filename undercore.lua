@@ -403,13 +403,14 @@ titleLogo.Position = UDim2.new(0, 12, 0.5, -11)
 titleLogo.BackgroundTransparency = 1
 titleLogo.Image = "rbxassetid://78552548457734"
 titleLogo.ScaleType = Enum.ScaleType.Fit
+titleLogo.ImageColor3 = M3_PRIMARY
 titleLogo.ZIndex = 5
 titleLogo.Parent = titleBar
 
 local titleText = Instance.new("TextLabel")
 titleText.Font = Enum.Font.BuilderSansMedium
 titleText.TextSize = 16
-titleText.TextColor3 = M3_ON_SURFACE
+titleText.TextColor3 = M3_PRIMARY
 titleText.TextXAlignment = Enum.TextXAlignment.Left
 titleText.TextYAlignment = Enum.TextYAlignment.Center
 titleText.BackgroundTransparency = 1
@@ -632,8 +633,9 @@ local function createPage(name)
 	page.Size = UDim2.new(1, 0, 1, 0)
 	page.BackgroundTransparency = 1
 	page.BorderSizePixel = 0
-	page.ScrollBarThickness = 3
-	page.ScrollBarImageColor3 = M3_SURFACE_VAR
+	page.ScrollBarThickness = 6
+	page.ScrollBarImageColor3 = M3_PRIMARY
+	page.ScrollBarImageTransparency = 0.3
 	page.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	page.CanvasSize = UDim2.new(0, 0, 0, 0)
 	page.Visible = false
@@ -3519,138 +3521,139 @@ createLabel(aboutPage, "About")
 
 -- Logo + Undercore name
 local logoRow = Instance.new("Frame")
-logoRow.Size = UDim2.new(1, 0, 0, 48)
+logoRow.Size = UDim2.new(1, 0, 0, 36)
 logoRow.BackgroundTransparency = 1
 logoRow.Parent = aboutPage
 
 local aboutLogo = Instance.new("ImageLabel")
-aboutLogo.Size = UDim2.new(0, 36, 0, 36)
-aboutLogo.Position = UDim2.new(0, 0, 0.5, -18)
+aboutLogo.Size = UDim2.new(0, 28, 0, 28)
+aboutLogo.Position = UDim2.new(0, 0, 0.5, -14)
 aboutLogo.BackgroundTransparency = 1
 aboutLogo.Image = "rbxassetid://78552548457734"
 aboutLogo.ScaleType = Enum.ScaleType.Fit
+aboutLogo.ImageColor3 = M3_PRIMARY
 aboutLogo.Parent = logoRow
 
 local aboutLogoText = Instance.new("TextLabel")
 aboutLogoText.Font = Enum.Font.BuilderSansMedium
-aboutLogoText.TextSize = 20
+aboutLogoText.TextSize = 18
 aboutLogoText.TextColor3 = M3_PRIMARY
 aboutLogoText.TextXAlignment = Enum.TextXAlignment.Left
 aboutLogoText.TextYAlignment = Enum.TextYAlignment.Center
 aboutLogoText.BackgroundTransparency = 1
-aboutLogoText.Size = UDim2.new(1, -46, 0, 48)
-aboutLogoText.Position = UDim2.new(0, 42, 0, 0)
+aboutLogoText.Size = UDim2.new(1, -36, 0, 36)
+aboutLogoText.Position = UDim2.new(0, 34, 0, 0)
 aboutLogoText.Text = "Undercore"
 aboutLogoText.Parent = logoRow
 
 -- Version
 local aboutVersion = Instance.new("TextLabel")
 aboutVersion.Font = Enum.Font.BuilderSans
-aboutVersion.TextSize = 13
+aboutVersion.TextSize = 12
 aboutVersion.TextColor3 = M3_ON_SURFACE_VAR
 aboutVersion.TextXAlignment = Enum.TextXAlignment.Left
 aboutVersion.BackgroundTransparency = 1
-aboutVersion.Size = UDim2.new(1, 0, 0, 20)
+aboutVersion.Size = UDim2.new(1, 0, 0, 16)
 aboutVersion.Text = "Version " .. SCRIPT_VERSION
 aboutVersion.Parent = aboutPage
 
 -- Description
 local aboutDesc = Instance.new("TextLabel")
 aboutDesc.Font = Enum.Font.BuilderSans
-aboutDesc.TextSize = 13
+aboutDesc.TextSize = 12
 aboutDesc.TextColor3 = M3_ON_SURFACE_VAR
 aboutDesc.TextXAlignment = Enum.TextXAlignment.Left
 aboutDesc.TextYAlignment = Enum.TextYAlignment.Top
 aboutDesc.TextWrapped = true
 aboutDesc.BackgroundTransparency = 1
-aboutDesc.Size = UDim2.new(1, 0, 0, 80)
+aboutDesc.Size = UDim2.new(1, 0, 0, 48)
 aboutDesc.Text = "A custom cheat menu for Roblox featuring Fly, Speed, Noclip, ESP, Fling, Auto Fling, and more. Real-time update checking via GitLab."
 aboutDesc.Parent = aboutPage
 
 -- Controls section
 local controlsLabel = Instance.new("TextLabel")
 controlsLabel.Font = Enum.Font.BuilderSansMedium
-controlsLabel.TextSize = 14
+controlsLabel.TextSize = 13
 controlsLabel.TextColor3 = M3_ON_SURFACE
 controlsLabel.TextXAlignment = Enum.TextXAlignment.Left
 controlsLabel.BackgroundTransparency = 1
-controlsLabel.Size = UDim2.new(1, 0, 0, 24)
+controlsLabel.Size = UDim2.new(1, 0, 0, 20)
 controlsLabel.Text = "Controls"
 controlsLabel.Parent = aboutPage
 
 local controlsText = Instance.new("TextLabel")
 controlsText.Font = Enum.Font.BuilderSans
-controlsText.TextSize = 13
+controlsText.TextSize = 12
 controlsText.TextColor3 = M3_ON_SURFACE_VAR
 controlsText.TextXAlignment = Enum.TextXAlignment.Left
 controlsText.TextYAlignment = Enum.TextYAlignment.Top
 controlsText.TextWrapped = true
 controlsText.BackgroundTransparency = 1
-controlsText.Size = UDim2.new(1, 0, 0, 80)
+controlsText.Size = UDim2.new(1, 0, 0, 56)
 controlsText.Text = "Toggle menu: RightShift / K / F8\nToggle button: U\nHold F8 or U for 5s to terminate"
 controlsText.Parent = aboutPage
 
 -- Credits
 local creditsText = Instance.new("TextLabel")
 creditsText.Font = Enum.Font.BuilderSans
-creditsText.TextSize = 13
+creditsText.TextSize = 12
 creditsText.TextColor3 = M3_ON_SURFACE_VAR
 creditsText.TextXAlignment = Enum.TextXAlignment.Left
 creditsText.BackgroundTransparency = 1
-creditsText.Size = UDim2.new(1, 0, 0, 20)
+creditsText.Size = UDim2.new(1, 0, 0, 16)
 creditsText.Text = "Made by Neruka"
 creditsText.Parent = aboutPage
 
 -- Spacer
 local spacer = Instance.new("Frame")
-spacer.Size = UDim2.new(1, 0, 0, 8)
+spacer.Size = UDim2.new(1, 0, 0, 4)
 spacer.BackgroundTransparency = 1
 spacer.Parent = aboutPage
 
 -- Support section
 local supportLabel = Instance.new("TextLabel")
 supportLabel.Font = Enum.Font.BuilderSansMedium
-supportLabel.TextSize = 14
+supportLabel.TextSize = 13
 supportLabel.TextColor3 = M3_ON_SURFACE
 supportLabel.TextXAlignment = Enum.TextXAlignment.Left
 supportLabel.BackgroundTransparency = 1
-supportLabel.Size = UDim2.new(1, 0, 0, 24)
+supportLabel.Size = UDim2.new(1, 0, 0, 20)
 supportLabel.Text = "Support Us"
 supportLabel.Parent = aboutPage
 
 local supportDesc = Instance.new("TextLabel")
 supportDesc.Font = Enum.Font.BuilderSans
-supportDesc.TextSize = 13
+supportDesc.TextSize = 12
 supportDesc.TextColor3 = M3_ON_SURFACE_VAR
 supportDesc.TextXAlignment = Enum.TextXAlignment.Left
 supportDesc.TextYAlignment = Enum.TextYAlignment.Top
 supportDesc.TextWrapped = true
 supportDesc.BackgroundTransparency = 1
-supportDesc.Size = UDim2.new(1, 0, 0, 36)
+supportDesc.Size = UDim2.new(1, 0, 0, 28)
 supportDesc.Text = "If you enjoy Undercore, consider supporting development with a donation."
 supportDesc.Parent = aboutPage
 
 -- Donate button
 local donateBtn = Instance.new("TextButton")
 donateBtn.Font = Enum.Font.BuilderSansMedium
-donateBtn.TextSize = 14
+donateBtn.TextSize = 13
 donateBtn.TextColor3 = M3_ON_PRIMARY
 donateBtn.TextXAlignment = Enum.TextXAlignment.Center
 donateBtn.TextYAlignment = Enum.TextYAlignment.Center
 donateBtn.BackgroundColor3 = M3_PRIMARY
 donateBtn.AutoButtonColor = false
 donateBtn.BorderSizePixel = 0
-donateBtn.Size = UDim2.new(1, 0, 0, 40)
+donateBtn.Size = UDim2.new(0, 140, 0, 32)
 donateBtn.Text = "  Donate"
 donateBtn.Parent = aboutPage
 
 local donateCorner = Instance.new("UICorner")
-donateCorner.CornerRadius = UDim.new(0, 20)
+donateCorner.CornerRadius = UDim.new(0, 16)
 donateCorner.Parent = donateBtn
 
 local donateIcon = Instance.new("ImageLabel")
-donateIcon.Size = UDim2.new(0, 18, 0, 18)
-donateIcon.Position = UDim2.new(0, 12, 0.5, -9)
+donateIcon.Size = UDim2.new(0, 14, 0, 14)
+donateIcon.Position = UDim2.new(0, 10, 0.5, -7)
 donateIcon.BackgroundTransparency = 1
 donateIcon.Image = "rbxassetid://136952031423283"
 donateIcon.ImageColor3 = M3_ON_PRIMARY
