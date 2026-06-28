@@ -420,9 +420,13 @@ updateText.Visible = false
 updateText.Parent = updateBanner
 
 -- Left navigation (M3 navigation rail)
-local navFrame = Instance.new("Frame")
+local navFrame = Instance.new("ScrollingFrame")
 navFrame.Size = UDim2.new(0, 56, 1, -48)
 navFrame.Position = UDim2.new(0, 0, 0, 48)
+navFrame.ScrollBarThickness = 0
+navFrame.ScrollDirection = Enum.ScrollDirection.Y
+navFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+navFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 navFrame.BackgroundColor3 = M3_SURFACE
 navFrame.BorderSizePixel = 0
 navFrame.Active = false
@@ -431,12 +435,12 @@ navFrame.Parent = mainFrame
 local navLayout = Instance.new("UIListLayout")
 navLayout.FillDirection = Enum.FillDirection.Vertical
 navLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-navLayout.Padding = UDim.new(0, 4)
+navLayout.Padding = UDim.new(0, 2)
 navLayout.Parent = navFrame
 
 local navPad = Instance.new("UIPadding")
-navPad.PaddingTop = UDim.new(0, 8)
-navPad.PaddingBottom = UDim.new(0, 8)
+navPad.PaddingTop = UDim.new(0, 4)
+navPad.PaddingBottom = UDim.new(0, 4)
 navPad.Parent = navFrame
 
 -- Right content (M3 surface)
@@ -492,18 +496,18 @@ local function createNavButton(name)
 	btn.TextXAlignment = Enum.TextXAlignment.Left
 	btn.BackgroundColor3 = M3_SURFACE
 	btn.BorderSizePixel = 0
-	btn.Size = UDim2.new(0, 48, 0, 48)
+	btn.Size = UDim2.new(0, 44, 0, 44)
 	btn.AutoButtonColor = false
 	btn.Parent = navFrame
 
 	local btnCorner = Instance.new("UICorner")
-	btnCorner.CornerRadius = UDim.new(0, 24)
+	btnCorner.CornerRadius = UDim.new(0, 22)
 	btnCorner.Parent = btn
 
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "Icon"
-	icon.Size = UDim2.new(0, 24, 0, 24)
-	icon.Position = UDim2.new(0.5, -12, 0.5, -12)
+	icon.Size = UDim2.new(0, 22, 0, 22)
+	icon.Position = UDim2.new(0.5, -11, 0.5, -11)
 	icon.BackgroundTransparency = 1
 	icon.Image = NAV_ICONS[name] or ""
 	icon.ImageColor3 = M3_ON_SURFACE_VAR
@@ -555,7 +559,7 @@ local function createNavButton(name)
 			TextTransparency = 0,
 		})
 		tooltipTween:Play()
-		if btn.BackgroundColor3 ~= M3_SECONDARY_CONTAINER then
+		if currentPage ~= name then
 			icon.ImageColor3 = M3_ON_SURFACE
 			btn.BackgroundColor3 = M3_SURFACE_CONTAINER
 		end
@@ -576,7 +580,7 @@ local function createNavButton(name)
 				tooltip.Visible = false
 			end
 		end)
-		if btn.BackgroundColor3 ~= M3_SECONDARY_CONTAINER then
+		if currentPage ~= name then
 			icon.ImageColor3 = M3_ON_SURFACE_VAR
 			btn.BackgroundColor3 = M3_SURFACE
 		end
@@ -614,7 +618,7 @@ local pageSwitching = false
 -- Active nav indicator (M3 pill shape behind selected item)
 local navIndicator = Instance.new("Frame")
 navIndicator.Name = "NavIndicator"
-navIndicator.Size = UDim2.new(0, 48, 0, 48)
+navIndicator.Size = UDim2.new(0, 56, 0, 32)
 navIndicator.Position = UDim2.new(0, 0, 0, 50)
 navIndicator.BackgroundColor3 = M3_SECONDARY_CONTAINER
 navIndicator.BorderSizePixel = 0
@@ -623,7 +627,7 @@ navIndicator.Visible = false
 navIndicator.Parent = navFrame
 
 local navIndicatorCorner = Instance.new("UICorner")
-navIndicatorCorner.CornerRadius = UDim.new(0, 24)
+navIndicatorCorner.CornerRadius = UDim.new(0, 16)
 navIndicatorCorner.Parent = navIndicator
 
 -- Forward declarations for visual preview panel (defined later)
@@ -668,15 +672,15 @@ local function showPage(name)
 	-- Activate new button
 	local newData = navButtons[name]
 	if newData then
-		newData.btn.BackgroundColor3 = M3_SECONDARY_CONTAINER
+		newData.btn.BackgroundColor3 = M3_SURFACE
 		newData.icon.ImageColor3 = M3_ON_SURFACE
 
 		-- Position indicator at new button
 		local btn = newData.btn
 		local targetY = btn.AbsolutePosition.Y - navFrame.AbsolutePosition.Y
 		local targetH = btn.AbsoluteSize.Y
-		navIndicator.Size = UDim2.new(0, 48, 0, targetH)
-		navIndicator.Position = UDim2.new(0, 0, 0, targetY)
+		navIndicator.Size = UDim2.new(0, 56, 0, 32)
+		navIndicator.Position = UDim2.new(0, 0, 0, targetY + (targetH - 32) / 2)
 		navIndicator.Visible = true
 	end
 
@@ -760,7 +764,7 @@ local function createToggle(parent, text, callback)
 			switchBg.BackgroundColor3 = M3_PRIMARY
 			switchOutline.Transparency = 1
 			knob.BackgroundColor3 = M3_ON_PRIMARY
-			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(1, -24, 0.5, -12), Size = UDim2.new(0, 24, 0, 24) })
+			local knobTween = TweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(1, -28, 0.5, -12), Size = UDim2.new(0, 24, 0, 24) })
 			knobTween:Play()
 		else
 			switchBg.BackgroundColor3 = M3_SURFACE_VAR
@@ -1252,6 +1256,74 @@ local hideTeleportSubmenu
 local spectateSubmenuVisible = false
 local showSpectateSubmenu
 local hideSpectateSubmenu
+
+-- Smart submenu slot system: right slot and left slot
+-- When a submenu opens, it picks the opposite side of any currently open panel
+-- If both slots are full, the oldest one closes with animation
+local submenuSlots = { right = nil, left = nil }
+local submenuOpenOrder = {}
+
+local function assignSubmenuSlot(panel, showFn, hideFn)
+	-- If this panel is already open, just close it
+	if submenuSlots.right == panel or submenuSlots.left == panel then
+		return nil
+	end
+
+	-- Determine which slot to use
+	local useRight = (submenuSlots.right == nil)
+	local slot
+
+	if useRight then
+		slot = "right"
+	else
+		-- Right is taken, try left
+		if submenuSlots.left == nil then
+			slot = "left"
+		else
+			-- Both slots full - close the oldest one and take its slot
+			local oldest = table.remove(submenuOpenOrder, 1)
+			if oldest then
+				if submenuSlots.right == oldest then
+					slot = "right"
+				elseif submenuSlots.left == oldest then
+					slot = "left"
+				end
+				-- Close the oldest panel with animation
+				if oldest == teleportPanel and hideTeleportSubmenu then
+					task.spawn(function() hideTeleportSubmenu() end)
+				elseif oldest == copySkinPanel and hideCopySkinSubmenu then
+					task.spawn(function() hideCopySkinSubmenu() end)
+				elseif oldest == spectatePanel and hideSpectateSubmenu then
+					task.spawn(function() hideSpectateSubmenu() end)
+				elseif oldest == visualPanel and hideVisualPreview then
+					task.spawn(function() hideVisualPreview() end)
+				end
+			else
+				slot = "right"
+			end
+		end
+	end
+
+	-- Free old slot if panel was previously in one
+	if submenuSlots.right == panel then submenuSlots.right = nil end
+	if submenuSlots.left == panel then submenuSlots.left = nil end
+
+	submenuSlots[slot] = panel
+	table.insert(submenuOpenOrder, panel)
+
+	return slot
+end
+
+local function freeSubmenuSlot(panel)
+	if submenuSlots.right == panel then submenuSlots.right = nil end
+	if submenuSlots.left == panel then submenuSlots.left = nil end
+	for i, p in ipairs(submenuOpenOrder) do
+		if p == panel then
+			table.remove(submenuOpenOrder, i)
+			break
+		end
+	end
+end
 local spectateTarget = nil
 local spectateEnabled = false
 
@@ -1297,6 +1369,19 @@ local teleportPanelCorner = Instance.new("UICorner")
 teleportPanelCorner.CornerRadius = UDim.new(0, 16)
 teleportPanelCorner.Parent = teleportPanel
 
+local teleportPanelStroke = Instance.new("UIStroke")
+teleportPanelStroke.Color = M3_OUTLINE_VAR
+teleportPanelStroke.Thickness = 1
+teleportPanelStroke.Transparency = 0
+teleportPanelStroke.Parent = teleportPanel
+
+local teleportPanelPad = Instance.new("UIPadding")
+teleportPanelPad.PaddingTop = UDim.new(0, 12)
+teleportPanelPad.PaddingBottom = UDim.new(0, 12)
+teleportPanelPad.PaddingLeft = UDim.new(0, 12)
+teleportPanelPad.PaddingRight = UDim.new(0, 12)
+teleportPanelPad.Parent = teleportPanel
+
 -- Sync teleport panel position with mainFrame (follows when dragged)
 -- mainFrame: AnchorPoint(0.5,0.5), Position(0.5,0, 0.5,0), Size(640,420)
 -- Top-left of mainFrame = (centerX - 320, centerY - 210)
@@ -1304,10 +1389,18 @@ teleportPanelCorner.Parent = teleportPanel
 -- Teleport panel (AnchorPoint 0,0) goes at (right edge, top-left Y)
 trackConn(RunService.RenderStepped:Connect(function()
 	if teleportPanel.Visible then
-		teleportPanel.Position = UDim2.new(
-			0.5, mainFrame.Position.X.Offset + 320,
-			0.5, mainFrame.Position.Y.Offset - 210
-		)
+		local isRight = (submenuSlots.right == teleportPanel)
+		if isRight then
+			teleportPanel.Position = UDim2.new(
+				0.5, mainFrame.Position.X.Offset + 320 + 8,
+				0.5, mainFrame.Position.Y.Offset - 210
+			)
+		else
+			teleportPanel.Position = UDim2.new(
+				0.5, mainFrame.Position.X.Offset - 320 - 258,
+				0.5, mainFrame.Position.Y.Offset - 210
+			)
+		end
 		teleportPanel.Size = UDim2.new(0, 250, 0, 420)
 	end
 end))
@@ -1460,6 +1553,9 @@ showTeleportSubmenu = function()
 	teleportSubmenuVisible = true
 	playRandomPageSound()
 
+	-- Assign a slot (closes oldest if both full)
+	assignSubmenuSlot(teleportPanel, showTeleportSubmenu, hideTeleportSubmenu)
+
 	refreshTeleportList()
 
 	local panelHeight = 420
@@ -1475,6 +1571,7 @@ hideTeleportSubmenu = function()
 	if not teleportSubmenuVisible then return end
 	teleportSubmenuVisible = false
 	playRandomPageSound()
+	freeSubmenuSlot(teleportPanel)
 
 	local sizeTween = TweenService:Create(teleportPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 420) })
 	sizeTween:Play()
@@ -1554,13 +1651,34 @@ local copySkinPanelCorner = Instance.new("UICorner")
 copySkinPanelCorner.CornerRadius = UDim.new(0, 16)
 copySkinPanelCorner.Parent = copySkinPanel
 
+local copySkinPanelStroke = Instance.new("UIStroke")
+copySkinPanelStroke.Color = M3_OUTLINE_VAR
+copySkinPanelStroke.Thickness = 1
+copySkinPanelStroke.Transparency = 0
+copySkinPanelStroke.Parent = copySkinPanel
+
+local copySkinPanelPad = Instance.new("UIPadding")
+copySkinPanelPad.PaddingTop = UDim.new(0, 12)
+copySkinPanelPad.PaddingBottom = UDim.new(0, 12)
+copySkinPanelPad.PaddingLeft = UDim.new(0, 12)
+copySkinPanelPad.PaddingRight = UDim.new(0, 12)
+copySkinPanelPad.Parent = copySkinPanel
+
 -- Sync position with mainFrame
 trackConn(RunService.RenderStepped:Connect(function()
 	if copySkinPanel.Visible then
-		copySkinPanel.Position = UDim2.new(
-			0.5, mainFrame.Position.X.Offset + 320,
-			0.5, mainFrame.Position.Y.Offset - 210
-		)
+		local isRight = (submenuSlots.right == copySkinPanel)
+		if isRight then
+			copySkinPanel.Position = UDim2.new(
+				0.5, mainFrame.Position.X.Offset + 320 + 8,
+				0.5, mainFrame.Position.Y.Offset - 210
+			)
+		else
+			copySkinPanel.Position = UDim2.new(
+				0.5, mainFrame.Position.X.Offset - 320 - 258,
+				0.5, mainFrame.Position.Y.Offset - 210
+			)
+		end
 		copySkinPanel.Size = UDim2.new(0, 250, 0, 420)
 	end
 end))
@@ -1826,6 +1944,9 @@ showCopySkinSubmenu = function()
 	if copySkinSubmenuVisible then return end
 	copySkinSubmenuVisible = true
 	playRandomPageSound()
+
+	assignSubmenuSlot(copySkinPanel, showCopySkinSubmenu, hideCopySkinSubmenu)
+
 	refreshCopySkinList()
 
 	local panelHeight = 420
@@ -1841,6 +1962,7 @@ hideCopySkinSubmenu = function()
 	if not copySkinSubmenuVisible then return end
 	copySkinSubmenuVisible = false
 	playRandomPageSound()
+	freeSubmenuSlot(copySkinPanel)
 
 	local sizeTween = TweenService:Create(copySkinPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 420) })
 	sizeTween:Play()
@@ -1928,13 +2050,34 @@ local spectatePanelCorner = Instance.new("UICorner")
 spectatePanelCorner.CornerRadius = UDim.new(0, 16)
 spectatePanelCorner.Parent = spectatePanel
 
+local spectatePanelStroke = Instance.new("UIStroke")
+spectatePanelStroke.Color = M3_OUTLINE_VAR
+spectatePanelStroke.Thickness = 1
+spectatePanelStroke.Transparency = 0
+spectatePanelStroke.Parent = spectatePanel
+
+local spectatePanelPad = Instance.new("UIPadding")
+spectatePanelPad.PaddingTop = UDim.new(0, 12)
+spectatePanelPad.PaddingBottom = UDim.new(0, 12)
+spectatePanelPad.PaddingLeft = UDim.new(0, 12)
+spectatePanelPad.PaddingRight = UDim.new(0, 12)
+spectatePanelPad.Parent = spectatePanel
+
 -- Sync spectate panel position with mainFrame (left side, top aligned)
 trackConn(RunService.RenderStepped:Connect(function()
 	if spectatePanel.Visible then
-		spectatePanel.Position = UDim2.new(
-			0.5, mainFrame.Position.X.Offset - 320 - 260,
-			0.5, mainFrame.Position.Y.Offset - 210
-		)
+		local isRight = (submenuSlots.right == spectatePanel)
+		if isRight then
+			spectatePanel.Position = UDim2.new(
+				0.5, mainFrame.Position.X.Offset + 320 + 8,
+				0.5, mainFrame.Position.Y.Offset - 210
+			)
+		else
+			spectatePanel.Position = UDim2.new(
+				0.5, mainFrame.Position.X.Offset - 320 - 258,
+				0.5, mainFrame.Position.Y.Offset - 210
+			)
+		end
 		spectatePanel.Size = UDim2.new(0, 250, 0, 420)
 	end
 end))
@@ -2138,6 +2281,9 @@ showSpectateSubmenu = function()
 	if spectateSubmenuVisible then return end
 	spectateSubmenuVisible = true
 	playRandomPageSound()
+
+	assignSubmenuSlot(spectatePanel, showSpectateSubmenu, hideSpectateSubmenu)
+
 	refreshSpectateList()
 	spectatePanel.Visible = true
 	spectatePanel.Size = UDim2.new(0, 0, 0, 420)
@@ -2150,6 +2296,7 @@ hideSpectateSubmenu = function()
 	if not spectateSubmenuVisible then return end
 	spectateSubmenuVisible = false
 	playRandomPageSound()
+	freeSubmenuSlot(spectatePanel)
 	local sizeTween = TweenService:Create(spectatePanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 420) })
 	sizeTween:Play()
 	sizeTween.Completed:Wait()
@@ -2269,13 +2416,34 @@ local visualPanelCorner = Instance.new("UICorner")
 visualPanelCorner.CornerRadius = UDim.new(0, 16)
 visualPanelCorner.Parent = visualPanel
 
+local visualPanelStroke = Instance.new("UIStroke")
+visualPanelStroke.Color = M3_OUTLINE_VAR
+visualPanelStroke.Thickness = 1
+visualPanelStroke.Transparency = 0
+visualPanelStroke.Parent = visualPanel
+
+local visualPanelPad = Instance.new("UIPadding")
+visualPanelPad.PaddingTop = UDim.new(0, 12)
+visualPanelPad.PaddingBottom = UDim.new(0, 12)
+visualPanelPad.PaddingLeft = UDim.new(0, 12)
+visualPanelPad.PaddingRight = UDim.new(0, 12)
+visualPanelPad.Parent = visualPanel
+
 -- Sync visual panel position with mainFrame (right side, top aligned)
 trackConn(RunService.RenderStepped:Connect(function()
 	if visualPanel.Visible then
-		visualPanel.Position = UDim2.new(
-			0.5, mainFrame.Position.X.Offset + 320,
-			0.5, mainFrame.Position.Y.Offset - 210
-		)
+		local isRight = (submenuSlots.right == visualPanel)
+		if isRight then
+			visualPanel.Position = UDim2.new(
+				0.5, mainFrame.Position.X.Offset + 320 + 8,
+				0.5, mainFrame.Position.Y.Offset - 210
+			)
+		else
+			visualPanel.Position = UDim2.new(
+				0.5, mainFrame.Position.X.Offset - 320 - 258,
+				0.5, mainFrame.Position.Y.Offset - 210
+			)
+		end
 		visualPanel.Size = UDim2.new(0, 250, 0, 420)
 	end
 end))
@@ -2617,6 +2785,8 @@ showVisualPreview = function()
 	visualPreviewVisible = true
 	playRandomPageSound()
 
+	assignSubmenuSlot(visualPanel, showVisualPreview, hideVisualPreview)
+
 	visualPanel.Visible = true
 	visualPanel.Size = UDim2.new(0, 0, 0, 420)
 
@@ -2629,6 +2799,7 @@ hideVisualPreview = function()
 	if not visualPreviewVisible then return end
 	visualPreviewVisible = false
 	playRandomPageSound()
+	freeSubmenuSlot(visualPanel)
 
 	local sizeTween = TweenService:Create(visualPanel, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 420) })
 	sizeTween:Play()
