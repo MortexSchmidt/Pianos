@@ -147,8 +147,8 @@ notifGui.IgnoreGuiInset = true
 protectGui(notifGui)
 notifGui.Parent = uiParent
 
-local NOTIF_GAP = 12
-local NOTIF_BOTTOM = 20
+local NOTIF_GAP = 16
+local NOTIF_BOTTOM = 8
 
 -- Full-screen container so card positions are relative to screen, not a small frame
 local container = Instance.new("Frame")
@@ -285,19 +285,19 @@ notify = function(title, message, duration, color, notifType)
 
 	task.defer(function()
 		task.wait()
-		local height = card.AbsoluteSize.Y
 		-- Wait for AutomaticSize to settle (may take 2-3 frames for wrapped text)
-		if height <= 0 then
-			task.wait()
-			height = card.AbsoluteSize.Y
-		end
-		if height <= 0 then
-			task.wait()
-			height = card.AbsoluteSize.Y
-		end
+		local height = card.AbsoluteSize.Y
+		task.wait()
+		height = card.AbsoluteSize.Y
+		task.wait()
+		height = card.AbsoluteSize.Y
 		-- Fallback: estimate from text bounds
 		if height <= 0 then
 			height = 60
+		end
+		-- Ensure minimum height
+		if height < 50 then
+			height = 50
 		end
 		local data = { frame = card, height = height, dismissed = false }
 		table.insert(notifications, 1, data)
