@@ -626,21 +626,6 @@ end
 local currentPage = nil
 local pageSwitching = false
 
--- Active nav indicator (M3 pill shape behind selected item)
-local navIndicator = Instance.new("Frame")
-navIndicator.Name = "NavIndicator"
-navIndicator.Size = UDim2.new(0, 56, 0, 32)
-navIndicator.Position = UDim2.new(0, 0, 0, 50)
-navIndicator.BackgroundColor3 = M3_SECONDARY_CONTAINER
-navIndicator.BorderSizePixel = 0
-navIndicator.ZIndex = 1
-navIndicator.Visible = false
-navIndicator.Parent = navFrame
-
-local navIndicatorCorner = Instance.new("UICorner")
-navIndicatorCorner.CornerRadius = UDim.new(0, 16)
-navIndicatorCorner.Parent = navIndicator
-
 -- Forward declarations for visual preview panel (defined later)
 local showVisualPreview
 local hideVisualPreview
@@ -683,16 +668,7 @@ local function showPage(name)
 	-- Activate new button
 	local newData = navButtons[name]
 	if newData then
-		newData.btn.BackgroundColor3 = M3_SURFACE
 		newData.icon.ImageColor3 = M3_ON_SURFACE
-
-		-- Position indicator at new button
-		local btn = newData.btn
-		local targetY = btn.AbsolutePosition.Y - navFrame.AbsolutePosition.Y
-		local targetH = btn.AbsoluteSize.Y
-		navIndicator.Size = UDim2.new(0, 56, 0, 32)
-		navIndicator.Position = UDim2.new(0, 0, 0, targetY + (targetH - 32) / 2)
-		navIndicator.Visible = true
 	end
 
 	local fadeOut = TweenService:Create(fadeOverlay, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { BackgroundTransparency = 1 })
@@ -1791,14 +1767,14 @@ local function applyCopySkin(targetPlayer)
 		return
 	end
 
-	-- Remove existing accessories from my character
+	-- Remove existing appearance items from my character
 	for _, item in ipairs(myChar:GetChildren()) do
 		if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item.Name == "BodyColors" then
 			pcall(function() item:Destroy() end)
 		end
 	end
 
-	-- Copy accessories
+	-- Copy all accessories (includes hair, hats, face accessories, etc.)
 	for _, item in ipairs(targetChar:GetChildren()) do
 		if item:IsA("Accessory") then
 			local clone = item:Clone()
@@ -1830,20 +1806,17 @@ local function applyCopySkin(targetPlayer)
 		myGraphic.Parent = myChar
 	end
 
-	-- Copy body colors
+	-- Copy body colors (skin color for all body parts)
 	local targetBodyColors = targetChar:FindFirstChild("BodyColors")
 	if targetBodyColors then
-		local myBodyColors = myChar:FindFirstChild("BodyColors")
-		if not myBodyColors then
-			myBodyColors = Instance.new("BodyColors")
-			myBodyColors.Parent = myChar
-		end
+		local myBodyColors = Instance.new("BodyColors")
 		myBodyColors.HeadColor3 = targetBodyColors.HeadColor3
 		myBodyColors.TorsoColor3 = targetBodyColors.TorsoColor3
 		myBodyColors.LeftArmColor3 = targetBodyColors.LeftArmColor3
 		myBodyColors.RightArmColor3 = targetBodyColors.RightArmColor3
 		myBodyColors.LeftLegColor3 = targetBodyColors.LeftLegColor3
 		myBodyColors.RightLegColor3 = targetBodyColors.RightLegColor3
+		myBodyColors.Parent = myChar
 	end
 
 	-- Copy face
@@ -1864,13 +1837,53 @@ local function applyCopySkin(targetPlayer)
 		end
 	end
 
-	-- Copy humanoid properties
+	-- Copy humanoid scaling (body proportions)
 	pcall(function()
 		myHum.BodyHeightScale = targetHum.BodyHeightScale
 		myHum.BodyWidthScale = targetHum.BodyWidthScale
 		myHum.BodyDepthScale = targetHum.BodyDepthScale
 		myHum.HeadScale = targetHum.HeadScale
 		myHum.RigType = targetHum.RigType
+	end)
+
+	-- Copy HumanoidDescription for full avatar replication
+	pcall(function()
+		local targetDesc = targetHum:FindFirstChildOfClass("HumanoidDescription")
+		if targetDesc then
+			local myDesc = myHum:FindFirstChildOfClass("HumanoidDescription")
+			if not myDesc then
+				myDesc = Instance.new("HumanoidDescription")
+				myDesc.Parent = myHum
+			end
+			myDesc.Shirt = targetDesc.Shirt
+			myDesc.Pants = targetDesc.Pants
+			myDesc.Graphic = targetDesc.Graphic
+			myDesc.Face = targetDesc.Face
+			myDesc.HeadColor = targetDesc.HeadColor
+			myDesc.TorsoColor = targetDesc.TorsoColor
+			myDesc.LeftArmColor = targetDesc.LeftArmColor
+			myDesc.RightArmColor = targetDesc.RightArmColor
+			myDesc.LeftLegColor = targetDesc.LeftLegColor
+			myDesc.RightLegColor = targetDesc.RightLegColor
+			myDesc.BodyTypeScale = targetDesc.BodyTypeScale
+			myDesc.DepthScale = targetDesc.DepthScale
+			myDesc.HeightScale = targetDesc.HeightScale
+			myDesc.WidthScale = targetDesc.WidthScale
+			myDesc.HeadScale = targetDesc.HeadScale
+			myDesc.ProportionScale = targetDesc.ProportionScale
+			-- Copy all accessory types
+			myDesc.HatAccessory = targetDesc.HatAccessory
+			myDesc.HairAccessory = targetDesc.HairAccessory
+			myDesc.FaceAccessory = targetDesc.FaceAccessory
+			myDesc.NeckAccessory = targetDesc.NeckAccessory
+			myDesc.ShouldersAccessory = targetDesc.ShouldersAccessory
+			myDesc.FrontAccessory = targetDesc.FrontAccessory
+			myDesc.BackAccessory = targetDesc.BackAccessory
+			myDesc.WaistAccessory = targetDesc.WaistAccessory
+			myDesc.GraphicTShirt = targetDesc.GraphicTShirt
+			-- Apply the description to actually update the avatar
+			myHum:ApplyDescription(myDesc)
+		end
 	end)
 
 	setCopiedName(targetPlayer.DisplayName)
