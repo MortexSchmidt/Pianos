@@ -74,24 +74,13 @@ local M3_ON_SURFACE_VAR = Color3.fromRGB(202, 196, 208) -- #CAC4D0 on surface va
 local M3_OUTLINE = Color3.fromRGB(147, 143, 153)     -- #938F99 outline
 local M3_OUTLINE_VAR = Color3.fromRGB(73, 69, 79)    -- #49454F outline variant
 
--- Aliases for backward compatibility
-local BG = M3_SURFACE
-local BG_DARK = M3_SURFACE_CONTAINER
-local BG_LIGHT = M3_SURFACE_CONTAINER
-local CARD_BG = M3_SURFACE_CONTAINER
-local CARD_HOVER = M3_SURFACE_CONTAINER_HIGH
-local LIST_HOVER = M3_SURFACE_CONTAINER_HIGH
-local LIST_ACTIVE = M3_SURFACE_CONTAINER_HIGH
-local BORDER_COLOR = M3_OUTLINE_VAR
+-- Aliases (only keep used ones to save local registers)
 local ACCENT = M3_PRIMARY
-local ACCENT_HOVER = M3_ON_PRIMARY_CONTAINER
 local TEXT_WHITE = M3_ON_SURFACE
 local TEXT_GRAY = M3_ON_SURFACE_VAR
-local TEXT_NORMAL = M3_ON_SURFACE
-local GREEN = Color3.fromRGB(169, 253, 163)          -- #A9FDA3 M3 success-ish
+local GREEN = Color3.fromRGB(169, 253, 163)
 local RED = M3_ERROR
-local WARNING = Color3.fromRGB(255, 216, 107)       -- #FFD86B M3 warning-ish
-local BLUE = M3_PRIMARY
+local WARNING = Color3.fromRGB(255, 216, 107)
 
 -- Sound IDs
 local SOUND_INJECT = "124834506603771"
@@ -137,6 +126,8 @@ end
 -- ===================
 -- NOTIFICATION SYSTEM
 -- ===================
+local notify
+do
 local NOTIF_WIDTH = 340
 local notifications = {}
 
@@ -204,7 +195,7 @@ local NOTIF_COLORS = {
 	success = GREEN,
 }
 
-local function notify(title, message, duration, color, notifType)
+notify = function(title, message, duration, color, notifType)
 	duration = duration or 4
 	notifType = notifType or "info"
 	color = NOTIF_COLORS[notifType] or color or WARNING
@@ -313,6 +304,7 @@ local function notify(title, message, duration, color, notifType)
 		task.delay(duration, function() dismiss(data) end)
 	end)
 end
+end -- notification system do block
 
 -- ===================
 -- MAIN GUI
@@ -341,17 +333,18 @@ mainFrame.Active = false
 mainFrame.GroupColor3 = Color3.fromRGB(255, 255, 255)
 mainFrame.Parent = gui
 
--- M3 large rounded corners
+-- M3 large rounded corners + shadow (no need to keep references)
+do
 local mainCorner = Instance.new("UICorner")
 mainCorner.CornerRadius = UDim.new(0, 28)
 mainCorner.Parent = mainFrame
 
--- M3 elevation shadow (subtle)
 local mainShadow = Instance.new("UIStroke")
 mainShadow.Color = Color3.fromRGB(0, 0, 0)
 mainShadow.Thickness = 0
 mainShadow.Transparency = 0.8
 mainShadow.Parent = mainFrame
+end
 
 -- Title bar (M3 top app bar style)
 local titleBar = Instance.new("Frame")
@@ -359,7 +352,10 @@ titleBar.Size = UDim2.new(1, 0, 0, 48)
 titleBar.BackgroundColor3 = M3_SURFACE
 titleBar.BorderSizePixel = 0
 titleBar.Active = true
--- Dragging
+titleBar.Parent = mainFrame
+
+-- Dragging + update banner (scoped to free registers)
+do
 local dragging = false
 local dragInput
 local dragStart
@@ -382,8 +378,6 @@ titleBar.InputChanged:Connect(function(input)
 	end
 end)
 
-titleBar.Parent = mainFrame
-
 local titleText = Instance.new("TextLabel")
 titleText.Font = Enum.Font.BuilderSansMedium
 titleText.TextSize = 16
@@ -396,7 +390,6 @@ titleText.Position = UDim2.new(0, 20, 0, 0)
 titleText.Text = "Undercore"
 titleText.Parent = titleBar
 
--- Update banner (hidden by default, shown when update is available)
 local updateBanner = Instance.new("TextButton")
 updateBanner.Name = "UpdateBanner"
 updateBanner.BackgroundTransparency = 1
@@ -429,6 +422,7 @@ updateText.Position = UDim2.new(0, 20, 0, 0)
 updateText.Text = "New update available - click to restart"
 updateText.Visible = false
 updateText.Parent = updateBanner
+end
 
 -- Left navigation (M3 navigation rail)
 local navFrame = Instance.new("ScrollingFrame")
@@ -443,6 +437,7 @@ navFrame.BorderSizePixel = 0
 navFrame.Active = false
 navFrame.Parent = mainFrame
 
+do
 local navLayout = Instance.new("UIListLayout")
 navLayout.FillDirection = Enum.FillDirection.Vertical
 navLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -453,6 +448,7 @@ local navPad = Instance.new("UIPadding")
 navPad.PaddingTop = UDim.new(0, 4)
 navPad.PaddingBottom = UDim.new(0, 4)
 navPad.Parent = navFrame
+end
 
 -- Right content (M3 surface)
 local contentFrame = Instance.new("Frame")
@@ -463,12 +459,14 @@ contentFrame.BorderSizePixel = 0
 contentFrame.Active = false
 contentFrame.Parent = mainFrame
 
+do
 local contentPad = Instance.new("UIPadding")
 contentPad.PaddingTop = UDim.new(0, 16)
 contentPad.PaddingBottom = UDim.new(0, 16)
 contentPad.PaddingLeft = UDim.new(0, 16)
 contentPad.PaddingRight = UDim.new(0, 16)
 contentPad.Parent = contentFrame
+end
 
 -- Pages
 local pages = {}
@@ -944,6 +942,7 @@ editModeHint.Visible = false
 editModeHint.ZIndex = 10
 editModeHint.Parent = editModeGui
 
+do
 local editModeHintCorner = Instance.new("UICorner")
 editModeHintCorner.CornerRadius = UDim.new(0, 16)
 editModeHintCorner.Parent = editModeHint
@@ -984,6 +983,7 @@ backspaceBadge.Parent = editModeHint
 local backspaceBadgeCorner = Instance.new("UICorner")
 backspaceBadgeCorner.CornerRadius = UDim.new(0, 14)
 backspaceBadgeCorner.Parent = backspaceBadge
+end
 
 -- On-screen keybind display
 local keybindGui = Instance.new("ScreenGui")
@@ -1006,6 +1006,7 @@ keybindFrame.AutomaticSize = Enum.AutomaticSize.Y
 keybindFrame.Visible = false
 keybindFrame.Parent = keybindGui
 
+do
 local keybindFrameCorner = Instance.new("UICorner")
 keybindFrameCorner.CornerRadius = UDim.new(0, 16)
 keybindFrameCorner.Parent = keybindFrame
@@ -1032,6 +1033,7 @@ keybindPadding.PaddingBottom = UDim.new(0, 6)
 keybindPadding.PaddingLeft = UDim.new(0, 8)
 keybindPadding.PaddingRight = UDim.new(0, 8)
 keybindPadding.Parent = keybindFrame
+end
 
 local function keyCodeName(keyCode)
 	local name = tostring(keyCode)
