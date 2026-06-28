@@ -1,7 +1,7 @@
 -- Undercore v2.4.0 - Custom Cheat Menu
 -- Inject via executor
 
-local SCRIPT_VERSION = "2.4.5"
+local SCRIPT_VERSION = "2.4.6"
 local terminated = false
 
 local TweenService = game:GetService("TweenService")
@@ -74,8 +74,9 @@ local BLUE = Color3.fromRGB(52, 129, 220)      -- #3481dc secondary blue
 
 -- Sound IDs
 local SOUND_INJECT = "124834506603771"
-local SOUND_NOTIF = "131268007007000"
-local SOUND_ERROR = "18999173729"
+local SOUND_NOTIF = "85513921738461"
+local SOUND_SUCCESS = "134998934323294"
+local SOUND_ERROR = "80779065737564"
 local SOUND_HOVER = "81092680156069"
 local SOUND_MODAL = "18999173729"
 local SOUND_PAGE = { "98884317334085" }
@@ -98,7 +99,7 @@ end
 
 -- Preload all sounds
 do
-	local allSounds = { SOUND_INJECT, SOUND_NOTIF, SOUND_ERROR, SOUND_HOVER, SOUND_MODAL }
+	local allSounds = { SOUND_INJECT, SOUND_NOTIF, SOUND_SUCCESS, SOUND_ERROR, SOUND_HOVER, SOUND_MODAL }
 	for _, id in ipairs(allSounds) do
 		local s = Instance.new("Sound")
 		s.SoundId = "rbxassetid://" .. id
@@ -182,7 +183,7 @@ local function notify(title, message, duration, color, notifType)
 	if notifType == "error" then
 		playSound(SOUND_ERROR, 0.5)
 	elseif notifType == "success" then
-		playSound(SOUND_INJECT, 0.8)
+		playSound(SOUND_SUCCESS, 0.8)
 	else
 		playSound(SOUND_NOTIF, 0.5)
 	end
@@ -193,12 +194,10 @@ local function notify(title, message, duration, color, notifType)
 		if not n.dismissed then y = y + n.height + 8 end
 	end
 
-	local card = Instance.new("CanvasGroup")
+	local card = Instance.new("Frame")
 	card.Size = UDim2.new(0, NOTIF_WIDTH, 0, 0)
 	card.AutomaticSize = Enum.AutomaticSize.Y
 	card.BackgroundColor3 = CARD_BG
-	card.GroupColor3 = Color3.fromRGB(255, 255, 255)
-	card.GroupTransparency = 0
 	card.BorderSizePixel = 0
 	card.Position = UDim2.new(0.5, -NOTIF_WIDTH / 2, 1, 50)
 	card.Parent = container
@@ -207,11 +206,12 @@ local function notify(title, message, duration, color, notifType)
 	cardCorner.CornerRadius = UDim.new(0, 10)
 	cardCorner.Parent = card
 
-	-- Icon on left
+	-- Icon on left, vertically centered
 	local icon = Instance.new("ImageLabel")
 	icon.Name = "NotifIcon"
 	icon.Size = UDim2.new(0, 22, 0, 22)
-	icon.Position = UDim2.new(0, 14, 0, 12)
+	icon.AnchorPoint = Vector2.new(0, 0.5)
+	icon.Position = UDim2.new(0, 14, 0.5, 0)
 	icon.BackgroundTransparency = 1
 	icon.Image = iconId
 	icon.ImageColor3 = color
@@ -219,11 +219,11 @@ local function notify(title, message, duration, color, notifType)
 	icon.ZIndex = 6
 	icon.Parent = card
 
-	-- Colored right strip
+	-- Colored right strip, full height
 	local strip = Instance.new("Frame")
 	strip.Name = "Strip"
-	strip.Size = UDim2.new(0, 3, 1, 0)
-	strip.Position = UDim2.new(1, -3, 0, 0)
+	strip.Size = UDim2.new(0, 4, 1, 0)
+	strip.Position = UDim2.new(1, -4, 0, 0)
 	strip.BackgroundColor3 = color
 	strip.BorderSizePixel = 0
 	strip.ZIndex = 6
@@ -235,8 +235,8 @@ local function notify(title, message, duration, color, notifType)
 
 	-- Content
 	local content = Instance.new("Frame")
-	content.Size = UDim2.new(1, -50, 0, 0)
-	content.Position = UDim2.new(0, 44, 0, 0)
+	content.Size = UDim2.new(1, -68, 0, 0)
+	content.Position = UDim2.new(0, 48, 0, 0)
 	content.AutomaticSize = Enum.AutomaticSize.Y
 	content.BackgroundTransparency = 1
 	content.Parent = card
@@ -244,7 +244,7 @@ local function notify(title, message, duration, color, notifType)
 	local pad = Instance.new("UIPadding")
 	pad.PaddingTop = UDim.new(0, 12)
 	pad.PaddingBottom = UDim.new(0, 12)
-	pad.PaddingRight = UDim.new(0, 12)
+	pad.PaddingRight = UDim.new(0, 14)
 	pad.Parent = content
 
 	local msg = Instance.new("TextLabel")
