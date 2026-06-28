@@ -1882,6 +1882,7 @@ stopBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 -- ===================
 -- MARKET PAGE
 -- ===================
+do
 local marketPage = createPage("Market")
 local navMarket, navMarketIcon, navMarketLabel = createNavButton("Market")
 navButtons["Market"] = { btn = navMarket, icon = navMarketIcon, label = navMarketLabel }
@@ -2150,10 +2151,12 @@ copyShareBtn.MouseButton1Click:Connect(function()
 end)
 
 copyShareBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+end -- Market page scope
 
 -- ===================
 -- SETTINGS PAGE
 -- ===================
+do
 local settingsPage = createPage("Settings")
 local navSettings, navSettingsIcon, navSettingsLabel = createNavButton("Settings")
 navButtons["Settings"] = { btn = navSettings, icon = navSettingsIcon, label = navSettingsLabel }
@@ -2234,10 +2237,12 @@ exitBtn.MouseButton1Click:Connect(function()
 end)
 
 exitBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+end -- Settings page scope
 
 -- ===================
 -- KEYBINDS PAGE
 -- ===================
+do
 local keybindsPage = createPage("Keybinds")
 local navKeybinds, navKeybindsIcon, navKeybindsLabel = createNavButton("Keybinds")
 navButtons["Keybinds"] = { btn = navKeybinds, icon = navKeybindsIcon, label = navKeybindsLabel }
@@ -2359,6 +2364,7 @@ for _, feature in ipairs(bindableActions) do
 
 	bindBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 end
+end -- Keybinds page scope
 
 -- ===================
 -- ABOUT PAGE
@@ -2506,6 +2512,7 @@ creditsText.BackgroundTransparency = 1
 creditsText.Size = UDim2.new(1, 0, 0, 40)
 creditsText.Text = "Piano engine: TALENTLESS by hellohellohell012321\nUI: Undercore by neruka"
 creditsText.Parent = aboutPage
+end -- About page scope
 
 -- Default page
 showPage("Songs")
