@@ -1462,6 +1462,8 @@ local BUILTIN_SONGS = {
 -- ===================
 -- SONGS PAGE
 -- ===================
+local selectedSong = nil
+do
 local songsPage = createPage("Songs")
 local navSongs, navSongsIcon, navSongsLabel = createNavButton("Songs")
 navButtons["Songs"] = { btn = navSongs, icon = navSongsIcon, label = navSongsLabel }
@@ -1508,7 +1510,6 @@ songListLayout.Padding = UDim.new(0, 4)
 songListLayout.Parent = songListFrame
 
 local songEntries = {}
-local selectedSong = nil
 
 local function refreshSongList(filter)
 	filter = (filter or ""):lower()
@@ -1672,10 +1673,12 @@ playCustomBtn.MouseButton1Click:Connect(function()
 end)
 
 playCustomBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+end -- Songs page scope
 
 -- ===================
 -- PLAYER PAGE
 -- ===================
+do
 local playerPage = createPage("Player")
 local navPlayer, navPlayerIcon, navPlayerLabel = createNavButton("Player")
 navButtons["Player"] = { btn = navPlayer, icon = navPlayerIcon, label = navPlayerLabel }
@@ -1878,6 +1881,7 @@ end)
 playBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 pauseBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
 stopBtn.MouseEnter:Connect(function() playSound(SOUND_HOVER, 1.0) end)
+end -- Player page scope
 
 -- ===================
 -- MARKET PAGE
@@ -2369,6 +2373,7 @@ end -- Keybinds page scope
 -- ===================
 -- ABOUT PAGE
 -- ===================
+do
 local aboutPage = createPage("About")
 local navAbout, navAboutIcon, navAboutLabel = createNavButton("About")
 navButtons["About"] = { btn = navAbout, icon = navAboutIcon, label = navAboutLabel }
