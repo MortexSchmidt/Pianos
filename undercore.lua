@@ -123,6 +123,13 @@ local function playRandomPageSound()
 	playSound(SOUND_PAGE[idx], 1.5)
 end
 
+-- Notification icons (top-level so preloader can access them)
+local NOTIF_ICONS = {
+	info = "rbxassetid://72432575303550",
+	error = "rbxassetid://117665558668208",
+	success = "rbxassetid://137280763593602",
+}
+
 -- ===================
 -- NOTIFICATION SYSTEM
 -- ===================
@@ -181,13 +188,6 @@ local function dismiss(data)
 	end
 	recalcPositions()
 end
-
--- Notification icons
-local NOTIF_ICONS = {
-	info = "rbxassetid://72432575303550",
-	error = "rbxassetid://117665558668208",
-	success = "rbxassetid://137280763593602",
-}
 
 local NOTIF_COLORS = {
 	info = WARNING,
